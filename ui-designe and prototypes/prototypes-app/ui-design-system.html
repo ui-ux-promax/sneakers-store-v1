@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>STRIDE — Дизайн-система</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Unbounded:wght@600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: 'hsl(var(--color-bg))',
+          surface: { DEFAULT: 'hsl(var(--color-surface))', soft: 'hsl(var(--color-surface-soft))' },
+          ink: { DEFAULT: 'hsl(var(--color-text))', muted: 'hsl(var(--color-text-muted))' },
+          primary: { DEFAULT: 'hsl(var(--color-primary))', foreground: 'hsl(var(--color-primary-foreground))' },
+          accent: { DEFAULT: 'hsl(var(--color-accent))', foreground: 'hsl(var(--color-accent-foreground))' },
+          warm: 'hsl(var(--color-warm-accent))',
+          line: 'hsl(var(--color-border))',
+          danger: 'hsl(var(--color-danger))',
+          success: 'hsl(var(--color-success))',
+          warning: 'hsl(var(--color-warning))',
+          info: 'hsl(var(--color-info))',
+          footer: 'hsl(var(--color-footer))',
+        },
+        fontFamily: { display: ['Unbounded','sans-serif'], sans: ['Manrope','sans-serif'] },
+      },
+    },
+  };
+</script>
+<style>
+  :root{
+    --color-bg:42 33% 97%;
+    --color-surface:0 0% 100%;
+    --color-surface-soft:48 36% 94%;
+    --color-text:220 13% 10%;
+    --color-text-muted:220 8% 42%;
+    --color-primary:75 100% 50%;
+    --color-primary-foreground:220 13% 10%;
+    --color-accent:250 28% 70%;
+    --color-accent-foreground:220 13% 10%;
+    --color-warm-accent:42 100% 52%;
+    --color-border:220 12% 88%;
+    --color-danger:0 72% 52%;
+    --color-success:145 63% 40%;
+    --color-warning:38 92% 50%;
+    --color-info:205 82% 48%;
+    --color-footer:240 18% 11%;
+  }
+  html{scroll-behavior:smooth;}
+  /* keyboard focus: lime ring with a surface-colored gap, reads on white + dark footer */
+  :focus-visible{outline:none;box-shadow:0 0 0 2px hsl(var(--color-surface)),0 0 0 4px hsl(var(--color-primary));}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+  /* frosted glass — чистый backdrop-blur 24px без заливки: хедер прозрачный, блюрит контент под собой */
+  .glass-header{
+    -webkit-backdrop-filter:blur(24px);
+    backdrop-filter:blur(24px);
+    border-bottom:1px solid hsl(var(--color-border));
+  }
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .glass-header{background:hsl(var(--color-surface)/.97);}
+  }
+  body{
+    background:linear-gradient(180deg,
+      hsl(var(--color-primary)/.20) 0%,
+      hsl(var(--color-primary)/.06) 22%,
+      hsl(0 0% 100%) 52%);
+    background-color:hsl(0 0% 100%);
+    background-attachment:fixed;
+    color:hsl(var(--color-text));font-family:'Manrope',sans-serif;
+  }
+  ::selection{background:hsl(var(--color-primary));color:hsl(var(--color-primary-foreground));}
+  .font-display{font-family:'Unbounded',sans-serif;}
+  .tnum{font-variant-numeric:tabular-nums;}
+  /* framed sample area, not a decorative card */
+  .frame{border:1px dashed hsl(var(--color-border));border-radius:16px;background:
+    repeating-linear-gradient(45deg,hsl(var(--color-surface-soft))0,hsl(var(--color-surface-soft))0);
+    background:hsl(var(--color-surface));}
+  .label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:hsl(var(--color-text-muted));}
+  /* buttons */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;font-weight:600;
+    border-radius:999px;transition:filter .15s,transform .15s,box-shadow .15s;cursor:pointer;
+    white-space:nowrap;border:1px solid transparent;line-height:1;}
+  .btn-sm{height:36px;padding:0 16px;font-size:13px;}
+  .btn-md{height:44px;padding:0 22px;font-size:14px;}
+  .btn-lg{height:52px;padding:0 30px;font-size:16px;}
+  .btn-primary{background:hsl(var(--color-primary));color:hsl(var(--color-primary-foreground));}
+  .btn-primary:hover{filter:brightness(.93);}
+  .btn-dark{background:hsl(var(--color-text));color:#fff;}
+  .btn-dark:hover{background:hsl(220 13% 22%);}
+  .btn-secondary{background:hsl(var(--color-surface));color:hsl(var(--color-text));border-color:hsl(var(--color-border));}
+  .btn-secondary:hover{border-color:hsl(var(--color-text));}
+  .btn-accent{background:hsl(var(--color-accent));color:hsl(var(--color-accent-foreground));}
+  .btn-accent:hover{filter:brightness(.96);}
+  .btn-ghost{background:transparent;color:hsl(var(--color-text));}
+  .btn-ghost:hover{background:hsl(var(--color-surface-soft));}
+  .btn-danger{background:hsl(var(--color-danger));color:#fff;}
+  .btn-danger:hover{filter:brightness(.93);}
+  .btn-link{background:transparent;color:hsl(var(--color-text));text-decoration:underline;text-underline-offset:4px;border-radius:6px;padding:0 4px;height:auto;}
+  .btn-link:hover{color:hsl(220 8% 42%);}
+  .btn[disabled],.is-disabled{opacity:.45;cursor:not-allowed;pointer-events:none;}
+  .ring{box-shadow:0 0 0 3px hsl(var(--color-primary)/.55);outline:none;}
+  /* inputs */
+  .inp{width:100%;height:44px;padding:0 14px;border-radius:12px;background:hsl(var(--color-surface));
+    border:1px solid hsl(var(--color-border));font-size:14px;color:hsl(var(--color-text));transition:.15s;}
+  .inp::placeholder{color:hsl(var(--color-text-muted));}
+  .inp:hover{border-color:hsl(220 12% 76%);}
+  .inp.err{border-color:hsl(var(--color-danger));}
+  .spinner{width:16px;height:16px;border-radius:50%;border:2px solid currentColor;border-top-color:transparent;
+    display:inline-block;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){.spinner{animation:none}}
+  .sidebar-link{display:block;padding:6px 12px;border-radius:8px;font-size:13px;font-weight:500;color:hsl(var(--color-text-muted));}
+  .sidebar-link:hover{background:hsl(var(--color-surface-soft));color:hsl(var(--color-text));}
+  details>summary{list-style:none;cursor:pointer;}
+  details>summary::-webkit-details-marker{display:none;}
+</style>
+</head>
+<body class="font-sans antialiased">
+<div class="flex min-h-screen">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="hidden lg:flex w-[220px] shrink-0 flex-col sticky top-0 h-screen overflow-y-auto border-r border-line bg-surface px-4 py-6">
+    <div class="flex items-center gap-2 px-2 mb-6">
+      <span class="grid place-items-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-display font-bold text-sm">S</span>
+      <span class="font-display font-bold text-lg tracking-tight">STRIDE <span class="text-ink-muted font-sans font-medium text-xs">DS</span></span>
+    </div>
+    <nav class="flex flex-col gap-0.5">
+      <a class="sidebar-link" href="#colors">01 · Цвета</a>
+      <a class="sidebar-link" href="#type">02 · Типографика</a>
+      <a class="sidebar-link" href="#spacing">03 · Отступы</a>
+      <a class="sidebar-link" href="#buttons">04 · Кнопки</a>
+      <a class="sidebar-link" href="#forms">05 · Формы</a>
+      <a class="sidebar-link" href="#cards">06 · Карточки</a>
+      <a class="sidebar-link" href="#badges">07 · Бейджи и чипы</a>
+      <a class="sidebar-link" href="#tables">08 · Таблицы</a>
+      <a class="sidebar-link" href="#notify">09 · Уведомления</a>
+      <a class="sidebar-link" href="#modals">10 · Модалки и шторки</a>
+      <a class="sidebar-link" href="#nav">11 · Навигация</a>
+      <a class="sidebar-link" href="#tabs">12 · Вкладки</a>
+      <a class="sidebar-link" href="#hero">13 · Hero</a>
+      <a class="sidebar-link" href="#topbar">14 · Топ-бар</a>
+      <a class="sidebar-link" href="#header">15 · Хедер</a>
+      <a class="sidebar-link" href="#filters">16 · Фильтры</a>
+      <a class="sidebar-link" href="#pagination">17 · Пагинация</a>
+      <a class="sidebar-link" href="#footer">18 · Футер</a>
+    </nav>
+    <p class="mt-auto pt-6 text-[11px] text-ink-muted px-2 leading-relaxed">STRIDE · кроссовки<br/>Дизайн-система · v1<br/>Проверено на 360 / 768 / 1440</p>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="flex-1 min-w-0">
+    <!-- mobile anchor strip -->
+    <div class="lg:hidden sticky top-0 z-20 bg-surface/95 backdrop-blur border-b border-line overflow-x-auto">
+      <div class="flex gap-1 px-4 py-2 whitespace-nowrap text-[12px]">
+        <a class="px-3 py-1 rounded-full bg-surface-soft font-semibold" href="#colors">STRIDE DS</a>
+        <a class="px-3 py-1" href="#buttons">Кнопки</a>
+        <a class="px-3 py-1" href="#cards">Карточки</a>
+        <a class="px-3 py-1" href="#forms">Формы</a>
+        <a class="px-3 py-1" href="#hero">Hero</a>
+        <a class="px-3 py-1" href="#footer">Футер</a>
+      </div>
+    </div>
+
+    <div class="mx-auto max-w-[1080px] px-4 sm:px-8 py-10">
+      <header class="mb-12">
+        <p class="label mb-3">Reference · внутренний UI-kit</p>
+        <h1 class="font-display font-bold text-4xl sm:text-5xl leading-[1.02] tracking-tight">Дизайн-система STRIDE</h1>
+        <p class="mt-4 text-ink-muted max-w-2xl leading-relaxed">Полный визуальный словарь магазина кроссовок: токены, типографика, компоненты и их состояния на одной странице. Источник истины для прототипов страниц. Тон — на «ты», цены в рублях.</p>
+        <div class="mt-5 flex items-start gap-3 rounded-xl px-4 py-3 text-sm max-w-2xl" style="background:hsl(var(--color-warning)/.14);border:1px solid hsl(var(--color-warning)/.4)">
+          <span class="font-bold shrink-0" style="color:hsl(38 70% 30%)">⚠ Заглушки</span>
+          <span>Иконки на этой странице (🛒 👤 🔍 ＋ 👁 ↗ и др.) — временные эмодзи-заглушки. В реальных компонентах они заменяются на <b>lucide-react</b> с корректными <code class="text-xs">aria-label</code>. Эмодзи в продакшен-разметку не тащим.</span>
+        </div>
+      </header>
+
+      <!-- ============ 01 COLORS ============ -->
+      <section id="colors" class="scroll-mt-20">
+        <div class="flex items-baseline gap-3 mb-1"><span class="label">01</span><h2 class="font-display font-bold text-2xl">Цвета</h2></div>
+        <p class="text-ink-muted text-sm mb-6 max-w-2xl">HSL-токены. В продакшене не хардкодим hex — только переменные. Лайм на белом декоративен: на кнопках используем лайм-заливку с тёмным текстом или тёмную заливку с лайм-акцентом.</p>
+
+        <p class="label mb-3">Core</p>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
+          <div class="rounded-2xl overflow-hidden border border-line bg-surface"><div class="h-20" style="background:hsl(var(--color-primary))"></div><div class="p-3"><p class="font-semibold text-sm">--color-primary</p><p class="text-ink-muted text-xs tnum">75 100% 50%</p><p class="text-ink-muted text-xs mt-1">CTA, активные пилюли</p></div></div>
+          <div class="rounded-2xl overflow-hidden border border-line bg-surface"><div class="h-20" style="background:hsl(var(--color-accent))"></div><div class="p-3"><p class="font-semibold text-sm">--color-accent</p><p class="text-ink-muted text-xs tnum">250 28% 70%</p><p class="text-ink-muted text-xs mt-1">Лавандовые панели</p></div></div>
+          <div class="rounded-2xl overflow-hidden border border-line bg-surface"><div class="h-20" style="background:hsl(var(--color-warm-accent))"></div><div class="p-3"><p class="font-semibold text-sm">--color-warm-accent</p><p class="text-ink-muted text-xs tnum">42 100% 52%</p><p class="text-ink-muted text-xs mt-1">Распродажа, кампания</p></div></div>
+          <div class="rounded-2xl overflow-hidden border border-line bg-surface"><div class="h-20" style="background:hsl(var(--color-text))"></div><div class="p-3"><p class="font-semibold text-sm">--color-text</p><p class="text-ink-muted text-xs tnum">220 13% 10%</p><p class="text-ink-muted text-xs mt-1">Текст, дисплей</p></div></div>
+          <div class="rounded-2xl overflow-hidden border border-line bg-surface"><div class="h-20" style="background:hsl(var(--color-footer))"></div><div class="p-3"><p class="font-semibold text-sm">--color-footer</p><p class="text-ink-muted text-xs tnum">240 18% 11%</p><p class="text-ink-muted text-xs mt-1">Тёмный футер</p></div></div>
+        </div>
+
+        <p class="label mb-3">Поверхности</p>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+          <div class="rounded-2xl overflow-hidden border border-line bg-surface"><div class="h-16" style="background:hsl(var(--color-bg))"></div><div class="p-3"><p class="font-semibold text-sm">--color-bg</p><p class="text-ink-muted text-xs tnum">42 33% 97%</p><p class="text-ink-muted text-xs mt-1">Тёплый фон страницы</p></div></div>
+          <div class="rounded-2xl overflow-hidden border border-line bg-surface"><div class="h-16 border-b border-line" style="background:hsl(var(--color-surface))"></div><div class="p-3"><p class="font-semibold text-sm">--color-surface</p><p class="text-ink-muted text-xs tnum">0 0% 100%</p><p class="text-ink-muted text-xs mt-1">Карточки, модалки, хедер</p></div></div>
+          <div class="rounded-2xl overflow-hidden border border-line bg-surface"><div class="h-16" style="background:hsl(var(--color-surface-soft))"></div><div class="p-3"><p class="font-semibold text-sm">--color-surface-soft</p><p class="text-ink-muted text-xs tnum">48 36% 94%</p><p class="text-ink-muted text-xs mt-1">Image-well карточки</p></div></div>
+        </div>
+
+        <p class="label mb-3">Текст и границы</p>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+          <div class="rounded-2xl overflow-hidden border border-line bg-surface"><div class="h-16" style="background:hsl(var(--color-text-muted))"></div><div class="p-3"><p class="font-semibold text-sm">--color-text-muted</p><p class="text-ink-muted text-xs tnum">220 8% 42%</p><p class="text-ink-muted text-xs mt-1">Подписи, helper</p></div></div>
+          <div class="rounded-2xl overflow-hidden border border-line bg-surface"><div class="h-16 border-b border-line" style="background:hsl(var(--color-border))"></div><div class="p-3"><p class="font-semibold text-sm">--color-border</p><p class="text-ink-muted text-xs tnum">220 12% 88%</p><p class="text-ink-muted text-xs mt-1">Разделители, инпуты</p></div></div>
+        </div>
+
+        <p class="label mb-3">Семантика</p>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+          <div class="rounded-2xl overflow-hidden border border-line bg-surface"><div class="h-16" style="background:hsl(var(--color-success))"></div><div class="p-3"><p class="font-semibold text-sm">--color-success</p><p class="text-ink-muted text-xs tnum">145 63% 40%</p><p class="text-ink-muted text-xs mt-1">Оплачено</p></div></div>
+          <div class="rounded-2xl overflow-hidden border border-line bg-surface"><div class="h-16" style="background:hsl(var(--color-warning))"></div><div class="p-3"><p class="font-semibold text-sm">--color-warning</p><p class="text-ink-muted text-xs tnum">38 92% 50%</p><p class="text-ink-muted text-xs mt-1">Ожидает, мало на складе</p></div></div>
+          <div class="rounded-2xl overflow-hidden border border-line bg-surface"><div class="h-16" style="background:hsl(var(--color-danger))"></div><div class="p-3"><p class="font-semibold text-sm">--color-danger</p><p class="text-ink-muted text-xs tnum">0 72% 52%</p><p class="text-ink-muted text-xs mt-1">Ошибка, удаление</p></div></div>
+          <div class="rounded-2xl overflow-hidden border border-line bg-surface"><div class="h-16" style="background:hsl(var(--color-info))"></div><div class="p-3"><p class="font-semibold text-sm">--color-info</p><p class="text-ink-muted text-xs tnum">205 82% 48%</p><p class="text-ink-muted text-xs mt-1">Инфо-сообщения</p></div></div>
+        </div>
+      </section>
+
+      <hr class="my-12 border-line" />
+
+      <!-- ============ 02 TYPOGRAPHY ============ -->
+      <section id="type" class="scroll-mt-20">
+        <div class="flex items-baseline gap-3 mb-1"><span class="label">02</span><h2 class="font-display font-bold text-2xl">Типографика</h2></div>
+        <p class="text-ink-muted text-sm mb-6 max-w-2xl">Заголовки — <b>Unbounded</b> (600/700). Текст — <b>Manrope</b> (400–700). Цены — табличные цифры. Дисплейный размер на мобиле резко уменьшается через брейкпоинты, без vw-масштабирования.</p>
+        <div class="rounded-2xl border border-line bg-surface divide-y divide-line">
+          <div class="p-5 flex flex-col sm:flex-row sm:items-baseline gap-2"><span class="label w-28 shrink-0">Display 80/0.92</span><span class="font-display font-bold text-[40px] sm:text-[56px] lg:text-[80px] leading-[0.92] tracking-tight">Смотри дроп</span></div>
+          <div class="p-5 flex flex-col sm:flex-row sm:items-baseline gap-2"><span class="label w-28 shrink-0">H1 56/1</span><span class="font-display font-bold text-[34px] sm:text-[48px] lg:text-[56px] leading-none">Новые кроссовки сезона</span></div>
+          <div class="p-5 flex flex-col sm:flex-row sm:items-baseline gap-2"><span class="label w-28 shrink-0">H2 40/1.05</span><span class="font-display font-bold text-[28px] sm:text-[40px] leading-tight">Бестселлеры недели</span></div>
+          <div class="p-5 flex flex-col sm:flex-row sm:items-baseline gap-2"><span class="label w-28 shrink-0">H3 28/1.15</span><span class="font-display font-semibold text-[28px] leading-tight">Беговые и лайфстайл</span></div>
+          <div class="p-5 flex flex-col sm:flex-row sm:items-baseline gap-2"><span class="label w-28 shrink-0">H4 20</span><span class="font-sans font-700 text-xl font-bold">Подбери размер под свою стопу</span></div>
+          <div class="p-5 flex flex-col sm:flex-row sm:items-baseline gap-2"><span class="label w-28 shrink-0">Body 16/1.55</span><span class="text-base max-w-lg leading-relaxed">Лёгкая дышащая сетка, амортизация для города и пробежек. Выбери размер и добавь в корзину — оформление займёт минуту.</span></div>
+          <div class="p-5 flex flex-col sm:flex-row sm:items-baseline gap-2"><span class="label w-28 shrink-0">Helper 14</span><span class="text-sm text-ink-muted">Доставка по России 1–3 дня. Примерь дома, верни бесплатно за 14 дней.</span></div>
+          <div class="p-5 flex flex-col sm:flex-row sm:items-baseline gap-2"><span class="label w-28 shrink-0">Micro 12</span><span class="text-xs font-medium uppercase tracking-wider text-ink-muted">Лимитированный дроп · 02.06</span></div>
+          <div class="p-5 flex flex-col sm:flex-row sm:items-baseline gap-2"><span class="label w-28 shrink-0">Цена tnum</span><span class="tnum text-2xl font-bold">12 990 ₽ <span class="text-ink-muted text-lg font-medium line-through ml-1">15 990 ₽</span></span></div>
+        </div>
+      </section>
+
+      <hr class="my-12 border-line" />
+
+      <!-- ============ 03 SPACING ============ -->
+      <section id="spacing" class="scroll-mt-20">
+        <div class="flex items-baseline gap-3 mb-1"><span class="label">03</span><h2 class="font-display font-bold text-2xl">Отступы</h2></div>
+        <p class="text-ink-muted text-sm mb-6 max-w-2xl">База — 4px. Контентные поля: 24px десктоп / 16px мобайл. Секционные отступы: 72–96px десктоп, 40–56px мобайл. Зазор товарной сетки 16–20px.</p>
+        <div class="rounded-2xl border border-line bg-surface p-5 space-y-3">
+          <div class="flex items-center gap-4"><span class="label w-24 shrink-0">space-1 · 4px</span><div class="h-4 bg-primary rounded" style="width:4px"></div></div>
+          <div class="flex items-center gap-4"><span class="label w-24 shrink-0">space-2 · 8px</span><div class="h-4 bg-primary rounded" style="width:8px"></div></div>
+          <div class="flex items-center gap-4"><span class="label w-24 shrink-0">space-3 · 12px</span><div class="h-4 bg-primary rounded" style="width:12px"></div></div>
+          <div class="flex items-center gap-4"><span class="label w-24 shrink-0">space-4 · 16px</span><div class="h-4 bg-primary rounded" style="width:16px"></div></div>
+          <div class="flex items-center gap-4"><span class="label w-24 shrink-0">space-6 · 24px</span><div class="h-4 bg-primary rounded" style="width:24px"></div></div>
+          <div class="flex items-center gap-4"><span class="label w-24 shrink-0">space-8 · 32px</span><div class="h-4 bg-primary rounded" style="width:32px"></div></div>
+          <div class="flex items-center gap-4"><span class="label w-24 shrink-0">space-12 · 48px</span><div class="h-4 bg-accent rounded" style="width:48px"></div></div>
+          <div class="flex items-center gap-4"><span class="label w-24 shrink-0">space-18 · 72px</span><div class="h-4 bg-accent rounded" style="width:72px"></div></div>
+          <div class="flex items-center gap-4"><span class="label w-24 shrink-0">space-24 · 96px</span><div class="h-4 bg-accent rounded" style="width:96px"></div></div>
+        </div>
+        <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="rounded-xl border border-line bg-surface p-3"><p class="label">Радиус S</p><p class="text-sm mt-1">10–12px · контролы</p><div class="mt-2 h-10 bg-surface-soft rounded-xl border border-line"></div></div>
+          <div class="rounded-xl border border-line bg-surface p-3"><p class="label">Радиус M</p><p class="text-sm mt-1">16–18px · карточки</p><div class="mt-2 h-10 bg-surface-soft rounded-2xl border border-line"></div></div>
+          <div class="rounded-xl border border-line bg-surface p-3"><p class="label">Радиус L</p><p class="text-sm mt-1">24px · панели</p><div class="mt-2 h-10 bg-surface-soft rounded-[24px] border border-line"></div></div>
+          <div class="rounded-xl border border-line bg-surface p-3"><p class="label">Pill</p><p class="text-sm mt-1">999px · CTA</p><div class="mt-2 h-10 bg-surface-soft rounded-full border border-line"></div></div>
+        </div>
+      </section>
+
+      <hr class="my-12 border-line" />
+
+      <!-- ============ 04 BUTTONS ============ -->
+      <section id="buttons" class="scroll-mt-20">
+        <div class="flex items-baseline gap-3 mb-1"><span class="label">04</span><h2 class="font-display font-bold text-2xl">Кнопки</h2></div>
+        <p class="text-ink-muted text-sm mb-6 max-w-2xl">Пилюли для CTA (44–52px), лайм или чёрная заливка. Icon-only quick-add — круглые, всегда с доступным label.</p>
+
+        <p class="label mb-3">Варианты (размер M)</p>
+        <div class="frame p-6 mb-6 flex flex-wrap gap-3 items-center">
+          <button class="btn btn-md btn-primary">Добавить в корзину</button>
+          <button class="btn btn-md btn-dark">Оформить заказ</button>
+          <button class="btn btn-md btn-secondary">Смотреть все</button>
+          <button class="btn btn-md btn-accent">Подобрать размер</button>
+          <button class="btn btn-md btn-ghost">Сбросить фильтры</button>
+          <button class="btn btn-md btn-danger">Удалить товар</button>
+          <a href="#buttons" class="btn-link font-semibold text-sm">Подробнее о доставке</a>
+        </div>
+
+        <p class="label mb-3">Размеры</p>
+        <div class="frame p-6 mb-6 flex flex-wrap gap-3 items-center">
+          <button class="btn btn-sm btn-primary">Small 36</button>
+          <button class="btn btn-md btn-primary">Medium 44</button>
+          <button class="btn btn-lg btn-primary">Large 52</button>
+        </div>
+
+        <p class="label mb-3">Состояния</p>
+        <div class="frame p-6 mb-6 grid gap-4">
+          <div class="flex flex-wrap gap-3 items-center"><span class="label w-20">Default</span><button class="btn btn-md btn-primary">В корзину</button><button class="btn btn-md btn-dark">Купить</button></div>
+          <div class="flex flex-wrap gap-3 items-center"><span class="label w-20">Hover</span><button class="btn btn-md btn-primary" style="filter:brightness(.93)">В корзину</button><button class="btn btn-md btn-dark" style="background:hsl(220 13% 22%)">Купить</button></div>
+          <div class="flex flex-wrap gap-3 items-center"><span class="label w-20">Focus</span><button class="btn btn-md btn-primary ring">В корзину</button><button class="btn btn-md btn-secondary ring">Смотреть все</button></div>
+          <div class="flex flex-wrap gap-3 items-center"><span class="label w-20">Disabled</span><button class="btn btn-md btn-primary" disabled>В корзину</button><button class="btn btn-md btn-dark" disabled>Купить</button></div>
+          <div class="flex flex-wrap gap-3 items-center"><span class="label w-20">Loading</span><button class="btn btn-md btn-primary"><span class="spinner"></span> Добавляем…</button><button class="btn btn-md btn-dark"><span class="spinner"></span> Оформляем…</button></div>
+        </div>
+
+        <p class="label mb-3">Icon-only quick-add</p>
+        <div class="frame p-6 mb-6 flex flex-wrap gap-3 items-center">
+          <button class="btn btn-primary w-11 h-11 !p-0 rounded-full" aria-label="Быстро добавить в корзину">＋</button>
+          <button class="btn btn-dark w-11 h-11 !p-0 rounded-full" aria-label="Открыть быстрый просмотр">👁</button>
+          <button class="btn btn-secondary w-11 h-11 !p-0 rounded-full" aria-label="Поделиться">↗</button>
+          <button class="btn btn-primary w-11 h-11 !p-0 rounded-full ring" aria-label="Быстро добавить (focus)">＋</button>
+          <button class="btn btn-primary w-11 h-11 !p-0 rounded-full" aria-label="Быстро добавить (disabled)" disabled>＋</button>
+        </div>
+
+        <p class="label mb-3">Full-width CTA</p>
+        <div class="frame p-6 max-w-sm">
+          <button class="btn btn-lg btn-primary w-full">Оформить заказ · 12 990 ₽</button>
+        </div>
+      </section>
+
+      <hr class="my-12 border-line" />
+
+      <!-- ============ 05 FORM CONTROLS ============ -->
+      <section id="forms" class="scroll-mt-20">
+        <div class="flex items-baseline gap-3 mb-1"><span class="label">05</span><h2 class="font-display font-bold text-2xl">Формы</h2></div>
+        <p class="text-ink-muted text-sm mb-6 max-w-2xl">Инпуты 12px радиус, белая поверхность, лайм-кольцо в фокусе. Ошибки короткие и привязаны к полю. React Hook Form + Zod.</p>
+        <div class="frame p-6 grid sm:grid-cols-2 gap-x-8 gap-y-6">
+          <div><label class="label block mb-2">Input · default</label><input class="inp" placeholder="Иван Петров" /></div>
+          <div><label class="label block mb-2">Input · focus</label><input class="inp ring" value="ivan@stride.ru" /></div>
+          <div><label class="label block mb-2">Input · error</label><input class="inp err" value="ivan@" /><p class="text-danger text-xs mt-1.5">Введи корректный e-mail.</p></div>
+          <div><label class="label block mb-2">Input · disabled</label><input class="inp is-disabled" value="Недоступно" disabled /></div>
+
+          <div><label class="label block mb-2">Select · размер</label>
+            <select class="inp"><option>Выбери размер</option><option>40 — есть</option><option>41 — есть</option><option>42 — мало</option></select></div>
+          <div><label class="label block mb-2">Select · disabled</label>
+            <select class="inp is-disabled" disabled><option>Нет в наличии</option></select></div>
+
+          <div class="sm:col-span-2"><label class="label block mb-2">Textarea · комментарий к заказу</label>
+            <textarea class="inp !h-24 py-3" placeholder="Например: позвонить за час до доставки">Оставьте у двери, домофон не работает.</textarea></div>
+          <div class="sm:col-span-2"><label class="label block mb-2">Textarea · error</label>
+            <textarea class="inp err !h-20 py-3"></textarea><p class="text-danger text-xs mt-1.5">Поле обязательно для самовывоза.</p></div>
+
+          <div class="space-y-3">
+            <p class="label">Checkbox</p>
+            <label class="flex items-center gap-2.5 text-sm cursor-pointer"><input type="checkbox" checked class="w-5 h-5 rounded-md accent-[hsl(var(--color-primary))]" /> Согласен с условиями доставки</label>
+            <label class="flex items-center gap-2.5 text-sm cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded-md accent-[hsl(var(--color-primary))]" /> Подписаться на дропы</label>
+            <label class="flex items-center gap-2.5 text-sm text-ink-muted cursor-not-allowed"><input type="checkbox" disabled class="w-5 h-5 rounded-md" /> Опция недоступна</label>
+          </div>
+          <div class="space-y-3">
+            <p class="label">Radio · способ получения</p>
+            <label class="flex items-center gap-2.5 text-sm cursor-pointer"><input type="radio" name="d" checked class="w-5 h-5 accent-[hsl(var(--color-primary))]" /> Доставка курьером</label>
+            <label class="flex items-center gap-2.5 text-sm cursor-pointer"><input type="radio" name="d" class="w-5 h-5 accent-[hsl(var(--color-primary))]" /> Самовывоз из пункта</label>
+            <label class="flex items-center gap-2.5 text-sm text-ink-muted cursor-not-allowed"><input type="radio" name="d" disabled class="w-5 h-5" /> Постамат (скоро)</label>
+          </div>
+
+          <div>
+            <p class="label mb-2">Counter · количество</p>
+            <div class="inline-flex items-center rounded-full border border-line bg-surface">
+              <button class="w-10 h-10 grid place-items-center text-lg rounded-l-full hover:bg-surface-soft" aria-label="Уменьшить">−</button>
+              <span class="w-10 text-center font-semibold tnum">2</span>
+              <button class="w-10 h-10 grid place-items-center text-lg rounded-r-full hover:bg-surface-soft" aria-label="Увеличить">＋</button>
+            </div>
+            <div class="inline-flex items-center rounded-full border border-line bg-surface ml-3 opacity-45">
+              <button class="w-10 h-10 grid place-items-center text-lg rounded-l-full" disabled>−</button>
+              <span class="w-10 text-center font-semibold tnum">1</span>
+              <button class="w-10 h-10 grid place-items-center text-lg rounded-r-full" disabled>＋</button>
+            </div>
+          </div>
+          <div>
+            <p class="label mb-2">Slider · цена до 20 000 ₽</p>
+            <input type="range" min="0" max="100" value="60" class="w-full accent-[hsl(var(--color-primary))]" />
+            <div class="flex justify-between text-xs text-ink-muted tnum mt-1"><span>0 ₽</span><span>12 000 ₽</span><span>20 000 ₽</span></div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="my-12 border-line" />
+
+      <!-- ============ 06 PRODUCT CARDS ============ -->
+      <section id="cards" class="scroll-mt-20">
+        <div class="flex items-baseline gap-3 mb-1"><span class="label">06</span><h2 class="font-display font-bold text-2xl">Товарные карточки</h2></div>
+        <p class="text-ink-muted text-sm mb-6 max-w-2xl">Мягкий image-well, реальное фото кроссовка, иерархия цены, опц. старая цена, бейдж и quick-add. Радиус 14–18px, без вложенных рамок. Ключ — id/SKU, не имя.</p>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+          <!-- normal + new -->
+          <article class="group rounded-2xl bg-surface border border-line overflow-hidden">
+            <div class="relative aspect-square bg-surface-soft">
+              <span class="absolute top-3 left-3 z-10 text-[11px] font-bold px-2.5 py-1 rounded-full bg-primary text-primary-foreground">Новинка</span>
+              <img src="../docs/design/product-images/nike-air-max-270.jpeg" alt="Кроссовки Nike Air Max 270" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+              <button class="absolute bottom-3 right-3 btn btn-primary w-10 h-10 !p-0 rounded-full opacity-0 group-hover:opacity-100 transition" aria-label="Быстро добавить">＋</button>
+            </div>
+            <div class="p-3.5">
+              <p class="text-[11px] text-ink-muted uppercase tracking-wide">Беговые</p>
+              <h3 class="font-semibold text-sm mt-0.5 leading-snug">STRIDE Velocity Trail</h3>
+              <p class="mt-2 tnum font-bold">12 990 ₽</p>
+            </div>
+          </article>
+
+          <!-- sale + old price -->
+          <article class="group rounded-2xl bg-surface border border-line overflow-hidden">
+            <div class="relative aspect-square bg-surface-soft">
+              <span class="absolute top-3 left-3 z-10 text-[11px] font-bold px-2.5 py-1 rounded-full bg-warm text-ink">−25%</span>
+              <img src="../docs/design/product-images/adidas-ultraboost.jpeg" alt="Кроссовки Adidas Ultraboost" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+              <button class="absolute bottom-3 right-3 btn btn-primary w-10 h-10 !p-0 rounded-full opacity-0 group-hover:opacity-100 transition" aria-label="Быстро добавить">＋</button>
+            </div>
+            <div class="p-3.5">
+              <p class="text-[11px] text-ink-muted uppercase tracking-wide">Лайфстайл</p>
+              <h3 class="font-semibold text-sm mt-0.5 leading-snug">STRIDE Court Classic</h3>
+              <p class="mt-2 tnum font-bold">11 240 ₽ <span class="text-ink-muted text-xs font-medium line-through">14 990 ₽</span></p>
+            </div>
+          </article>
+
+          <!-- bestseller + low stock -->
+          <article class="group rounded-2xl bg-surface border border-line overflow-hidden">
+            <div class="relative aspect-square bg-surface-soft">
+              <span class="absolute top-3 left-3 z-10 text-[11px] font-bold px-2.5 py-1 rounded-full bg-ink text-white">Бестселлер</span>
+              <img src="../docs/design/product-images/new-balance-550.jpeg" alt="Кроссовки New Balance 550" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+              <button class="absolute bottom-3 right-3 btn btn-primary w-10 h-10 !p-0 rounded-full opacity-0 group-hover:opacity-100 transition" aria-label="Быстро добавить">＋</button>
+            </div>
+            <div class="p-3.5">
+              <p class="text-[11px] text-ink-muted uppercase tracking-wide">Платформы</p>
+              <h3 class="font-semibold text-sm mt-0.5 leading-snug">STRIDE Cloud Platform</h3>
+              <p class="mt-2 tnum font-bold">15 490 ₽</p>
+              <p class="text-[11px] text-warning font-semibold mt-1">Осталось 2 пары</p>
+            </div>
+          </article>
+
+          <!-- empty image / placeholder -->
+          <article class="rounded-2xl bg-surface border border-line overflow-hidden">
+            <div class="relative aspect-square bg-surface-soft grid place-items-center">
+              <div class="text-center text-ink-muted">
+                <div class="mx-auto mb-2 w-10 h-10 rounded-full border-2 border-dashed border-line grid place-items-center">🖼</div>
+                <p class="text-[11px]">Фото скоро<br/>появится</p>
+              </div>
+            </div>
+            <div class="p-3.5">
+              <p class="text-[11px] text-ink-muted uppercase tracking-wide">Лимитированные</p>
+              <h3 class="font-semibold text-sm mt-0.5 leading-snug">STRIDE Drop 04 · скоро</h3>
+              <p class="mt-2 tnum font-bold text-ink-muted">— ₽</p>
+            </div>
+          </article>
+        </div>
+        <p class="text-xs text-ink-muted mt-3">На мобиле (360px) сетка превращается в 2 колонки; quick-add остаётся видимым, hover-действия дублируются тапом по карточке.</p>
+      </section>
+
+      <hr class="my-12 border-line" />
+
+      <!-- ============ 07 BADGES / CHIPS ============ -->
+      <section id="badges" class="scroll-mt-20">
+        <div class="flex items-baseline gap-3 mb-1"><span class="label">07</span><h2 class="font-display font-bold text-2xl">Бейджи и чипы</h2></div>
+
+        <p class="label mb-3">Статусы заказа</p>
+        <div class="frame p-6 mb-6 flex flex-wrap gap-2.5">
+          <span class="text-xs font-semibold px-3 py-1.5 rounded-full" style="background:hsl(var(--color-warning)/.16);color:hsl(38 70% 32%)">Ожидает оплаты</span>
+          <span class="text-xs font-semibold px-3 py-1.5 rounded-full" style="background:hsl(var(--color-success)/.16);color:hsl(145 63% 28%)">Оплачен</span>
+          <span class="text-xs font-semibold px-3 py-1.5 rounded-full" style="background:hsl(var(--color-info)/.16);color:hsl(205 70% 35%)">В доставке</span>
+          <span class="text-xs font-semibold px-3 py-1.5 rounded-full" style="background:hsl(var(--color-danger)/.14);color:hsl(0 60% 42%)">Отменён</span>
+        </div>
+
+        <p class="label mb-3">Товарные бейджи</p>
+        <div class="frame p-6 mb-6 flex flex-wrap gap-2.5">
+          <span class="text-xs font-bold px-3 py-1.5 rounded-full bg-primary text-primary-foreground">Новинка</span>
+          <span class="text-xs font-bold px-3 py-1.5 rounded-full bg-ink text-white">Бестселлер</span>
+          <span class="text-xs font-bold px-3 py-1.5 rounded-full bg-warm text-ink">Скидка −25%</span>
+          <span class="text-xs font-bold px-3 py-1.5 rounded-full bg-accent text-accent-foreground">Лимитированный дроп</span>
+        </div>
+
+        <p class="label mb-3">Фильтр-чипы (выбор размера)</p>
+        <div class="frame p-6 mb-6 flex flex-wrap gap-2">
+          <button class="px-3.5 py-2 rounded-xl border border-line text-sm font-medium hover:border-ink">40</button>
+          <button class="px-3.5 py-2 rounded-xl border-2 text-sm font-semibold" style="border-color:hsl(var(--color-text))">41</button>
+          <button class="px-3.5 py-2 rounded-xl border border-line text-sm font-medium hover:border-ink">42</button>
+          <button class="px-3.5 py-2 rounded-xl border border-line text-sm text-ink-muted line-through cursor-not-allowed" disabled>43</button>
+          <button class="px-3.5 py-2 rounded-xl border border-line text-sm font-medium hover:border-ink">44</button>
+        </div>
+
+        <p class="label mb-3">Удаляемые чипы (активные фильтры)</p>
+        <div class="frame p-6 flex flex-wrap gap-2">
+          <span class="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full bg-surface-soft border border-line">Беговые <button class="text-ink-muted hover:text-danger" aria-label="Убрать фильтр Беговые">✕</button></span>
+          <span class="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full bg-surface-soft border border-line">Размер 42 <button class="text-ink-muted hover:text-danger" aria-label="Убрать размер 42">✕</button></span>
+          <span class="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full bg-surface-soft border border-line">До 15 000 ₽ <button class="text-ink-muted hover:text-danger" aria-label="Убрать ценовой фильтр">✕</button></span>
+          <button class="text-sm font-semibold text-ink-muted underline underline-offset-2 hover:text-ink ml-1">Сбросить всё</button>
+        </div>
+      </section>
+
+      <hr class="my-12 border-line" />
+
+      <!-- ============ 08 TABLES ============ -->
+      <section id="tables" class="scroll-mt-20">
+        <div class="flex items-baseline gap-3 mb-1"><span class="label">08</span><h2 class="font-display font-bold text-2xl">Таблицы</h2></div>
+        <p class="text-ink-muted text-sm mb-6 max-w-2xl">Таблица заказов в админке / истории профиля. Заголовок, строки, hover и пустое состояние.</p>
+        <div class="rounded-2xl border border-line bg-surface overflow-hidden overflow-x-auto">
+          <table class="w-full text-sm min-w-[640px]">
+            <thead><tr class="text-left text-ink-muted border-b border-line bg-surface-soft/60">
+              <th class="font-semibold px-4 py-3">Заказ</th><th class="font-semibold px-4 py-3">Дата</th><th class="font-semibold px-4 py-3">Товары</th><th class="font-semibold px-4 py-3 text-right">Сумма</th><th class="font-semibold px-4 py-3">Статус</th></tr></thead>
+            <tbody class="divide-y divide-line">
+              <tr class="hover:bg-surface-soft/50 transition"><td class="px-4 py-3 font-semibold tnum">#10245</td><td class="px-4 py-3 text-ink-muted tnum">28.05.2026</td><td class="px-4 py-3">Velocity Trail · 42</td><td class="px-4 py-3 text-right tnum font-semibold">12 990 ₽</td><td class="px-4 py-3"><span class="text-xs font-semibold px-2.5 py-1 rounded-full" style="background:hsl(var(--color-success)/.16);color:hsl(145 63% 28%)">Оплачен</span></td></tr>
+              <tr class="hover:bg-surface-soft/50 transition"><td class="px-4 py-3 font-semibold tnum">#10244</td><td class="px-4 py-3 text-ink-muted tnum">26.05.2026</td><td class="px-4 py-3">Court Classic · 41 + 1</td><td class="px-4 py-3 text-right tnum font-semibold">23 480 ₽</td><td class="px-4 py-3"><span class="text-xs font-semibold px-2.5 py-1 rounded-full" style="background:hsl(var(--color-info)/.16);color:hsl(205 70% 35%)">В доставке</span></td></tr>
+              <tr class="hover:bg-surface-soft/50 transition"><td class="px-4 py-3 font-semibold tnum">#10243</td><td class="px-4 py-3 text-ink-muted tnum">24.05.2026</td><td class="px-4 py-3">Cloud Platform · 40</td><td class="px-4 py-3 text-right tnum font-semibold">15 490 ₽</td><td class="px-4 py-3"><span class="text-xs font-semibold px-2.5 py-1 rounded-full" style="background:hsl(var(--color-warning)/.16);color:hsl(38 70% 32%)">Ожидает оплаты</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="label mt-6 mb-3">Пустое состояние</p>
+        <div class="rounded-2xl border border-line bg-surface p-10 text-center">
+          <div class="mx-auto mb-3 w-12 h-12 rounded-full bg-surface-soft grid place-items-center text-xl">🧾</div>
+          <p class="font-semibold">Заказов пока нет</p>
+          <p class="text-sm text-ink-muted mt-1 mb-4">Выбери первую пару — она появится здесь.</p>
+          <button class="btn btn-md btn-primary">Смотреть каталог</button>
+        </div>
+      </section>
+
+      <hr class="my-12 border-line" />
+
+      <!-- ============ 09 NOTIFICATIONS ============ -->
+      <section id="notify" class="scroll-mt-20">
+        <div class="flex items-baseline gap-3 mb-1"><span class="label">09</span><h2 class="font-display font-bold text-2xl">Уведомления</h2></div>
+
+        <p class="label mb-3">Тосты</p>
+        <div class="frame p-6 mb-6 grid sm:grid-cols-2 gap-3">
+          <div class="flex items-start gap-3 rounded-xl bg-surface border border-line p-3.5 shadow-sm"><span class="mt-0.5 w-6 h-6 grid place-items-center rounded-full text-white text-xs shrink-0" style="background:hsl(var(--color-success))">✓</span><div class="flex-1"><p class="font-semibold text-sm">Добавлено в корзину</p><p class="text-xs text-ink-muted">STRIDE Velocity Trail · размер 42</p></div><button class="text-ink-muted hover:text-ink" aria-label="Закрыть">✕</button></div>
+          <div class="flex items-start gap-3 rounded-xl bg-surface border border-line p-3.5 shadow-sm"><span class="mt-0.5 w-6 h-6 grid place-items-center rounded-full text-white text-xs shrink-0" style="background:hsl(var(--color-danger))">!</span><div class="flex-1"><p class="font-semibold text-sm">Не удалось применить промокод</p><p class="text-xs text-ink-muted">Код DROP25 уже использован.</p></div><button class="text-ink-muted hover:text-ink" aria-label="Закрыть">✕</button></div>
+          <div class="flex items-start gap-3 rounded-xl bg-surface border border-line p-3.5 shadow-sm"><span class="mt-0.5 w-6 h-6 grid place-items-center rounded-full text-white text-xs shrink-0" style="background:hsl(var(--color-info))">i</span><div class="flex-1"><p class="font-semibold text-sm">Размер 43 в листе ожидания</p><p class="text-xs text-ink-muted">Сообщим, когда появится.</p></div><button class="text-ink-muted hover:text-ink" aria-label="Закрыть">✕</button></div>
+          <div class="flex items-start gap-3 rounded-xl bg-surface border border-line p-3.5 shadow-sm"><span class="mt-0.5 w-6 h-6 grid place-items-center rounded-full text-ink text-xs shrink-0" style="background:hsl(var(--color-warning))">⚠</span><div class="flex-1"><p class="font-semibold text-sm">Осталось 2 пары</p><p class="text-xs text-ink-muted">Оформи заказ, чтобы закрепить размер.</p></div><button class="text-ink-muted hover:text-ink" aria-label="Закрыть">✕</button></div>
+        </div>
+
+        <p class="label mb-3">Инлайн-алерты</p>
+        <div class="frame p-6 grid gap-3">
+          <div class="rounded-xl px-4 py-3 text-sm" style="background:hsl(var(--color-success)/.12);border:1px solid hsl(var(--color-success)/.3)"><b style="color:hsl(145 63% 28%)">Оплата прошла.</b> Письмо с деталями заказа отправлено на почту.</div>
+          <div class="rounded-xl px-4 py-3 text-sm" style="background:hsl(var(--color-warning)/.14);border:1px solid hsl(var(--color-warning)/.4)"><b style="color:hsl(38 70% 30%)">Подтверди e-mail.</b> Доступ к истории заказов откроется после подтверждения.</div>
+          <div class="rounded-xl px-4 py-3 text-sm" style="background:hsl(var(--color-danger)/.1);border:1px solid hsl(var(--color-danger)/.3)"><b style="color:hsl(0 60% 42%)">Платёж отклонён.</b> Корзина сохранена — попробуй другой способ оплаты.</div>
+          <div class="rounded-xl px-4 py-3 text-sm" style="background:hsl(var(--color-info)/.1);border:1px solid hsl(var(--color-info)/.3)"><b style="color:hsl(205 70% 35%)">Бесплатная доставка</b> при заказе от 10 000 ₽ по всей России.</div>
+        </div>
+      </section>
+
+      <hr class="my-12 border-line" />
+
+      <!-- ============ 10 MODALS & DRAWERS ============ -->
+      <section id="modals" class="scroll-mt-20">
+        <div class="flex items-baseline gap-3 mb-1"><span class="label">10</span><h2 class="font-display font-bold text-2xl">Модалки и шторки</h2></div>
+        <p class="text-ink-muted text-sm mb-6 max-w-2xl">Показаны статично поверх затемнения. Корзина-шторка выезжает справа на десктопе и снизу на мобиле.</p>
+
+        <div class="grid lg:grid-cols-2 gap-6">
+          <!-- modal: quick size select -->
+          <div>
+            <p class="label mb-3">Модалка · быстрый выбор размера</p>
+            <div class="relative rounded-2xl overflow-hidden border border-line" style="background:hsl(var(--color-text)/.35)">
+              <div class="p-6 sm:p-10">
+                <div class="bg-surface rounded-2xl p-5 shadow-xl max-w-sm mx-auto">
+                  <div class="flex items-start justify-between mb-1"><h3 class="font-display font-semibold text-lg">Выбери размер</h3><button class="text-ink-muted hover:text-ink" aria-label="Закрыть">✕</button></div>
+                  <p class="text-sm text-ink-muted mb-4">STRIDE Velocity Trail · 12 990 ₽</p>
+                  <div class="flex flex-wrap gap-2 mb-5">
+                    <button class="px-3.5 py-2 rounded-xl border border-line text-sm hover:border-ink">40</button>
+                    <button class="px-3.5 py-2 rounded-xl border-2 text-sm font-semibold" style="border-color:hsl(var(--color-text))">41</button>
+                    <button class="px-3.5 py-2 rounded-xl border border-line text-sm hover:border-ink">42</button>
+                    <button class="px-3.5 py-2 rounded-xl border border-line text-sm text-ink-muted line-through" disabled>43</button>
+                  </div>
+                  <button class="btn btn-md btn-primary w-full">Добавить в корзину</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- confirmation dialog -->
+          <div>
+            <p class="label mb-3">Диалог подтверждения</p>
+            <div class="relative rounded-2xl overflow-hidden border border-line" style="background:hsl(var(--color-text)/.35)">
+              <div class="p-6 sm:p-10">
+                <div class="bg-surface rounded-2xl p-5 shadow-xl max-w-xs mx-auto text-center">
+                  <div class="mx-auto mb-3 w-11 h-11 rounded-full grid place-items-center text-xl" style="background:hsl(var(--color-danger)/.12);color:hsl(var(--color-danger))">🗑</div>
+                  <h3 class="font-semibold">Убрать из корзины?</h3>
+                  <p class="text-sm text-ink-muted mt-1 mb-4">STRIDE Court Classic · 41</p>
+                  <div class="flex gap-2"><button class="btn btn-md btn-secondary flex-1">Отмена</button><button class="btn btn-md btn-danger flex-1">Убрать</button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="label mt-6 mb-3">Шторка корзины (мобайл — снизу)</p>
+        <div class="relative rounded-2xl overflow-hidden border border-line" style="background:hsl(var(--color-text)/.35)">
+          <div class="flex justify-end">
+            <div class="bg-surface w-full max-w-sm h-[360px] p-5 flex flex-col">
+              <div class="flex items-center justify-between mb-4"><h3 class="font-display font-semibold text-lg">Корзина · 2</h3><button class="text-ink-muted hover:text-ink" aria-label="Закрыть">✕</button></div>
+              <div class="flex-1 space-y-3 overflow-y-auto">
+                <div class="flex gap-3"><div class="w-16 h-16 rounded-xl bg-surface-soft shrink-0 overflow-hidden"><img src="../docs/design/product-images/102270093_f1.jpg" alt="" class="w-full h-full object-contain p-1" /></div><div class="flex-1 text-sm"><p class="font-semibold leading-snug">Velocity Trail</p><p class="text-ink-muted text-xs">Размер 42</p><p class="tnum font-semibold mt-1">12 990 ₽</p></div></div>
+                <div class="flex gap-3"><div class="w-16 h-16 rounded-xl bg-surface-soft shrink-0 overflow-hidden"><img src="../docs/design/product-images/102270080_f1.jpg" alt="" class="w-full h-full object-contain p-1" /></div><div class="flex-1 text-sm"><p class="font-semibold leading-snug">Court Classic</p><p class="text-ink-muted text-xs">Размер 41</p><p class="tnum font-semibold mt-1">11 240 ₽</p></div></div>
+              </div>
+              <div class="border-t border-line pt-3 mt-3"><div class="flex justify-between font-semibold mb-3"><span>Итого</span><span class="tnum">24 230 ₽</span></div><button class="btn btn-md btn-primary w-full">Оформить заказ</button></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="my-12 border-line" />
+
+      <!-- ============ 11 NAVIGATION ============ -->
+      <section id="nav" class="scroll-mt-20">
+        <div class="flex items-baseline gap-3 mb-1"><span class="label">11</span><h2 class="font-display font-bold text-2xl">Навигация</h2></div>
+        <p class="label mb-3">Хлебные крошки</p>
+        <div class="frame p-6 mb-6">
+          <nav class="flex items-center gap-2 text-sm text-ink-muted flex-wrap">
+            <a href="#nav" class="hover:text-ink">Главная</a><span>/</span>
+            <a href="#nav" class="hover:text-ink">Каталог</a><span>/</span>
+            <a href="#nav" class="hover:text-ink">Беговые</a><span>/</span>
+            <span class="text-ink font-semibold">Velocity Trail</span>
+          </nav>
+        </div>
+        <p class="label mb-3">Ссылки маршрутов (с активным состоянием)</p>
+        <div class="frame p-6 flex flex-wrap gap-5 text-sm font-medium">
+          <a href="#nav" class="relative text-ink">Новинки <span class="absolute -right-2 top-0 w-1.5 h-1.5 rounded-full bg-primary"></span></a>
+          <a href="#nav" class="text-ink-muted hover:text-ink">Беговые</a>
+          <a href="#nav" class="text-ink-muted hover:text-ink">Лайфстайл</a>
+          <a href="#nav" class="text-ink-muted hover:text-ink">Платформы</a>
+          <a href="#nav" class="text-ink-muted hover:text-ink">Лимитированные</a>
+        </div>
+      </section>
+
+      <hr class="my-12 border-line" />
+
+      <!-- ============ 12 TABS ============ -->
+      <section id="tabs" class="scroll-mt-20">
+        <div class="flex items-baseline gap-3 mb-1"><span class="label">12</span><h2 class="font-display font-bold text-2xl">Вкладки</h2></div>
+        <p class="text-ink-muted text-sm mb-6 max-w-2xl">На странице товара: описание, размеры/посадка, доставка. Активная — лайм-подчёркивание.</p>
+        <div class="frame p-6">
+          <div class="flex gap-6 border-b border-line">
+            <button class="relative pb-3 text-sm font-semibold text-ink">Описание<span class="absolute left-0 -bottom-px h-0.5 w-full bg-primary rounded-full"></span></button>
+            <button class="pb-3 text-sm font-medium text-ink-muted hover:text-ink">Размеры и посадка</button>
+            <button class="pb-3 text-sm font-medium text-ink-muted hover:text-ink">Доставка и возврат</button>
+            <button class="pb-3 text-sm font-medium text-ink-muted/50 cursor-not-allowed" disabled>Отзывы (скоро)</button>
+          </div>
+          <p class="text-sm text-ink-muted mt-4 max-w-lg leading-relaxed">Лёгкий верх из дышащей сетки, литая промежуточная подошва с амортизацией, цепкий протектор для города и лёгкого трейла. Подходит для ежедневной носки и пробежек.</p>
+        </div>
+      </section>
+
+      <hr class="my-12 border-line" />
+
+      <!-- ============ 13 HERO ============ -->
+      <section id="hero" class="scroll-mt-20">
+        <div class="flex items-baseline gap-3 mb-1"><span class="label">13</span><h2 class="font-display font-bold text-2xl">Hero / шапка страницы</h2></div>
+        <p class="text-ink-muted text-sm mb-6 max-w-2xl">Один доминирующий кроссовок, крупный дисплейный шрифт, лайм-акцент, лавандовая подложка. Не коллаж из мелких фото.</p>
+        <div class="rounded-[24px] overflow-hidden border border-line relative" style="background:linear-gradient(120deg,hsl(var(--color-accent)/.45),hsl(var(--color-surface-soft)))">
+          <div class="grid md:grid-cols-2 items-center">
+            <div class="p-8 sm:p-12">
+              <span class="text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-primary text-primary-foreground">Лимитированный дроп · 02.06</span>
+              <h1 class="font-display font-bold text-[44px] sm:text-[60px] lg:text-[72px] leading-[0.95] tracking-tight mt-4">Беги<br/>за пределы</h1>
+              <p class="text-ink-muted mt-4 max-w-sm leading-relaxed">Новая коллекция STRIDE для города и трассы. Дышащий верх, мягкая амортизация. Выбери размер и поймай дроп первым.</p>
+              <div class="flex flex-wrap gap-3 mt-6">
+                <button class="btn btn-lg btn-dark">Смотреть дроп</button>
+                <button class="btn btn-lg btn-secondary">Все новинки</button>
+              </div>
+            </div>
+            <div class="relative h-64 md:h-[420px]">
+              <img src="../docs/design/product-images/102270093_f1.jpg" alt="Кроссовки STRIDE — новый дроп" class="absolute inset-0 w-full h-full object-contain p-6 drop-shadow-2xl" />
+            </div>
+          </div>
+        </div>
+        <p class="label mt-6 mb-3">Шапка коллекции (компактная)</p>
+        <div class="rounded-2xl border border-line bg-surface p-6 sm:p-8">
+          <p class="text-xs text-ink-muted uppercase tracking-wide">Каталог · Беговые</p>
+          <h2 class="font-display font-bold text-3xl mt-1">Беговые кроссовки</h2>
+          <p class="text-ink-muted text-sm mt-2 max-w-lg">42 модели · от 8 990 ₽. Лёгкие, с амортизацией, для ежедневных пробежек и города.</p>
+        </div>
+      </section>
+
+      <hr class="my-12 border-line" />
+
+      <!-- ============ 14 TOP BAR ============ -->
+      <section id="topbar" class="scroll-mt-20">
+        <div class="flex items-baseline gap-3 mb-1"><span class="label">14</span><h2 class="font-display font-bold text-2xl">Топ-бар</h2></div>
+        <p class="text-ink-muted text-sm mb-6 max-w-2xl">Промо / доставка над хедером. Тёмная и лаймовая версии.</p>
+        <div class="space-y-3">
+          <div class="rounded-xl text-white text-sm text-center py-2.5 px-4" style="background:hsl(var(--color-footer))">Бесплатная доставка по России от 10 000 ₽ · Возврат 14 дней</div>
+          <div class="rounded-xl text-center py-2.5 px-4 text-sm font-semibold bg-primary text-primary-foreground">Новый дроп STRIDE Velocity уже в наличии — лови размеры</div>
+        </div>
+      </section>
+
+      <hr class="my-12 border-line" />
+
+      <!-- ============ 15 HEADER ============ -->
+      <section id="header" class="scroll-mt-20">
+        <div class="flex items-baseline gap-3 mb-1"><span class="label">15</span><h2 class="font-display font-bold text-2xl">Хедер</h2></div>
+        <p class="text-ink-muted text-sm mb-6 max-w-2xl">Слим, высокий контраст: лого, навигация, поиск, профиль и корзина. Подложка — frosted glass как в референсе: белая заливка 88% + <code class="text-xs">backdrop-filter: blur(24px)</code>. Эффект виден, когда под липким хедером проходит контент.</p>
+        <div class="rounded-2xl border border-line overflow-hidden" style="background:linear-gradient(120deg,hsl(var(--color-primary)/.5),hsl(var(--color-accent)/.55))">
+          <header class="glass-header flex items-center gap-4 px-4 sm:px-6 h-16">
+            <a href="#header" class="flex items-center gap-2 shrink-0"><span class="grid place-items-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-display font-bold text-sm">S</span><span class="font-display font-bold text-lg tracking-tight">STRIDE</span></a>
+            <nav class="hidden md:flex items-center gap-5 text-sm font-medium ml-4">
+              <a href="#header" class="text-ink">Новинки</a>
+              <a href="#header" class="text-ink-muted hover:text-ink">Беговые</a>
+              <a href="#header" class="text-ink-muted hover:text-ink">Лайфстайл</a>
+              <a href="#header" class="text-ink-muted hover:text-ink">Лимитированные</a>
+            </nav>
+            <div class="flex-1"></div>
+            <div class="hidden sm:flex items-center gap-2 bg-surface-soft rounded-full px-3 h-10 w-44"><span class="text-ink-muted">🔍</span><input class="bg-transparent text-sm outline-none w-full" placeholder="Поиск кроссовок" /></div>
+            <button class="w-10 h-10 grid place-items-center rounded-full hover:bg-surface-soft" aria-label="Профиль">👤</button>
+            <button class="relative w-10 h-10 grid place-items-center rounded-full hover:bg-surface-soft" aria-label="Корзина">🛒<span class="absolute -top-0.5 -right-0.5 w-5 h-5 grid place-items-center text-[10px] font-bold rounded-full bg-primary text-primary-foreground tnum">2</span></button>
+          </header>
+        </div>
+        <p class="text-xs text-ink-muted mt-3">На 360px навигация уходит в бургер-меню, поиск превращается в иконку, остаются лого / поиск / корзина.</p>
+      </section>
+
+      <hr class="my-12 border-line" />
+
+      <!-- ============ 16 FILTERS ============ -->
+      <section id="filters" class="scroll-mt-20">
+        <div class="flex items-baseline gap-3 mb-1"><span class="label">16</span><h2 class="font-display font-bold text-2xl">Фильтры</h2></div>
+        <div class="grid lg:grid-cols-2 gap-6">
+          <div>
+            <p class="label mb-3">Сайдбар (выбранное состояние)</p>
+            <div class="rounded-2xl border border-line bg-surface p-5 space-y-5">
+              <div><p class="font-semibold text-sm mb-2">Категория</p><div class="space-y-1.5 text-sm"><label class="flex items-center gap-2"><input type="checkbox" checked class="w-4 h-4 rounded accent-[hsl(var(--color-primary))]" /> Беговые <span class="text-ink-muted ml-auto tnum">42</span></label><label class="flex items-center gap-2"><input type="checkbox" class="w-4 h-4 rounded accent-[hsl(var(--color-primary))]" /> Лайфстайл <span class="text-ink-muted ml-auto tnum">31</span></label><label class="flex items-center gap-2"><input type="checkbox" class="w-4 h-4 rounded accent-[hsl(var(--color-primary))]" /> Платформы <span class="text-ink-muted ml-auto tnum">12</span></label></div></div>
+              <div class="border-t border-line pt-4"><p class="font-semibold text-sm mb-2">Размер</p><div class="flex flex-wrap gap-1.5">
+                <button class="px-2.5 py-1.5 rounded-lg border border-line text-xs hover:border-ink">40</button>
+                <button class="px-2.5 py-1.5 rounded-lg border-2 text-xs font-semibold" style="border-color:hsl(var(--color-text))">41</button>
+                <button class="px-2.5 py-1.5 rounded-lg border border-line text-xs hover:border-ink">42</button>
+                <button class="px-2.5 py-1.5 rounded-lg border border-line text-xs text-ink-muted line-through" disabled>43</button>
+              </div></div>
+              <div class="border-t border-line pt-4"><p class="font-semibold text-sm mb-2">Цена до 20 000 ₽</p><input type="range" min="0" max="100" value="60" class="w-full accent-[hsl(var(--color-primary))]" /></div>
+              <button class="btn btn-sm btn-ghost w-full">Сбросить фильтры</button>
+            </div>
+          </div>
+          <div>
+            <p class="label mb-3">Горизонтальные + сортировка</p>
+            <div class="rounded-2xl border border-line bg-surface p-5">
+              <div class="flex flex-wrap gap-2 mb-4">
+                <button class="px-3.5 py-2 rounded-full text-sm font-semibold bg-ink text-white">Все</button>
+                <button class="px-3.5 py-2 rounded-full text-sm font-medium border border-line hover:border-ink">Беговые</button>
+                <button class="px-3.5 py-2 rounded-full text-sm font-medium border border-line hover:border-ink">Лайфстайл</button>
+                <button class="px-3.5 py-2 rounded-full text-sm font-medium border border-line hover:border-ink">Платформы</button>
+              </div>
+              <select class="inp max-w-[220px]"><option>Сначала новинки</option><option>Популярные</option><option>Цена: по возрастанию</option><option>Цена: по убыванию</option></select>
+            </div>
+            <p class="label mt-6 mb-3">Пустое состояние выдачи</p>
+            <div class="rounded-2xl border border-line bg-surface p-8 text-center">
+              <div class="mx-auto mb-3 w-12 h-12 rounded-full bg-surface-soft grid place-items-center text-xl">👟</div>
+              <p class="font-semibold">Таких кроссовок нет</p>
+              <p class="text-sm text-ink-muted mt-1 mb-4">Сбрось фильтры или выбери другой размер.</p>
+              <button class="btn btn-md btn-secondary">Сбросить фильтры</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="my-12 border-line" />
+
+      <!-- ============ 17 PAGINATION ============ -->
+      <section id="pagination" class="scroll-mt-20">
+        <div class="flex items-baseline gap-3 mb-1"><span class="label">17</span><h2 class="font-display font-bold text-2xl">Пагинация</h2></div>
+        <div class="frame p-6 flex justify-center">
+          <nav class="flex items-center gap-1.5 text-sm">
+            <button class="w-9 h-9 grid place-items-center rounded-lg border border-line text-ink-muted cursor-not-allowed" disabled aria-label="Назад">‹</button>
+            <button class="w-9 h-9 grid place-items-center rounded-lg font-semibold bg-ink text-white tnum">1</button>
+            <button class="w-9 h-9 grid place-items-center rounded-lg border border-line hover:border-ink tnum">2</button>
+            <button class="w-9 h-9 grid place-items-center rounded-lg border border-line hover:border-ink tnum">3</button>
+            <span class="w-9 h-9 grid place-items-center text-ink-muted">…</span>
+            <button class="w-9 h-9 grid place-items-center rounded-lg border border-line hover:border-ink tnum">12</button>
+            <button class="w-9 h-9 grid place-items-center rounded-lg border border-line hover:border-ink" aria-label="Вперёд">›</button>
+          </nav>
+        </div>
+      </section>
+
+      <hr class="my-12 border-line" />
+
+      <!-- ============ 18 FOOTER ============ -->
+      <section id="footer" class="scroll-mt-20">
+        <div class="flex items-baseline gap-3 mb-1"><span class="label">18</span><h2 class="font-display font-bold text-2xl">Футер</h2></div>
+        <div class="rounded-[24px] overflow-hidden text-white" style="background:hsl(var(--color-footer))">
+          <div class="p-8 sm:p-10">
+            <div class="grid md:grid-cols-[1.4fr_1fr_1fr] gap-8">
+              <div>
+                <div class="flex items-center gap-2 mb-3"><span class="grid place-items-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-display font-bold text-sm">S</span><span class="font-display font-bold text-lg">STRIDE</span></div>
+                <p class="text-white/60 text-sm max-w-xs leading-relaxed">Подпишись на дропы и забирай новые модели первым.</p>
+                <form class="flex gap-2 mt-4 max-w-sm"><input class="flex-1 h-11 px-4 rounded-full bg-white/10 border border-white/15 text-sm text-white placeholder-white/40 outline-none focus:border-primary" placeholder="Твой e-mail" /><button class="btn btn-md btn-primary shrink-0">Подписаться</button></form>
+              </div>
+              <div><p class="font-semibold text-sm mb-3">Магазин</p><ul class="space-y-2 text-sm text-white/60"><li><a href="#footer" class="hover:text-white">Новинки</a></li><li><a href="#footer" class="hover:text-white">Беговые</a></li><li><a href="#footer" class="hover:text-white">Лайфстайл</a></li><li><a href="#footer" class="hover:text-white">Лимитированные</a></li></ul></div>
+              <div><p class="font-semibold text-sm mb-3">Помощь</p><ul class="space-y-2 text-sm text-white/60"><li><a href="#footer" class="hover:text-white">Доставка</a></li><li><a href="#footer" class="hover:text-white">Возврат</a></li><li><a href="#footer" class="hover:text-white">Конфиденциальность</a></li><li><a href="#footer" class="hover:text-white">Контакты</a></li></ul></div>
+            </div>
+            <div class="border-t border-white/10 mt-8 pt-5 flex flex-col sm:flex-row gap-2 justify-between text-xs text-white/40">
+              <p>© 2026 STRIDE. Цены в рублях.</p>
+              <p>Сделано для России · Доставка 1–3 дня</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>

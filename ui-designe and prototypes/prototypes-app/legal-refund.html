@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Возврат и обмен — STRIDE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Unbounded:wght@600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: 'hsl(var(--color-bg))',
+          surface: { DEFAULT: 'hsl(var(--color-surface))', soft: 'hsl(var(--color-surface-soft))' },
+          ink: { DEFAULT: 'hsl(var(--color-text))', muted: 'hsl(var(--color-text-muted))' },
+          primary: { DEFAULT: 'hsl(var(--color-primary))', foreground: 'hsl(var(--color-primary-foreground))' },
+          accent: { DEFAULT: 'hsl(var(--color-accent))', foreground: 'hsl(var(--color-accent-foreground))' },
+          warm: 'hsl(var(--color-warm-accent))',
+          line: 'hsl(var(--color-border))',
+          danger: 'hsl(var(--color-danger))',
+          success: 'hsl(var(--color-success))',
+          warning: 'hsl(var(--color-warning))',
+          info: 'hsl(var(--color-info))',
+          footer: 'hsl(var(--color-footer))',
+        },
+        fontFamily: { display: ['Unbounded','sans-serif'], sans: ['Manrope','sans-serif'] },
+      },
+    },
+  };
+</script>
+<style>
+  :root{
+    --color-bg:42 33% 97%;
+    --color-surface:0 0% 100%;
+    --color-surface-soft:48 36% 94%;
+    --color-text:220 13% 10%;
+    --color-text-muted:220 8% 42%;
+    --color-primary:75 100% 50%;
+    --color-primary-foreground:220 13% 10%;
+    --color-accent:250 28% 70%;
+    --color-accent-foreground:220 13% 10%;
+    --color-warm-accent:42 100% 52%;
+    --color-border:220 12% 88%;
+    --color-danger:0 72% 52%;
+    --color-success:145 63% 40%;
+    --color-warning:38 92% 50%;
+    --color-info:205 82% 48%;
+    --color-footer:240 18% 11%;
+  }
+  html{scroll-behavior:smooth;}
+  :focus-visible{outline:none;box-shadow:0 0 0 2px hsl(var(--color-surface)),0 0 0 4px hsl(var(--color-primary));}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+  .glass-header{
+    -webkit-backdrop-filter:blur(24px);
+    backdrop-filter:blur(24px);
+    border-bottom:1px solid hsl(var(--color-border));
+  }
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .glass-header{background:hsl(var(--color-surface)/.97);}
+  }
+  body{
+    background:linear-gradient(180deg,
+      hsl(var(--color-primary)/.20) 0%,
+      hsl(var(--color-primary)/.06) 22%,
+      hsl(0 0% 100%) 52%);
+    background-color:hsl(0 0% 100%);
+    background-attachment:fixed;
+    color:hsl(var(--color-text));font-family:'Manrope',sans-serif;
+  }
+  ::selection{background:hsl(var(--color-primary));color:hsl(var(--color-primary-foreground));}
+  .font-display{font-family:'Unbounded',sans-serif;}
+  .tnum{font-variant-numeric:tabular-nums;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;font-weight:600;
+    border-radius:999px;transition:filter .15s,transform .15s,box-shadow .15s;cursor:pointer;
+    white-space:nowrap;border:1px solid transparent;line-height:1;}
+  .btn-sm{height:36px;padding:0 16px;font-size:13px;}
+  .btn-md{height:44px;padding:0 22px;font-size:14px;}
+  .btn-lg{height:52px;padding:0 30px;font-size:16px;}
+  .btn-primary{background:hsl(var(--color-primary));color:hsl(var(--color-primary-foreground));}
+  .btn-primary:hover{filter:brightness(.93);}
+  .btn-dark{background:hsl(var(--color-text));color:#fff;}
+  .btn-dark:hover{background:hsl(220 13% 22%);}
+  .btn-secondary{background:hsl(var(--color-surface));color:hsl(var(--color-text));border-color:hsl(var(--color-border));}
+  .btn-secondary:hover{border-color:hsl(var(--color-text));}
+  .btn-ghost{background:transparent;color:hsl(var(--color-text));}
+  .btn-ghost:hover{background:hsl(var(--color-surface-soft));}
+  .btn-danger{background:hsl(var(--color-danger));color:#fff;}
+  .btn-danger:hover{filter:brightness(.93);}
+  .btn[disabled],.is-disabled{opacity:.45;cursor:not-allowed;pointer-events:none;}
+  .prose{max-width:800px;margin:0 auto;}
+  .prose h2{font-family:'Unbounded',sans-serif;font-weight:700;font-size:1.5rem;margin-top:2.5rem;margin-bottom:1rem;line-height:1.2;}
+  .prose p{line-height:1.7;margin-bottom:1rem;color:hsl(var(--color-text));}
+  .prose ul{margin-bottom:1.5rem;padding-left:1.5rem;}
+  .prose ol{margin-bottom:1.5rem;padding-left:1.5rem;}
+  .prose li{line-height:1.7;margin-bottom:0.5rem;color:hsl(var(--color-text));}
+  .prose a{color:hsl(var(--color-text));text-decoration:underline;text-underline-offset:2px;}
+  .prose a:hover{color:hsl(var(--color-text-muted));}
+  .prose strong{font-weight:600;}
+</style>
+</head>
+<body class="font-sans antialiased">
+
+<!-- ============ TOP BAR ============ -->
+<div class="bg-footer text-white text-center text-[13px] py-2.5 px-4">
+  Бесплатная доставка по России от 10 000 ₽ · Возврат 14 дней · <a href="#" class="underline underline-offset-2 hover:text-primary">Где мой заказ?</a>
+</div>
+
+<!-- ============ HEADER ============ -->
+<header class="sticky top-0 z-40 glass-header">
+  <div class="mx-auto max-w-[1240px] px-4 sm:px-6">
+    <div class="flex items-center gap-4 h-16">
+      <button class="md:hidden w-10 h-10 grid place-items-center rounded-full hover:bg-surface-soft -ml-2" aria-label="Открыть меню">☰</button>
+      <a href="home.html" class="flex items-center gap-2 shrink-0" aria-label="STRIDE — на главную">
+        <span class="grid place-items-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-display font-bold text-sm">S</span>
+        <span class="font-display font-bold text-lg tracking-tight">STRIDE</span>
+      </a>
+      <nav class="hidden md:flex items-center gap-5 ml-4" aria-label="Основная навигация">
+        <a href="catalog.html" class="nav-link">Каталог</a>
+        <a href="#" class="nav-link">Беговые</a>
+        <a href="#" class="nav-link">Лайфстайл</a>
+        <a href="#" class="nav-link">Платформы</a>
+        <a href="#" class="nav-link text-warm font-semibold">Дроп 04</a>
+      </nav>
+      <div class="flex-1"></div>
+      <label class="hidden sm:flex items-center gap-2 bg-surface-soft rounded-full px-3 h-10 w-44 lg:w-56">
+        <span class="text-ink-muted" aria-hidden="true">🔍</span>
+        <span class="sr-only">Поиск кроссовок</span>
+        <input class="bg-transparent text-sm outline-none w-full" placeholder="Поиск кроссовок" />
+      </label>
+      <button class="sm:hidden w-10 h-10 grid place-items-center rounded-full hover:bg-surface-soft" aria-label="Поиск">🔍</button>
+      <button class="w-10 h-10 grid place-items-center rounded-full hover:bg-surface-soft" aria-label="Профиль">👤</button>
+      <a href="cart.html" class="btn btn-primary btn-md" aria-label="Корзина: 3 товара, 24 990 ₽">
+        <span class="font-bold tnum">24 990 ₽</span>
+        <span class="h-5 w-px bg-primary-foreground/30 hidden sm:inline"></span>
+        <span class="hidden sm:inline">🛒 3</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ============ MAIN ============ -->
+<main class="max-w-[1080px] mx-auto px-4 sm:px-6 py-8 sm:py-12">
+  <div class="mb-8">
+    <h1 class="font-display font-bold text-3xl sm:text-4xl mb-2">Возврат и обмен</h1>
+    <p class="text-ink-muted">Как вернуть или обменять кроссовки, если они не подошли</p>
+  </div>
+
+  <div class="prose">
+    <h2>Условия возврата</h2>
+    <p>Ты можешь вернуть кроссовки в течение <strong>14 дней</strong> с момента получения, если они не подошли по размеру, цвету или просто не понравились. Это твоё право по закону «О защите прав потребителей».</p>
+    <p><strong>Главные условия:</strong></p>
+    <ul>
+      <li>Товар не был в употреблении (чистая подошва, нет следов носки)</li>
+      <li>Сохранена оригинальная упаковка (коробка, вкладыши)</li>
+      <li>Сохранены все бирки, ярлыки, наклейки</li>
+      <li>Есть чек или подтверждение заказа (номер заказа из SMS/email)</li>
+      <li>Товар сохранил товарный вид и потребительские свойства</li>
+    </ul>
+    <p>Примерить кроссовки дома можно, но только на чистом полу или ковре. Если вышел на улицу — возврат невозможен.</p>
+
+    <h2>Как оформить возврат</h2>
+    <p>Процесс возврата простой и занимает 3–5 минут:</p>
+    <ol>
+      <li><strong>Свяжись с нами:</strong> напиши на <a href="mailto:support@stride.ru">support@stride.ru</a>, в Telegram <a href="#">@stride_support</a> или позвони <a href="tel:+78001234567">8 800 123-45-67</a></li>
+      <li><strong>Укажи номер заказа</strong> и причину возврата (не обязательно, но помогает нам улучшать сервис)</li>
+      <li><strong>Получи инструкцию:</strong> мы отправим адрес для возврата и форму заявления (или оформим всё онлайн)</li>
+      <li><strong>Упакуй товар</strong> в оригинальную коробку, приложи заявление и чек</li>
+      <li><strong>Отправь товар:</strong> курьером (мы вызовем бесплатно) или через пункт выдачи</li>
+      <li><strong>Получи деньги:</strong> в течение 10 дней после того, как товар вернётся к нам</li>
+    </ol>
+    <p>Мы оплачиваем обратную доставку, если возврат связан с браком или нашей ошибкой. Если товар просто не подошёл — доставку оплачиваешь ты (обычно 200–400 ₽).</p>
+
+    <h2>Обмен товара</h2>
+    <p>Если кроссовки не подошли по размеру или хочешь другой цвет, можешь обменять их на другую пару:</p>
+    <ul>
+      <li><strong>Обмен на другой размер/цвет:</strong> бесплатно, если товар есть в наличии</li>
+      <li><strong>Обмен на другую модель:</strong> доплачиваешь или получаешь разницу, если цена отличается</li>
+      <li><strong>Срок обмена:</strong> 14 дней с момента получения</li>
+    </ul>
+    <p><strong>Как обменять:</strong></p>
+    <ol>
+      <li>Свяжись с нами и скажи, на что хочешь обменять</li>
+      <li>Мы проверим наличие и зарезервируем новую пару</li>
+      <li>Отправь старые кроссовки обратно (мы вызовем курьера)</li>
+      <li>Получи новую пару в течение 3–5 дней после того, как мы получим возврат</li>
+    </ol>
+    <p>Если нужного размера нет в наличии, мы вернём деньги или предложим подождать поступления (обычно 1–2 недели).</p>
+
+    <h2>Возврат денег</h2>
+    <p>Деньги возвращаются тем же способом, которым ты оплатил заказ:</p>
+    <ul>
+      <li><strong>Оплата картой онлайн:</strong> возврат на карту в течение 5–10 рабочих дней</li>
+      <li><strong>Оплата при получении:</strong> возврат на карту (укажи реквизиты в заявлении) в течение 10 дней</li>
+      <li><strong>Рассрочка:</strong> отменяем платежи, уже оплаченные суммы возвращаем на карту</li>
+    </ul>
+    <p>Срок возврата начинается с момента, когда товар вернулся к нам и прошёл проверку. Мы отправим уведомление, когда деньги будут переведены.</p>
+    <p>Стоимость доставки возвращается только если возврат связан с браком или нашей ошибкой (не тот размер/цвет отправили).</p>
+
+    <h2>Возврат при браке или ошибке</h2>
+    <p>Если ты получил бракованный товар или мы отправили не то, что заказывал:</p>
+    <ul>
+      <li><strong>Производственный брак:</strong> расклеилась подошва, разошёлся шов, отвалилась фурнитура</li>
+      <li><strong>Наша ошибка:</strong> не тот размер, цвет или модель</li>
+      <li><strong>Повреждение при доставке:</strong> товар пришёл повреждённым</li>
+    </ul>
+    <p><strong>Что делать:</strong></p>
+    <ol>
+      <li>Сфотографируй дефект или несоответствие</li>
+      <li>Свяжись с нами в течение 3 дней с момента получения</li>
+      <li>Отправь фото и опиши проблему</li>
+      <li>Мы вызовем курьера за наш счёт или предложим вернуть через пункт выдачи (оплатим доставку)</li>
+      <li>Выбери: обмен на новую пару или возврат денег</li>
+    </ol>
+    <p>Возврат денег или отправка новой пары — в течение 3–5 дней после получения товара обратно. Все расходы на доставку компенсируем.</p>
+
+    <h2>Гарантийный возврат</h2>
+    <p>Если в течение 30 дней после покупки обнаружился производственный дефект:</p>
+    <ul>
+      <li>Свяжись с нами и опиши проблему</li>
+      <li>Отправь фото дефекта</li>
+      <li>Мы организуем бесплатный возврат</li>
+      <li>Проведём экспертизу (обычно 3–5 дней)</li>
+      <li>Если брак подтвердится — заменим товар или вернём деньги</li>
+    </ul>
+    <p>Гарантия не распространяется на естественный износ, механические повреждения и последствия неправильного использования.</p>
+
+    <h2>Исключения: что нельзя вернуть</h2>
+    <p>Мы не принимаем возврат в следующих случаях:</p>
+    <ul>
+      <li>Товар был в употреблении (грязная подошва, следы носки на улице)</li>
+      <li>Повреждена упаковка, утеряны бирки или ярлыки</li>
+      <li>Прошло больше 14 дней с момента получения</li>
+      <li>Товар повреждён по твоей вине (порезы, проколы, химические пятна)</li>
+      <li>Товар из категории «финальная распродажа» (указано на карточке товара)</li>
+      <li>Индивидуальный заказ или кастомизация</li>
+    </ul>
+    <p>Если не уверен, можно ли вернуть товар — напиши в поддержку, мы подскажем.</p>
+
+    <h2>Возврат в шоуруме (Москва)</h2>
+    <p>Если ты в Москве, можешь вернуть или обменять товар прямо в нашем шоуруме:</p>
+    <ul>
+      <li><strong>Адрес:</strong> Москва, ул. Примерная, д. 1 (м. Парк Культуры)</li>
+      <li><strong>Время работы:</strong> пн–пт 10:00–20:00, сб–вс 11:00–19:00</li>
+      <li><strong>Что взять с собой:</strong> товар в оригинальной упаковке, чек или номер заказа, паспорт</li>
+    </ul>
+    <p>Деньги вернём сразу наличными или переведём на карту в течение 3–5 дней. Обмен на другой размер — на месте, если товар есть в наличии.</p>
+
+    <h2>Частые вопросы</h2>
+    <p><strong>Можно ли примерить кроссовки дома?</strong></p>
+    <p>Да, но только на чистом полу или ковре. Если подошва испачкалась или появились следы носки — возврат невозможен.</p>
+
+    <p><strong>Сколько раз можно вернуть товар?</strong></p>
+    <p>Без ограничений, если соблюдены условия возврата. Но если ты систематически возвращаешь товары без уважительной причины, мы оставляем за собой право запросить предоплату при следующих заказах.</p>
+
+    <p><strong>Можно ли вернуть товар, купленный со скидкой?</strong></p>
+    <p>Да, условия возврата одинаковые для всех товаров, кроме финальной распродажи (об этом предупреждаем на карточке товара).</p>
+
+    <p><strong>Что делать, если потерял чек?</strong></p>
+    <p>Чек не обязателен — достаточно номера заказа из SMS или email. Мы найдём твой заказ в системе.</p>
+
+    <p><strong>Можно ли вернуть часть заказа?</strong></p>
+    <p>Да, если заказал несколько пар — можешь вернуть одну или несколько. Условия те же.</p>
+
+    <h2>Контакты</h2>
+    <p>Вопросы по возврату и обмену:</p>
+    <ul>
+      <li>Email: <a href="mailto:support@stride.ru">support@stride.ru</a></li>
+      <li>Телефон: <a href="tel:+78001234567">8 800 123-45-67</a> (бесплатно, ежедневно 9:00–21:00 МСК)</li>
+      <li>Telegram: <a href="#">@stride_support</a></li>
+      <li>Чат на сайте (правый нижний угол)</li>
+    </ul>
+    <p>Мы ответим в течение 2 часов в рабочее время.</p>
+
+    <p class="text-sm text-ink-muted mt-8 pt-6 border-t border-line">
+      Последнее обновление: 15 мая 2026 года<br/>
+      См. также: <a href="legal-privacy.html">Политика конфиденциальности</a> · <a href="legal-terms.html">Условия продажи</a> · <a href="legal-delivery.html">Доставка и оплата</a>
+    </p>
+  </div>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="mx-auto max-w-[1240px] px-4 sm:px-6 pb-8 mt-20">
+  <div class="rounded-[28px] overflow-hidden text-white bg-footer">
+    <div class="p-8 sm:p-12">
+      <div class="grid md:grid-cols-[1.5fr_1fr_1fr_1fr] gap-8">
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="grid place-items-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-display font-bold text-sm">S</span>
+            <span class="font-display font-bold text-lg">STRIDE</span>
+          </div>
+          <p class="text-white/60 text-sm max-w-xs leading-relaxed">Подпишись на дропы и забирай новые модели первым. Без спама.</p>
+          <form class="flex gap-2 mt-4 max-w-sm">
+            <label class="flex-1"><span class="sr-only">E-mail для рассылки</span>
+              <input type="email" class="w-full h-11 px-4 rounded-full bg-white/10 border border-white/15 text-sm text-white placeholder-white/40 outline-none focus:border-primary" placeholder="Твой e-mail" /></label>
+            <button type="submit" class="btn btn-md btn-primary shrink-0">Подписаться</button>
+          </form>
+        </div>
+        <div><p class="font-semibold text-sm mb-3">Магазин</p><ul class="space-y-2 text-sm text-white/60"><li><a href="#" class="hover:text-white">Новинки</a></li><li><a href="#" class="hover:text-white">Беговые</a></li><li><a href="#" class="hover:text-white">Лайфстайл</a></li><li><a href="#" class="hover:text-white">Платформы</a></li></ul></div>
+        <div><p class="font-semibold text-sm mb-3">Помощь</p><ul class="space-y-2 text-sm text-white/60"><li><a href="legal-delivery.html" class="hover:text-white">Доставка</a></li><li><a href="legal-refund.html" class="hover:text-white">Возврат</a></li><li><a href="#" class="hover:text-white">Размерная сетка</a></li><li><a href="#" class="hover:text-white">Контакты</a></li></ul></div>
+        <div><p class="font-semibold text-sm mb-3">Мы рядом</p><ul class="space-y-2 text-sm text-white/60"><li><a href="#" class="hover:text-white">Telegram</a></li><li><a href="#" class="hover:text-white">VK</a></li><li><a href="#" class="hover:text-white">YouTube</a></li></ul></div>
+      </div>
+      <div class="border-t border-white/10 mt-10 pt-6 text-sm text-white/40">© 2024 STRIDE. Все права защищены.</div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

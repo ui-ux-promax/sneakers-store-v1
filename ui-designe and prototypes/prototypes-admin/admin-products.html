@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>STRIDE Admin - Product Catalog</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@400;600;700;800&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#A3E600",
+                        "on-secondary-fixed-variant": "#533c6e",
+                        "surface-variant": "#F3F4F6",
+                        "on-tertiary-fixed": "#1c1b1b",
+                        "background": "#F7F8F4",
+                        "primary": "#111827",
+                        "surface-dim": "#F3F4F6",
+                        "inverse-primary": "#496800",
+                        "surface-tint": "#B8FF00",
+                        "tertiary-fixed": "#e5e2e1",
+                        "surface-container": "#FFFFFF",
+                        "surface": "#FFFFFF",
+                        "on-primary-fixed": "#131f00",
+                        "on-surface": "#111827",
+                        "on-surface-variant": "#6B7280",
+                        "on-tertiary-fixed-variant": "#474646",
+                        "on-secondary-container": "#6B21A8",
+                        "surface-bright": "#FFFFFF",
+                        "secondary": "#D8BBF6",
+                        "on-primary": "#FFFFFF",
+                        "primary-container": "#B8FF00",
+                        "on-primary-container": "#111827",
+                        "tertiary": "#111827",
+                        "secondary-fixed-dim": "#d8bbf6",
+                        "secondary-container": "#F3E8FF",
+                        "surface-container-lowest": "#F9FAFB",
+                        "on-secondary": "#FFFFFF",
+                        "surface-container-highest": "#E5E7EB",
+                        "inverse-on-surface": "#F3F4F6",
+                        "on-primary-fixed-variant": "#364e00",
+                        "inverse-surface": "#111827",
+                        "primary-fixed": "#B8FF00",
+                        "tertiary-fixed-dim": "#c9c6c5",
+                        "on-error": "#FFFFFF",
+                        "error": "#EF4444",
+                        "outline-variant": "#E5E7EB",
+                        "tertiary-container": "#e5e2e1",
+                        "on-tertiary-container": "#656464",
+                        "secondary-fixed": "#eedbff",
+                        "outline": "#D1D5DB",
+                        "surface-container-low": "#FFFFFF",
+                        "on-background": "#111827",
+                        "on-tertiary": "#313030",
+                        "surface-container-high": "#F3F4F6",
+                        "error-container": "#FEE2E2",
+                        "on-secondary-fixed": "#260f40",
+                        "on-error-container": "#991B1B",
+                        "border-subtle": "#E5E7EB"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "16px",
+                        "xl": "24px",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "unit": "4px",
+                        "margin-desktop": "40px",
+                        "container-max": "1440px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "headline-lg": ["Anybody"],
+                        "display-lg": ["Anybody"],
+                        "title-md": ["Manrope"],
+                        "h2": ["Anybody"],
+                        "h3": ["Anybody"],
+                        "data-num": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "title-md": ["18px", {"lineHeight": "1.5", "fontWeight": "600"}],
+                        "h2": ["40px", {"lineHeight": "1.05", "fontWeight": "700"}],
+                        "h3": ["28px", {"lineHeight": "1.15", "fontWeight": "600"}],
+                        "data-num": ["16px", {"fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #F7F8F4;
+            color: #111827;
+            font-family: 'Manrope', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .sidebar-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+            background: #E5E7EB;
+            border-radius: 10px;
+        }
+        .table-container {
+            scrollbar-gutter: stable;
+        }
+        select {
+            background-image: none !important;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-background overflow-hidden">
+<!-- Sidebar Navigation (Matching SCREEN_11) -->
+<aside class="fixed left-0 top-0 h-full flex flex-col py-6 px-4 z-40 bg-surface-container border-r border-outline-variant w-[280px]">
+<div class="mb-12 px-2 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container font-bold" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div>
+<h1 class="text-h3 font-h3 font-bold tracking-tighter text-on-surface">STRIDE</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Premium Sneakers</p>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-1 sidebar-scroll overflow-y-auto">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<!-- Active State: Lime Green -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-primary-container bg-primary-container rounded-xl font-bold transition-all duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+<span>Catalog</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span>Orders</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined">group</span>
+<span>Customers</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined">campaign</span>
+<span>Marketing</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined">badge</span>
+<span>Team</span>
+</a>
+</nav>
+<div class="mt-auto flex flex-col gap-1 pt-6 border-t border-outline-variant">
+<!-- Theme Switcher (Appearance Toggle style from SCREEN_11) -->
+<div class="px-4 py-2">
+<p class="text-label-sm text-on-surface-variant mb-2 uppercase tracking-widest text-[10px]">Appearance</p>
+<div class="flex bg-surface-container-lowest p-1 rounded-full border border-outline-variant">
+<button class="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-full bg-surface-container-highest text-on-surface font-bold transition-all shadow-sm">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">light_mode</span>
+<span class="text-label-sm">Light</span>
+</button>
+<button class="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-full text-on-surface-variant hover:text-on-surface transition-all">
+<span class="material-symbols-outlined text-[18px]">dark_mode</span>
+<span class="text-label-sm">Dark</span>
+</button>
+</div>
+</div>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined">help</span>
+<span>Help</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+<div class="mt-4 p-4 bg-surface-container-high rounded-xl flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container overflow-hidden">
+<img alt="Admin Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCP89roEgRaO0u5frs6QaamCv6ImAFK_m6d6VNs2P-VEgOaDaX5NcMbd0yvil4nGp4wRLSM4yBp7NK3U8VDb8mcTk9gIJE-luubw8scLF-ml2IyUwn89h4DfvIf1RnBHBFYsxJiN77P5K3ExOPUICAdPKQh55MdnhWathZk3k5CuboKW_bSqi8YgL4ycyRP5_7rpNsWCFlmnfJDsdWX7oSi8bXqtcLbgQyE78NZVrZeT4d4Ibgte--H7RXn0At8Sg3v9LhLJ5TTN60"/>
+</div>
+<div class="flex-1 overflow-hidden">
+<p class="font-bold text-on-surface truncate">Alex Rivera</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant truncate">Store Admin</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-error">logout</span>
+</div>
+</div>
+</aside>
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 left-[280px] h-16 flex justify-between items-center px-8 z-30 bg-surface/80 backdrop-blur-md border-b border-outline-variant">
+<div class="flex items-center gap-4 flex-1 max-w-xl">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container border border-outline-variant rounded-full text-body-md focus:ring-2 focus:ring-primary-container transition-all placeholder:text-on-surface-variant/70 text-on-surface" placeholder="Search catalog, brands, orders..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border-2 border-surface"></span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all">
+<span class="material-symbols-outlined">chat_bubble</span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant mx-2"></div>
+<!-- Add Product Button (Lime Green, Matching New Product) -->
+<button class="bg-primary-container hover:bg-primary-fixed-dim text-on-primary-container px-6 py-2 rounded-full font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-primary-container/10">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Add Product</span>
+</button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-[280px] mt-16 p-margin-desktop h-[calc(100vh-64px)] overflow-y-auto">
+<div class="max-w-[1440px] mx-auto">
+<!-- Header Section -->
+<div class="flex justify-between items-end mb-8">
+<div>
+<h2 class="font-h2 text-h2 text-on-surface mb-1">Products (42)</h2>
+<p class="text-on-surface-variant">Manage your premium sneaker inventory and display status.</p>
+</div>
+<div class="flex bg-surface-container rounded-full p-1 border border-outline-variant">
+<button class="px-4 py-1.5 text-label-sm font-bold bg-primary-container text-on-primary-container rounded-full transition-all">All Items</button>
+<button class="px-4 py-1.5 text-label-sm font-bold text-on-surface-variant hover:text-on-surface transition-all">Recently Added</button>
+</div>
+</div>
+<!-- Filters Bar -->
+<div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+<div class="relative">
+<select class="w-full appearance-none bg-surface border border-outline-variant px-4 py-2.5 rounded-xl font-body-md text-on-surface focus:ring-2 focus:ring-primary-container cursor-pointer transition-all">
+<option>All Categories</option>
+<option>Performance</option>
+<option>Lifestyle</option>
+<option>Retro</option>
+<option>Limited Edition</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+<div class="relative">
+<select class="w-full appearance-none bg-surface border border-outline-variant px-4 py-2.5 rounded-xl font-body-md text-on-surface focus:ring-2 focus:ring-primary-container cursor-pointer transition-all">
+<option>All Brands</option>
+<option>Nike</option>
+<option>Adidas</option>
+<option>New Balance</option>
+<option>Jordan</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+<div class="relative">
+<select class="w-full appearance-none bg-surface border border-outline-variant px-4 py-2.5 rounded-xl font-body-md text-on-surface focus:ring-2 focus:ring-primary-container cursor-pointer transition-all">
+<option>Collections</option>
+<option>SS24</option>
+<option>FW23</option>
+<option>Archival</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+<div class="relative">
+<select class="w-full appearance-none bg-surface border border-outline-variant px-4 py-2.5 rounded-xl font-body-md text-on-surface focus:ring-2 focus:ring-primary-container cursor-pointer transition-all">
+<option>Status</option>
+<option>Active</option>
+<option>Archived</option>
+<option>Draft</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+<button class="border border-outline-variant hover:bg-surface-container-high flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-body-md text-on-surface transition-colors bg-surface">
+<span class="material-symbols-outlined">filter_list</span>
+                More Filters
+            </button>
+</div>
+<!-- Table Section (Matching Recent Orders Style from SCREEN_11) -->
+<div class="bg-surface rounded-xl border border-outline-variant overflow-hidden">
+<div class="overflow-x-auto table-container">
+<table class="w-full text-left">
+<thead class="bg-surface-container-highest">
+<tr>
+<th class="px-8 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Product</th>
+<th class="px-8 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">SKU</th>
+<th class="px-8 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Brand</th>
+<th class="px-8 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Category</th>
+<th class="px-8 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Stock</th>
+<th class="px-8 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Price</th>
+<th class="px-8 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Status</th>
+<th class="px-8 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-high transition-colors group cursor-pointer bg-surface">
+<td class="px-8 py-5">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container-highest p-1 overflow-hidden flex items-center justify-center border border-outline-variant">
+<img alt="Nike Air Max" class="object-contain w-full h-full transform group-hover:scale-110 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBr0j68P7HAn0VF_5FrIFCJ7pa4uCdndctEQirm_58HhEied9yUhTgLIKvF_smbKLLYoQVJJGH8XGecKK--fxQDFCqdIpzBeTKnQA4tHvA3dTmWyO2aGBB8edI4dUX77G5rDrYjtw4Ugq_bv1NMREQYZsTcSK6ug8cCHJZoesk2DgjDLKsPTlC-kuCCvChailHs3ILksMXm2ITuGGiIAUpXq5bLgWV2D0_MKxnomOy9-J5-yebwQCkvREpcdBmaoGsklUjPtbaNdbI"/>
+</div>
+<div>
+<div class="font-bold text-on-surface">Air Max 270 Volt</div>
+<div class="text-xs text-on-surface-variant">Added 2 days ago</div>
+</div>
+</div>
+</td>
+<td class="px-8 py-5 font-bold text-on-surface">NK-AM-270-VLT</td>
+<td class="px-8 py-5 text-on-surface-variant">Nike</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 bg-surface-container-highest rounded-full text-label-sm font-bold text-on-surface">Performance</span>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 rounded-full bg-primary-fixed"></div>
+<span class="font-bold text-on-surface">142</span>
+</div>
+</td>
+<td class="px-8 py-5 font-bold text-on-surface tabular-nums">$160.00</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 bg-primary-container text-on-primary-container rounded-full text-label-sm font-bold flex items-center gap-1 w-fit">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                    Active
+                                </span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="p-2 hover:bg-surface-container-highest rounded-full transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-high transition-colors group cursor-pointer bg-surface">
+<td class="px-8 py-5">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container-highest p-1 overflow-hidden flex items-center justify-center border border-outline-variant">
+<img alt="Adidas Ultraboost" class="object-contain w-full h-full transform group-hover:scale-110 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBomtM6JbHN5Bz8fwHXpfM53S61mEEI-W-4czuarrJrxiieaGUajXWjFOv2wVn9nZMzTWKub7M4svs0Yi_iH53CGQwOVxyKLqMAWrrYRRjxq4xEoOE4ajOC61zXUeVNtHk9FWY5DJrGMfzul5G0N_aUr6QWF2zyWGuy4xbDOA9ECTgxEnite_8r-RCdm_HpbxXu13DVrQn8aRiw-kybzmu_hA2wDLJLlOcRa70N3NkLPMgSB8YCD2WBjQEkGUJnX0MZR5cL3sv3dic"/>
+</div>
+<div>
+<div class="font-bold text-on-surface">Ultraboost 22 Cloud</div>
+<div class="text-xs text-on-surface-variant">Added 1 week ago</div>
+</div>
+</div>
+</td>
+<td class="px-8 py-5 font-bold text-on-surface">AD-UB-22-CLD</td>
+<td class="px-8 py-5 text-on-surface-variant">Adidas</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 bg-surface-container-highest rounded-full text-label-sm font-bold text-on-surface">Lifestyle</span>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 rounded-full bg-secondary"></div>
+<span class="font-bold text-on-surface">12</span>
+</div>
+</td>
+<td class="px-8 py-5 font-bold text-on-surface tabular-nums">$190.00</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-label-sm font-bold flex items-center gap-1 w-fit">
+<span class="material-symbols-outlined text-[14px]">sell</span>
+                                    On Sale
+                                </span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="p-2 hover:bg-surface-container-highest rounded-full transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-high transition-colors group cursor-pointer bg-surface">
+<td class="px-8 py-5">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container-highest p-1 overflow-hidden flex items-center justify-center border border-outline-variant">
+<img alt="Jordan 1 Retro" class="object-contain w-full h-full transform group-hover:scale-110 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFM1bcszA-q8ixaSBmkGnS7UDNKMFazN5DWlYI_nrg-4RFPVPl21GDu832EYQKm_tqJLzyvGc7M_wDayJfTvI1woPwwX2A96cbYihZN5E8qwisb-NGZP0hXwcUs_y_G4381TUf4DBqD8QSf35NaVHnpzYPI571baXNQze6g2CDNX984R1sVURvU1eeYZfkBO8sM6IGq1Rp9yyM3O_FaaFLc3SUyFZS58rRO1QYY-Wo2NiVHKkSex3SlBvFMsuSEwD32KtjLpIBut8"/>
+</div>
+<div>
+<div class="font-bold text-on-surface">Jordan 1 High OG</div>
+<div class="text-xs text-on-surface-variant">Added 3 weeks ago</div>
+</div>
+</div>
+</td>
+<td class="px-8 py-5 font-bold text-on-surface">JD-AJ1-OG-LIM</td>
+<td class="px-8 py-5 text-on-surface-variant">Jordan</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 bg-surface-container-highest rounded-full text-label-sm font-bold text-on-surface">Retro</span>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 rounded-full bg-error"></div>
+<span class="font-bold text-error">Out of Stock</span>
+</div>
+</td>
+<td class="px-8 py-5 font-bold text-on-surface tabular-nums">$220.00</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant rounded-full text-label-sm font-bold border border-outline-variant flex items-center gap-1 w-fit">
+<span class="material-symbols-outlined text-[14px]">archive</span>
+                                    Archived
+                                </span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="p-2 hover:bg-surface-container-highest rounded-full transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-high transition-colors group cursor-pointer bg-surface">
+<td class="px-8 py-5">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container-highest p-1 overflow-hidden flex items-center justify-center border border-outline-variant">
+<img alt="New Balance 990" class="object-contain w-full h-full transform group-hover:scale-110 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5Boo9o2j_M8D6uEd8nQlVLFEATZISsxzEmFgBJLPqGJ1xBhiQX1HgoEFqsc09TYS5OzSBsQmU-QLT2iFVkNciKv8k01Hmu_3u0Pym772S-IVmDewelQS46pXsmFDC8dr-C_h8bOowDmed-5yXTLvfTPvmrmvg9rA9a58twKXCfEvT0Dbm2XRFMhTHbQcA7wwtgXnwcfjMMI_0u-Qc9fwxrrWAra8-sDOva6_io2v-a0hgO6onBgxRkHrTDYJda36ndjd54HbX6Pw"/>
+</div>
+<div>
+<div class="font-bold text-on-surface">990v5 Heritage</div>
+<div class="text-xs text-on-surface-variant">Added 1 month ago</div>
+</div>
+</div>
+</td>
+<td class="px-8 py-5 font-bold text-on-surface">NB-990-V5-GRY</td>
+<td class="px-8 py-5 text-on-surface-variant">New Balance</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 bg-surface-container-highest rounded-full text-label-sm font-bold text-on-surface">Lifestyle</span>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 rounded-full bg-primary-fixed"></div>
+<span class="font-bold text-on-surface">86</span>
+</div>
+</td>
+<td class="px-8 py-5 font-bold text-on-surface tabular-nums">$185.00</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 bg-primary-container text-on-primary-container rounded-full text-label-sm font-bold flex items-center gap-1 w-fit">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                    Active
+                                </span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="p-2 hover:bg-surface-container-highest rounded-full transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination (Matching SCREEN_11/STRIDE Branding) -->
+<div class="px-8 py-4 border-t border-outline-variant flex items-center justify-between bg-surface">
+<p class="font-label-sm text-label-sm text-on-surface-variant">Showing 1 to 10 of 42 results</p>
+<div class="flex items-center gap-2">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant hover:bg-surface-container-high transition-all text-on-surface-variant disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary-container text-on-primary-container font-bold shadow-sm shadow-primary-container/10">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-high transition-all font-bold text-on-surface-variant">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-high transition-all font-bold text-on-surface-variant">3</button>
+<span class="text-on-surface-variant mx-1">...</span>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-high transition-all font-bold text-on-surface-variant">5</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant hover:bg-surface-container-high transition-all text-on-surface-variant">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Stats Grid (Bento Metrics style from SCREEN_11) -->
+<div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-surface p-6 rounded-xl border border-outline-variant hover:border-primary-fixed transition-all group cursor-default">
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center group-hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined text-primary-fixed group-hover:text-on-primary-container">trending_up</span>
+</div>
+<span class="text-primary-fixed font-bold text-label-sm">+12.5%</span>
+</div>
+<p class="text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Total Sales Value</p>
+<h3 class="text-h3 font-h3 font-bold text-on-surface">$242,000</h3>
+</div>
+<div class="bg-surface p-6 rounded-xl border border-outline-variant hover:border-primary-fixed transition-all group cursor-default">
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center group-hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined text-secondary group-hover:text-on-primary-container">inventory_2</span>
+</div>
+<span class="text-on-surface-variant font-bold text-label-sm">Healthy</span>
+</div>
+<p class="text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Current Stock Level</p>
+<h3 class="text-h3 font-h3 font-bold text-on-surface">1,842</h3>
+</div>
+<div class="bg-surface p-6 rounded-xl border border-outline-variant hover:border-primary-fixed transition-all group cursor-default">
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center group-hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-primary-container">person_celebrate</span>
+</div>
+<span class="text-primary-fixed font-bold text-label-sm">Top Brand</span>
+</div>
+<p class="text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Best Selling Brand</p>
+<h3 class="text-h3 font-h3 font-bold text-on-surface">Nike</h3>
+</div>
+</div>
+</div>
+</main>
+<script>
+    // Micro-interactions and effects
+    document.querySelectorAll('button, a.flex, tr').forEach(el => {
+        el.addEventListener('mousedown', () => el.classList.add('scale-[0.98]'));
+        el.addEventListener('mouseup', () => el.classList.remove('scale-[0.98]'));
+        el.addEventListener('mouseleave', () => el.classList.remove('scale-[0.98]'));
+    });
+
+    // Search Focus Effect
+    const searchInput = document.querySelector('input[type="text"]');
+    if(searchInput) {
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('ring-2', 'ring-primary-container/50');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('ring-2', 'ring-primary-container/50');
+        });
+    }
+</script>
+</body></html>

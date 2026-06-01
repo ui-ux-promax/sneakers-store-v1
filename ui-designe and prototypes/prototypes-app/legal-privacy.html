@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Политика конфиденциальности — STRIDE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Unbounded:wght@600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: 'hsl(var(--color-bg))',
+          surface: { DEFAULT: 'hsl(var(--color-surface))', soft: 'hsl(var(--color-surface-soft))' },
+          ink: { DEFAULT: 'hsl(var(--color-text))', muted: 'hsl(var(--color-text-muted))' },
+          primary: { DEFAULT: 'hsl(var(--color-primary))', foreground: 'hsl(var(--color-primary-foreground))' },
+          accent: { DEFAULT: 'hsl(var(--color-accent))', foreground: 'hsl(var(--color-accent-foreground))' },
+          warm: 'hsl(var(--color-warm-accent))',
+          line: 'hsl(var(--color-border))',
+          danger: 'hsl(var(--color-danger))',
+          success: 'hsl(var(--color-success))',
+          warning: 'hsl(var(--color-warning))',
+          info: 'hsl(var(--color-info))',
+          footer: 'hsl(var(--color-footer))',
+        },
+        fontFamily: { display: ['Unbounded','sans-serif'], sans: ['Manrope','sans-serif'] },
+      },
+    },
+  };
+</script>
+<style>
+  :root{
+    --color-bg:42 33% 97%;
+    --color-surface:0 0% 100%;
+    --color-surface-soft:48 36% 94%;
+    --color-text:220 13% 10%;
+    --color-text-muted:220 8% 42%;
+    --color-primary:75 100% 50%;
+    --color-primary-foreground:220 13% 10%;
+    --color-accent:250 28% 70%;
+    --color-accent-foreground:220 13% 10%;
+    --color-warm-accent:42 100% 52%;
+    --color-border:220 12% 88%;
+    --color-danger:0 72% 52%;
+    --color-success:145 63% 40%;
+    --color-warning:38 92% 50%;
+    --color-info:205 82% 48%;
+    --color-footer:240 18% 11%;
+  }
+  html{scroll-behavior:smooth;}
+  :focus-visible{outline:none;box-shadow:0 0 0 2px hsl(var(--color-surface)),0 0 0 4px hsl(var(--color-primary));}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+  .glass-header{
+    -webkit-backdrop-filter:blur(24px);
+    backdrop-filter:blur(24px);
+    border-bottom:1px solid hsl(var(--color-border));
+  }
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .glass-header{background:hsl(var(--color-surface)/.97);}
+  }
+  body{
+    background:linear-gradient(180deg,
+      hsl(var(--color-primary)/.20) 0%,
+      hsl(var(--color-primary)/.06) 22%,
+      hsl(0 0% 100%) 52%);
+    background-color:hsl(0 0% 100%);
+    background-attachment:fixed;
+    color:hsl(var(--color-text));font-family:'Manrope',sans-serif;
+  }
+  ::selection{background:hsl(var(--color-primary));color:hsl(var(--color-primary-foreground));}
+  .font-display{font-family:'Unbounded',sans-serif;}
+  .tnum{font-variant-numeric:tabular-nums;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;font-weight:600;
+    border-radius:999px;transition:filter .15s,transform .15s,box-shadow .15s;cursor:pointer;
+    white-space:nowrap;border:1px solid transparent;line-height:1;}
+  .btn-sm{height:36px;padding:0 16px;font-size:13px;}
+  .btn-md{height:44px;padding:0 22px;font-size:14px;}
+  .btn-lg{height:52px;padding:0 30px;font-size:16px;}
+  .btn-primary{background:hsl(var(--color-primary));color:hsl(var(--color-primary-foreground));}
+  .btn-primary:hover{filter:brightness(.93);}
+  .btn-dark{background:hsl(var(--color-text));color:#fff;}
+  .btn-dark:hover{background:hsl(220 13% 22%);}
+  .btn-secondary{background:hsl(var(--color-surface));color:hsl(var(--color-text));border-color:hsl(var(--color-border));}
+  .btn-secondary:hover{border-color:hsl(var(--color-text));}
+  .btn-ghost{background:transparent;color:hsl(var(--color-text));}
+  .btn-ghost:hover{background:hsl(var(--color-surface-soft));}
+  .btn-danger{background:hsl(var(--color-danger));color:#fff;}
+  .btn-danger:hover{filter:brightness(.93);}
+  .btn[disabled],.is-disabled{opacity:.45;cursor:not-allowed;pointer-events:none;}
+  .prose{max-width:800px;margin:0 auto;}
+  .prose h2{font-family:'Unbounded',sans-serif;font-weight:700;font-size:1.5rem;margin-top:2.5rem;margin-bottom:1rem;line-height:1.2;}
+  .prose p{line-height:1.7;margin-bottom:1rem;color:hsl(var(--color-text));}
+  .prose ul{margin-bottom:1.5rem;padding-left:1.5rem;}
+  .prose li{line-height:1.7;margin-bottom:0.5rem;color:hsl(var(--color-text));}
+  .prose a{color:hsl(var(--color-text));text-decoration:underline;text-underline-offset:2px;}
+  .prose a:hover{color:hsl(var(--color-text-muted));}
+  .prose strong{font-weight:600;}
+</style>
+</head>
+<body class="font-sans antialiased">
+
+<!-- ============ TOP BAR ============ -->
+<div class="bg-footer text-white text-center text-[13px] py-2.5 px-4">
+  Бесплатная доставка по России от 10 000 ₽ · Возврат 14 дней · <a href="#" class="underline underline-offset-2 hover:text-primary">Где мой заказ?</a>
+</div>
+
+<!-- ============ HEADER ============ -->
+<header class="sticky top-0 z-40 glass-header">
+  <div class="mx-auto max-w-[1240px] px-4 sm:px-6">
+    <div class="flex items-center gap-4 h-16">
+      <button class="md:hidden w-10 h-10 grid place-items-center rounded-full hover:bg-surface-soft -ml-2" aria-label="Открыть меню">☰</button>
+      <a href="home.html" class="flex items-center gap-2 shrink-0" aria-label="STRIDE — на главную">
+        <span class="grid place-items-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-display font-bold text-sm">S</span>
+        <span class="font-display font-bold text-lg tracking-tight">STRIDE</span>
+      </a>
+      <nav class="hidden md:flex items-center gap-5 ml-4" aria-label="Основная навигация">
+        <a href="catalog.html" class="nav-link">Каталог</a>
+        <a href="#" class="nav-link">Беговые</a>
+        <a href="#" class="nav-link">Лайфстайл</a>
+        <a href="#" class="nav-link">Платформы</a>
+        <a href="#" class="nav-link text-warm font-semibold">Дроп 04</a>
+      </nav>
+      <div class="flex-1"></div>
+      <label class="hidden sm:flex items-center gap-2 bg-surface-soft rounded-full px-3 h-10 w-44 lg:w-56">
+        <span class="text-ink-muted" aria-hidden="true">🔍</span>
+        <span class="sr-only">Поиск кроссовок</span>
+        <input class="bg-transparent text-sm outline-none w-full" placeholder="Поиск кроссовок" />
+      </label>
+      <button class="sm:hidden w-10 h-10 grid place-items-center rounded-full hover:bg-surface-soft" aria-label="Поиск">🔍</button>
+      <button class="w-10 h-10 grid place-items-center rounded-full hover:bg-surface-soft" aria-label="Профиль">👤</button>
+      <a href="cart.html" class="btn btn-primary btn-md" aria-label="Корзина: 3 товара, 24 990 ₽">
+        <span class="font-bold tnum">24 990 ₽</span>
+        <span class="h-5 w-px bg-primary-foreground/30 hidden sm:inline"></span>
+        <span class="hidden sm:inline">🛒 3</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ============ MAIN ============ -->
+<main class="max-w-[1080px] mx-auto px-4 sm:px-6 py-8 sm:py-12">
+  <div class="mb-8">
+    <h1 class="font-display font-bold text-3xl sm:text-4xl mb-2">Политика конфиденциальности</h1>
+    <p class="text-ink-muted">Как мы собираем, используем и защищаем твои данные</p>
+  </div>
+
+  <div class="prose">
+    <h2>Введение</h2>
+    <p>STRIDE уважает твою конфиденциальность и обязуется защищать твои персональные данные. Эта политика объясняет, какую информацию мы собираем, как её используем и какие права у тебя есть в отношении твоих данных.</p>
+    <p>Используя наш сайт и совершая покупки, ты соглашаешься с условиями этой политики конфиденциальности.</p>
+
+    <h2>Какие данные мы собираем</h2>
+    <p>Мы собираем только те данные, которые необходимы для обработки твоего заказа и улучшения качества обслуживания:</p>
+    <ul>
+      <li><strong>Контактные данные:</strong> имя, фамилия, номер телефона, адрес электронной почты</li>
+      <li><strong>Адрес доставки:</strong> город, улица, дом, квартира, почтовый индекс</li>
+      <li><strong>Данные заказа:</strong> выбранные товары, размеры, количество, стоимость</li>
+      <li><strong>Платёжная информация:</strong> обрабатывается через защищённые платёжные системы, мы не храним данные твоей карты</li>
+      <li><strong>Технические данные:</strong> IP-адрес, тип браузера, устройство — для улучшения работы сайта</li>
+    </ul>
+
+    <h2>Как мы используем данные</h2>
+    <p>Твои данные используются исключительно для следующих целей:</p>
+    <ul>
+      <li>Обработка и доставка заказов</li>
+      <li>Связь с тобой по вопросам заказа (SMS, email, звонок курьера)</li>
+      <li>Обработка возвратов и обменов</li>
+      <li>Улучшение работы сайта и персонализация предложений</li>
+      <li>Отправка информации о новых дропах и акциях (только если ты подписался)</li>
+      <li>Соблюдение законодательных требований</li>
+    </ul>
+    <p>Мы никогда не продаём и не передаём твои данные третьим лицам в маркетинговых целях.</p>
+
+    <h2>Cookies и технологии отслеживания</h2>
+    <p>Мы используем cookies (небольшие текстовые файлы) для улучшения работы сайта:</p>
+    <ul>
+      <li><strong>Необходимые cookies:</strong> обеспечивают работу корзины, авторизации и оформления заказа</li>
+      <li><strong>Аналитические cookies:</strong> помогают понять, как посетители используют сайт (Google Analytics, Яндекс.Метрика)</li>
+      <li><strong>Маркетинговые cookies:</strong> показывают релевантную рекламу (можно отключить в настройках браузера)</li>
+    </ul>
+    <p>Ты можешь управлять cookies в настройках своего браузера. Отключение необходимых cookies может ограничить функциональность сайта.</p>
+
+    <h2>Защита данных</h2>
+    <p>Мы применяем современные меры безопасности для защиты твоих данных:</p>
+    <ul>
+      <li>Шифрование данных при передаче (SSL/TLS)</li>
+      <li>Защищённое хранение данных на серверах с ограниченным доступом</li>
+      <li>Регулярные проверки безопасности и обновления систем</li>
+      <li>Доступ к данным имеют только уполномоченные сотрудники</li>
+    </ul>
+    <p>Платёжные данные обрабатываются через сертифицированные платёжные системы (ЮKassa, Сбербанк) и не хранятся на наших серверах.</p>
+
+    <h2>Твои права</h2>
+    <p>В соответствии с законодательством РФ о персональных данных, ты имеешь право:</p>
+    <ul>
+      <li>Запросить копию своих данных, которые мы храним</li>
+      <li>Исправить неточные или неполные данные</li>
+      <li>Удалить свои данные (за исключением случаев, когда мы обязаны их хранить по закону)</li>
+      <li>Отозвать согласие на обработку данных</li>
+      <li>Отписаться от рассылок в любой момент</li>
+      <li>Подать жалобу в Роскомнадзор, если считаешь, что твои права нарушены</li>
+    </ul>
+
+    <h2>Хранение данных</h2>
+    <p>Мы храним твои данные только в течение необходимого срока:</p>
+    <ul>
+      <li>Данные заказов — 5 лет (требование налогового законодательства)</li>
+      <li>Данные для рассылок — до момента отписки</li>
+      <li>Технические логи — до 1 года</li>
+    </ul>
+    <p>После истечения срока данные удаляются или обезличиваются.</p>
+
+    <h2>Изменения в политике</h2>
+    <p>Мы можем обновлять эту политику конфиденциальности. О значительных изменениях мы сообщим по email или через уведомление на сайте. Рекомендуем периодически проверять эту страницу.</p>
+
+    <h2>Контакты</h2>
+    <p>Если у тебя есть вопросы о политике конфиденциальности или ты хочешь воспользоваться своими правами, свяжись с нами:</p>
+    <ul>
+      <li>Email: <a href="mailto:privacy@stride.ru">privacy@stride.ru</a></li>
+      <li>Телефон: <a href="tel:+78001234567">8 800 123-45-67</a> (бесплатно по России)</li>
+      <li>Telegram: <a href="#">@stride_support</a></li>
+    </ul>
+    <p>Мы ответим в течение 3 рабочих дней.</p>
+
+    <p class="text-sm text-ink-muted mt-8 pt-6 border-t border-line">
+      Последнее обновление: 15 мая 2026 года<br/>
+      ИП Иванов Иван Иванович, ИНН 123456789012<br/>
+      См. также: <a href="legal-terms.html">Условия продажи</a> · <a href="legal-delivery.html">Доставка и оплата</a> · <a href="legal-refund.html">Возврат и обмен</a>
+    </p>
+  </div>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="mx-auto max-w-[1240px] px-4 sm:px-6 pb-8 mt-20">
+  <div class="rounded-[28px] overflow-hidden text-white bg-footer">
+    <div class="p-8 sm:p-12">
+      <div class="grid md:grid-cols-[1.5fr_1fr_1fr_1fr] gap-8">
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="grid place-items-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-display font-bold text-sm">S</span>
+            <span class="font-display font-bold text-lg">STRIDE</span>
+          </div>
+          <p class="text-white/60 text-sm max-w-xs leading-relaxed">Подпишись на дропы и забирай новые модели первым. Без спама.</p>
+          <form class="flex gap-2 mt-4 max-w-sm">
+            <label class="flex-1"><span class="sr-only">E-mail для рассылки</span>
+              <input type="email" class="w-full h-11 px-4 rounded-full bg-white/10 border border-white/15 text-sm text-white placeholder-white/40 outline-none focus:border-primary" placeholder="Твой e-mail" /></label>
+            <button type="submit" class="btn btn-md btn-primary shrink-0">Подписаться</button>
+          </form>
+        </div>
+        <div><p class="font-semibold text-sm mb-3">Магазин</p><ul class="space-y-2 text-sm text-white/60"><li><a href="#" class="hover:text-white">Новинки</a></li><li><a href="#" class="hover:text-white">Беговые</a></li><li><a href="#" class="hover:text-white">Лайфстайл</a></li><li><a href="#" class="hover:text-white">Платформы</a></li></ul></div>
+        <div><p class="font-semibold text-sm mb-3">Помощь</p><ul class="space-y-2 text-sm text-white/60"><li><a href="legal-delivery.html" class="hover:text-white">Доставка</a></li><li><a href="legal-refund.html" class="hover:text-white">Возврат</a></li><li><a href="#" class="hover:text-white">Размерная сетка</a></li><li><a href="#" class="hover:text-white">Контакты</a></li></ul></div>
+        <div><p class="font-semibold text-sm mb-3">Мы рядом</p><ul class="space-y-2 text-sm text-white/60"><li><a href="#" class="hover:text-white">Telegram</a></li><li><a href="#" class="hover:text-white">VK</a></li><li><a href="#" class="hover:text-white">YouTube</a></li></ul></div>
+      </div>
+      <div class="border-t border-white/10 mt-10 pt-6 text-sm text-white/40">© 2024 STRIDE. Все права защищены.</div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

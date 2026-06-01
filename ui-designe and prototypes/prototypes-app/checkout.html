@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Оформление заказа — STRIDE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Unbounded:wght@600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: 'hsl(var(--color-bg))',
+          surface: { DEFAULT: 'hsl(var(--color-surface))', soft: 'hsl(var(--color-surface-soft))' },
+          ink: { DEFAULT: 'hsl(var(--color-text))', muted: 'hsl(var(--color-text-muted))' },
+          primary: { DEFAULT: 'hsl(var(--color-primary))', foreground: 'hsl(var(--color-primary-foreground))' },
+          accent: { DEFAULT: 'hsl(var(--color-accent))', foreground: 'hsl(var(--color-accent-foreground))' },
+          warm: 'hsl(var(--color-warm-accent))',
+          line: 'hsl(var(--color-border))',
+          danger: 'hsl(var(--color-danger))',
+          success: 'hsl(var(--color-success))',
+          warning: 'hsl(var(--color-warning))',
+          info: 'hsl(var(--color-info))',
+          footer: 'hsl(var(--color-footer))',
+        },
+        fontFamily: { display: ['Unbounded','sans-serif'], sans: ['Manrope','sans-serif'] },
+      },
+    },
+  };
+</script>
+<style>
+  :root{
+    --color-bg:42 33% 97%;
+    --color-surface:0 0% 100%;
+    --color-surface-soft:48 36% 94%;
+    --color-text:220 13% 10%;
+    --color-text-muted:220 8% 42%;
+    --color-primary:75 100% 50%;
+    --color-primary-foreground:220 13% 10%;
+    --color-accent:250 28% 70%;
+    --color-accent-foreground:220 13% 10%;
+    --color-warm-accent:42 100% 52%;
+    --color-border:220 12% 88%;
+    --color-danger:0 72% 52%;
+    --color-success:145 63% 40%;
+    --color-warning:38 92% 50%;
+    --color-info:205 82% 48%;
+    --color-footer:240 18% 11%;
+  }
+  html{scroll-behavior:smooth;}
+  :focus-visible{outline:none;box-shadow:0 0 0 2px hsl(var(--color-surface)),0 0 0 4px hsl(var(--color-primary));}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+  .glass-header{
+    -webkit-backdrop-filter:blur(24px);
+    backdrop-filter:blur(24px);
+    border-bottom:1px solid hsl(var(--color-border));
+  }
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .glass-header{background:hsl(var(--color-surface)/.97);}
+  }
+  body{
+    background:linear-gradient(180deg,
+      hsl(var(--color-primary)/.20) 0%,
+      hsl(var(--color-primary)/.06) 22%,
+      hsl(0 0% 100%) 52%);
+    background-color:hsl(0 0% 100%);
+    background-attachment:fixed;
+    color:hsl(var(--color-text));font-family:'Manrope',sans-serif;
+  }
+  ::selection{background:hsl(var(--color-primary));color:hsl(var(--color-primary-foreground));}
+  .font-display{font-family:'Unbounded',sans-serif;}
+  .tnum{font-variant-numeric:tabular-nums;}
+  /* buttons */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;font-weight:600;
+    border-radius:999px;transition:filter .15s,transform .15s,box-shadow .15s;cursor:pointer;
+    white-space:nowrap;border:1px solid transparent;line-height:1;}
+  .btn-sm{height:36px;padding:0 16px;font-size:13px;}
+  .btn-md{height:44px;padding:0 22px;font-size:14px;}
+  .btn-lg{height:52px;padding:0 30px;font-size:16px;}
+  .btn-primary{background:hsl(var(--color-primary));color:hsl(var(--color-primary-foreground));}
+  .btn-primary:hover{filter:brightness(.93);}
+  .btn-dark{background:hsl(var(--color-text));color:#fff;}
+  .btn-dark:hover{background:hsl(220 13% 22%);}
+  .btn-secondary{background:hsl(var(--color-surface));color:hsl(var(--color-text));border-color:hsl(var(--color-border));}
+  .btn-secondary:hover{border-color:hsl(var(--color-text));}
+  .btn-ghost{background:transparent;color:hsl(var(--color-text));}
+  .btn-ghost:hover{background:hsl(var(--color-surface-soft));}
+  .btn-danger{background:hsl(var(--color-danger));color:#fff;}
+  .btn-danger:hover{filter:brightness(.93);}
+  .btn[disabled],.is-disabled{opacity:.45;cursor:not-allowed;pointer-events:none;}
+  /* inputs */
+  .inp{width:100%;height:44px;padding:0 14px;border-radius:12px;background:hsl(var(--color-surface));
+    border:1px solid hsl(var(--color-border));font-size:14px;color:hsl(var(--color-text));transition:.15s;}
+  .inp::placeholder{color:hsl(var(--color-text-muted));}
+  .inp:hover{border-color:hsl(220 12% 76%);}
+  .inp:focus{border-color:hsl(var(--color-primary));}
+  .inp.err{border-color:hsl(var(--color-danger));}
+  .inp-error-text{color:hsl(var(--color-danger));font-size:12px;margin-top:6px;}
+  /* radio cards */
+  .radio-card{display:flex;align-items:start;gap:12px;padding:14px;border-radius:12px;
+    background:hsl(var(--color-surface));border:1px solid hsl(var(--color-border));cursor:pointer;transition:.15s;}
+  .radio-card:hover{border-color:hsl(220 12% 76%);}
+  .radio-card.selected{border-color:hsl(var(--color-text));border-width:2px;padding:13px;}
+  /* order item mini */
+  .order-item-mini{display:flex;gap:12px;padding:12px;background:hsl(var(--color-surface-soft));
+    border-radius:12px;}
+  .order-item-img{width:60px;height:60px;border-radius:8px;background:hsl(var(--color-surface));
+    object-fit:cover;flex-shrink:0;}
+  /* promo input */
+  .promo-group{display:flex;gap:8px;}
+  .promo-group .inp{border-radius:12px;}
+  /* dashed divider */
+  .dashed-divider{border:none;border-top:1px dashed hsl(var(--color-border));margin:16px 0;}
+  /* sticky summary */
+  .sticky-summary{position:sticky;top:88px;}
+  @media(max-width:1023px){
+    .sticky-summary{position:static;}
+  }
+</style>
+</head>
+<body class="font-sans antialiased">
+
+<!-- ============ TOP BAR ============ -->
+<div class="bg-footer text-white text-center text-[13px] py-2.5 px-4">
+  Бесплатная доставка по России от 10 000 ₽ · Возврат 14 дней · <a href="#" class="underline underline-offset-2 hover:text-primary">Где мой заказ?</a>
+</div>
+
+<!-- ============ HEADER ============ -->
+<!-- Эмодзи 🛒 👤 🔍 ☰ — заглушки; в продакшене заменяются на lucide-react с aria-label -->
+<header class="sticky top-0 z-40 glass-header">
+  <div class="mx-auto max-w-[1240px] px-4 sm:px-6">
+    <div class="flex items-center gap-4 h-16">
+      <button class="md:hidden w-10 h-10 grid place-items-center rounded-full hover:bg-surface-soft -ml-2" aria-label="Открыть меню">☰</button>
+      <a href="home.html" class="flex items-center gap-2 shrink-0" aria-label="STRIDE — на главную">
+        <span class="grid place-items-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-display font-bold text-sm">S</span>
+        <span class="font-display font-bold text-lg tracking-tight">STRIDE</span>
+      </a>
+      <nav class="hidden md:flex items-center gap-5 ml-4" aria-label="Основная навигация">
+        <a href="catalog.html" class="nav-link">Каталог</a>
+        <a href="#" class="nav-link">Беговые</a>
+        <a href="#" class="nav-link">Лайфстайл</a>
+        <a href="#" class="nav-link">Платформы</a>
+        <a href="#" class="nav-link text-warm font-semibold">Дроп 04</a>
+      </nav>
+      <div class="flex-1"></div>
+      <label class="hidden sm:flex items-center gap-2 bg-surface-soft rounded-full px-3 h-10 w-44 lg:w-56">
+        <span class="text-ink-muted" aria-hidden="true">🔍</span>
+        <span class="sr-only">Поиск кроссовок</span>
+        <input class="bg-transparent text-sm outline-none w-full" placeholder="Поиск кроссовок" />
+      </label>
+      <button class="sm:hidden w-10 h-10 grid place-items-center rounded-full hover:bg-surface-soft" aria-label="Поиск">🔍</button>
+      <button class="w-10 h-10 grid place-items-center rounded-full hover:bg-surface-soft" aria-label="Профиль">👤</button>
+      <a href="cart.html" class="btn btn-primary btn-md" aria-label="Корзина: 2 товара, 22 980 ₽">
+        <span class="font-bold tnum">22 980 ₽</span>
+        <span class="h-5 w-px bg-primary-foreground/30 hidden sm:inline"></span>
+        <span class="hidden sm:inline">🛒 2</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ============ MAIN: CHECKOUT ============ -->
+<main class="max-w-[1240px] mx-auto px-4 sm:px-6 py-8 sm:py-12">
+  <div class="mb-6">
+    <h1 class="font-display font-bold text-3xl sm:text-4xl mb-2">Оформление заказа</h1>
+    <p class="text-ink-muted">Заполни данные для доставки</p>
+  </div>
+
+  <div class="grid lg:grid-cols-[1fr_420px] gap-6 lg:gap-8">
+    <!-- LEFT: Checkout Form -->
+    <div class="space-y-6">
+
+      <!-- Contact Information -->
+      <section class="bg-surface border border-line rounded-2xl p-5 sm:p-6">
+        <h2 class="font-display font-semibold text-xl mb-4">Контактные данные</h2>
+        <div class="space-y-4">
+          <div>
+            <label for="name" class="block text-sm font-medium mb-2">Имя <span class="text-danger">*</span></label>
+            <input type="text" id="name" class="inp" placeholder="Иван Петров" aria-required="true" />
+          </div>
+          <div>
+            <label for="phone" class="block text-sm font-medium mb-2">Телефон <span class="text-danger">*</span></label>
+            <input type="tel" id="phone" class="inp err" placeholder="+7 (___) ___-__-__" value="+7 (912) 345" aria-required="true" aria-invalid="true" aria-describedby="phone-error" />
+            <p id="phone-error" class="inp-error-text">Введи номер телефона полностью.</p>
+          </div>
+          <div>
+            <label for="email" class="block text-sm font-medium mb-2">E-mail <span class="text-danger">*</span></label>
+            <input type="email" id="email" class="inp" placeholder="ivan@example.com" aria-required="true" />
+          </div>
+        </div>
+      </section>
+
+      <!-- Delivery Address -->
+      <section class="bg-surface border border-line rounded-2xl p-5 sm:p-6">
+        <h2 class="font-display font-semibold text-xl mb-4">Адрес доставки</h2>
+        <div class="space-y-4">
+          <div>
+            <label for="city" class="block text-sm font-medium mb-2">Город <span class="text-danger">*</span></label>
+            <input type="text" id="city" class="inp" placeholder="Начни вводить название города" aria-required="true" aria-describedby="city-hint" />
+            <p id="city-hint" class="text-xs text-ink-muted mt-1.5">Автокомплит подскажет доступные города</p>
+          </div>
+          <div>
+            <label for="address" class="block text-sm font-medium mb-2">Улица, дом, квартира <span class="text-danger">*</span></label>
+            <input type="text" id="address" class="inp" placeholder="ул. Ленина, д. 10, кв. 5" aria-required="true" />
+          </div>
+          <div>
+            <label for="comment" class="block text-sm font-medium mb-2">Комментарий к адресу</label>
+            <textarea id="comment" class="inp !h-20 py-3" placeholder="Например: позвонить за час до доставки"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- Delivery Method -->
+      <section class="bg-surface border border-line rounded-2xl p-5 sm:p-6">
+        <h2 class="font-display font-semibold text-xl mb-4">Способ доставки</h2>
+        <div class="space-y-3">
+          <label class="radio-card selected">
+            <input type="radio" name="delivery" value="courier" checked class="w-5 h-5 accent-[hsl(var(--color-primary))] shrink-0" aria-label="Доставка курьером" />
+            <div class="flex-1">
+              <p class="font-semibold text-sm">Курьер</p>
+              <p class="text-xs text-ink-muted mt-0.5">Бесплатно от 10 000 ₽ · 1–3 дня</p>
+            </div>
+            <p class="font-bold text-sm text-success">Бесплатно</p>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="delivery" value="pickup" class="w-5 h-5 accent-[hsl(var(--color-primary))] shrink-0" aria-label="Самовывоз" />
+            <div class="flex-1">
+              <p class="font-semibold text-sm">Самовывоз</p>
+              <p class="text-xs text-ink-muted mt-0.5">Из пункта выдачи · сегодня</p>
+            </div>
+            <p class="font-bold text-sm">Бесплатно</p>
+          </label>
+        </div>
+      </section>
+
+      <!-- Payment Method -->
+      <section class="bg-surface border border-line rounded-2xl p-5 sm:p-6">
+        <h2 class="font-display font-semibold text-xl mb-4">Способ оплаты</h2>
+        <div class="space-y-3">
+          <label class="radio-card selected">
+            <input type="radio" name="payment" value="online" checked class="w-5 h-5 accent-[hsl(var(--color-primary))] shrink-0" aria-label="Оплата картой онлайн" />
+            <div class="flex-1">
+              <p class="font-semibold text-sm">Картой онлайн</p>
+              <p class="text-xs text-ink-muted mt-0.5">Visa, MasterCard, МИР</p>
+            </div>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="payment" value="cash" class="w-5 h-5 accent-[hsl(var(--color-primary))] shrink-0" aria-label="Оплата при получении" />
+            <div class="flex-1">
+              <p class="font-semibold text-sm">При получении</p>
+              <p class="text-xs text-ink-muted mt-0.5">Наличными или картой курьеру</p>
+            </div>
+          </label>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- RIGHT: Order Summary -->
+    <aside>
+      <div class="sticky-summary">
+        <div class="bg-surface border border-line rounded-2xl p-5 sm:p-6 space-y-4">
+          <h2 class="font-display font-bold text-xl mb-4">Ваш заказ</h2>
+
+          <!-- Order Items -->
+          <div class="space-y-3">
+            <article class="order-item-mini">
+              <img src="../docs/design/product-images/102270093_f1.jpg"
+                   alt="Кроссовки STRIDE Velocity Trail"
+                   class="order-item-img" />
+              <div class="flex-1 min-w-0">
+                <h3 class="font-semibold text-sm leading-tight">STRIDE Velocity Trail</h3>
+                <p class="text-xs text-ink-muted mt-0.5">Размер: 42.5 · Кол-во: 1</p>
+                <p class="font-bold text-sm tnum mt-1.5">12 990 ₽</p>
+              </div>
+            </article>
+
+            <article class="order-item-mini">
+              <img src="../docs/design/product-images/102270080_f1.jpg"
+                   alt="Кроссовки STRIDE Court Classic"
+                   class="order-item-img" />
+              <div class="flex-1 min-w-0">
+                <h3 class="font-semibold text-sm leading-tight">STRIDE Court Classic</h3>
+                <p class="text-xs text-ink-muted mt-0.5">Размер: 43 · Кол-во: 1</p>
+                <p class="font-bold text-sm tnum mt-1.5">9 990 ₽</p>
+              </div>
+            </article>
+          </div>
+
+          <div class="dashed-divider"></div>
+
+          <!-- Promo Code -->
+          <div>
+            <label for="promo-input" class="block text-sm font-medium mb-2">Промокод</label>
+            <div class="promo-group">
+              <input type="text"
+                     id="promo-input"
+                     class="inp flex-1"
+                     placeholder="Введите промокод"
+                     aria-label="Промокод" />
+              <button class="btn btn-secondary btn-md shrink-0">Применить</button>
+            </div>
+          </div>
+
+          <div class="dashed-divider"></div>
+
+          <!-- Price Breakdown -->
+          <div class="space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-ink-muted">Товары (2 шт.)</span>
+              <span class="font-semibold tnum">22 980 ₽</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-ink-muted">Доставка</span>
+              <span class="font-semibold text-success">Бесплатно</span>
+            </div>
+          </div>
+
+          <div class="dashed-divider"></div>
+
+          <!-- Total -->
+          <div class="flex justify-between items-baseline">
+            <span class="text-lg font-semibold">Итого</span>
+            <span class="font-display font-bold text-2xl tnum">22 980 ₽</span>
+          </div>
+
+          <!-- CTA -->
+          <button class="btn btn-primary btn-lg w-full">
+            Оформить заказ
+            <span aria-hidden="true">→</span>
+          </button>
+
+          <!-- Legal Notice -->
+          <p class="text-xs text-ink-muted leading-relaxed">
+            Нажимая «Оформить заказ», вы соглашаетесь с <a href="/terms" class="underline hover:text-ink">условиями продажи</a> и <a href="/privacy" class="underline hover:text-ink">политикой конфиденциальности</a>.
+          </p>
+        </div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="mx-auto max-w-[1240px] px-4 sm:px-6 pb-8 mt-20">
+  <div class="rounded-[28px] overflow-hidden text-white bg-footer">
+    <div class="p-8 sm:p-12">
+      <div class="grid md:grid-cols-[1.5fr_1fr_1fr_1fr] gap-8">
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="grid place-items-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-display font-bold text-sm">S</span>
+            <span class="font-display font-bold text-lg">STRIDE</span>
+          </div>
+          <p class="text-white/60 text-sm max-w-xs leading-relaxed">Подпишись на дропы и забирай новые модели первым. Без спама.</p>
+          <form class="flex gap-2 mt-4 max-w-sm">
+            <label class="flex-1"><span class="sr-only">E-mail для рассылки</span>
+              <input type="email" class="w-full h-11 px-4 rounded-full bg-white/10 border border-white/15 text-sm text-white placeholder-white/40 outline-none focus:border-primary" placeholder="Твой e-mail" /></label>
+            <button type="submit" class="btn btn-md btn-primary shrink-0">Подписаться</button>
+          </form>
+        </div>
+        <div><p class="font-semibold text-sm mb-3">Магазин</p><ul class="space-y-2 text-sm text-white/60"><li><a href="#" class="hover:text-white">Новинки</a></li><li><a href="#" class="hover:text-white">Беговые</a></li><li><a href="#" class="hover:text-white">Лайфстайл</a></li><li><a href="#" class="hover:text-white">Платформы</a></li></ul></div>
+        <div><p class="font-semibold text-sm mb-3">Помощь</p><ul class="space-y-2 text-sm text-white/60"><li><a href="#" class="hover:text-white">Доставка</a></li><li><a href="#" class="hover:text-white">Возврат</a></li><li><a href="#" class="hover:text-white">Размерная сетка</a></li><li><a href="#" class="hover:text-white">Контакты</a></li></ul></div>
+        <div><p class="font-semibold text-sm mb-3">Мы рядом</p><ul class="space-y-2 text-sm text-white/60"><li><a href="#" class="hover:text-white">Telegram</a></li><li><a href="#" class="hover:text-white">VK</a></li><li><a href="#" class="hover:text-white">YouTube</a></li></ul></div>
+      </div>
+      <div class="border-t border-white/10 mt-10 pt-6 text-sm text-white/40">© 2024 STRIDE. Все права защищены.</div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
