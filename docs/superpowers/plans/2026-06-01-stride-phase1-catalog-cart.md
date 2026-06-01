@@ -3248,7 +3248,7 @@ git commit -m "feat(stride-app): лендинг — hero, бенто-катег�
 
 ---
 
-## Task 15: Каталог `/catalog` (RSC, URL-driven фильтры, counts, пагинация, состояния)
+## Task 15: Каталог `/catalog` (RSC, URL-driven фильтры, counts, пагинация, состояния)  ✅
 
 **Files:**
 - Create: `stride-app/lib/find-products.ts`
@@ -3267,7 +3267,7 @@ git commit -m "feat(stride-app): лендинг — hero, бенто-катег�
 
 > Эталон: `catalog.html`. Сайдбар (строки 7–19 отчёта), тулбар (21–37), карточка — общий `ProductCard`, пагинация (62–66), состояния (68–75). Спека добавляет к прототипу **бренд** и **gender** (та же группа-чекбоксы), реальные сортировки и facet-counts.
 
-- [ ] **Step 1: `lib/find-products.ts` — чтение каталога + counts + сортировка/пагинация** `(context7)`
+- [x] **Step 1: `lib/find-products.ts` — чтение каталога + counts + сортировка/пагинация** `(context7)`
 
 ```ts
 import { prisma } from '@/lib/prisma-client';
@@ -3354,7 +3354,7 @@ export async function findProducts(sp: RawSearchParams): Promise<CatalogResult> 
 }
 ```
 
-- [ ] **Step 2: `hooks/use-catalog-url.ts` (client; чтение/запись фильтров в URL)**
+- [x] **Step 2: `hooks/use-catalog-url.ts` (client; чтение/запись фильтров в URL)**
 
 ```tsx
 'use client';
@@ -3402,7 +3402,7 @@ export function useCatalogUrl() {
 }
 ```
 
-- [ ] **Step 3: `checkbox-facet.tsx` (общий для категории/бренда/gender) + `size-filter.tsx` + `color-filter.tsx` + `in-stock-toggle.tsx`**
+- [x] **Step 3: `checkbox-facet.tsx` (общий для категории/бренда/gender) + `size-filter.tsx` + `color-filter.tsx` + `in-stock-toggle.tsx`**
 
 `checkbox-facet.tsx`:
 ```tsx
@@ -3528,7 +3528,7 @@ export function PriceFilter() {
 }
 ```
 
-- [ ] **Step 4: `filter-sidebar.tsx` (RSC-раскладка, оборачивает client-контролы)**
+- [x] **Step 4: `filter-sidebar.tsx` (RSC-раскладка, оборачивает client-контролы)**
 
 ```tsx
 import { CheckboxFacet } from './checkbox-facet';
@@ -3560,7 +3560,7 @@ export function FilterSidebar({ facets }: { facets: CatalogResult['facets'] }) {
 }
 ```
 
-- [ ] **Step 5: `sort-select.tsx`, `active-filter-chips.tsx` (+ `ResetButton`), `pagination.tsx`, `catalog-states.tsx`**
+- [x] **Step 5: `sort-select.tsx`, `active-filter-chips.tsx` (+ `ResetButton`), `pagination.tsx`, `catalog-states.tsx`**
 
 `sort-select.tsx`:
 ```tsx
@@ -3678,7 +3678,7 @@ export function EmptyCatalog() {
 }
 ```
 
-- [ ] **Step 6: `app/catalog/page.tsx` (RSC; Next 15 async searchParams)** `(context7)`
+- [x] **Step 6: `app/catalog/page.tsx` (RSC; Next 15 async searchParams)** `(context7)`
 
 ```tsx
 import { Suspense } from 'react';
@@ -3724,12 +3724,12 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
 ```
 > Клиентские компоненты, читающие `useSearchParams`, оборачиваются в `<Suspense>` (требование Next 15 для CSR-bailout). `ProductGridSkeleton` использовать как `loading.tsx` каталога (опц.): создать `app/catalog/loading.tsx`, рендерящий каркас сетки.
 
-- [ ] **Step 7: Визуальная + функциональная проверка**
+- [x] **Step 7: Визуальная + функциональная проверка**
 
 Run: `npm run dev` → `/catalog`.
 Expected: сайдбар с фильтрами (категория/бренд/пол/размер/цена/цвет/в наличии) и счётчиками; клик по фильтру меняет URL и выдачу; чипы активных фильтров с крестиком; сортировка меняет порядок; «Сбросить всё» очищает; пустая выдача при несовпадении. Остановить.
 
-- [ ] **Step 8: Прогнать тесты/типы и Commit**
+- [x] **Step 8: Прогнать тесты/типы и Commit**
 
 Run: `npm test && npm run typecheck`
 ```bash
@@ -3739,7 +3739,7 @@ git commit -m "feat(stride-app): каталог — URL-фильтры (брен
 
 ---
 
-## Task 16: Страница товара `/product/[slug]` (RSC + `?color=`, расцветки/размеры/add-to-cart)
+## Task 16: Страница товара `/product/[slug]` (RSC + `?color=`, расцветки/размеры/add-to-cart)  ✅
 
 **Files:**
 - Create: `stride-app/lib/get-product.ts`
@@ -3752,7 +3752,7 @@ git commit -m "feat(stride-app): каталог — URL-фильтры (брен
 
 > Эталон: `product.html`. Галерея (17–25 отчёта), селектор расцветки (27–36), размера (38–50), цена/бейджи (52–62), add-to-cart (65–74), specs (76–91), related (93–102). Скрываем: отзывы, избранное, «Купить в один клик». Размер — EU (не «RU»).
 
-- [ ] **Step 1: `lib/get-product.ts`**
+- [x] **Step 1: `lib/get-product.ts`**
 
 ```ts
 import type { Prisma } from '@prisma/client';
@@ -3776,7 +3776,7 @@ export function getProductBySlug(slug: string) {
 }
 ```
 
-- [ ] **Step 2: `breadcrumbs.tsx` (RSC) + `specs-table.tsx` (RSC)**
+- [x] **Step 2: `breadcrumbs.tsx` (RSC) + `specs-table.tsx` (RSC)**
 
 `breadcrumbs.tsx`:
 ```tsx
@@ -3815,7 +3815,7 @@ export function SpecsTable({ specs }: { specs: Record<string, string> | null }) 
 }
 ```
 
-- [ ] **Step 3: `product-gallery.tsx` (client; thumbnails + главное фото; key по расцветке)**
+- [x] **Step 3: `product-gallery.tsx` (client; thumbnails + главное фото; key по расцветке)**
 
 ```tsx
 'use client';
@@ -3848,7 +3848,7 @@ export function ProductGallery({ images, productName }: { images: GalleryImage[]
 }
 ```
 
-- [ ] **Step 4: `purchase-panel.tsx` (client; расцветки→`?color=`, размеры, цена, add-to-cart)** `(context7)`
+- [x] **Step 4: `purchase-panel.tsx` (client; расцветки→`?color=`, размеры, цена, add-to-cart)** `(context7)`
 
 ```tsx
 'use client';
@@ -3947,7 +3947,7 @@ export function PurchasePanel({ productName, colorways, activeColorwaySlug, acti
 }
 ```
 
-- [ ] **Step 5: `app/product/[slug]/not-found.tsx`**
+- [x] **Step 5: `app/product/[slug]/not-found.tsx`**
 
 ```tsx
 import Link from 'next/link';
@@ -3963,7 +3963,7 @@ export default function ProductNotFound() {
 }
 ```
 
-- [ ] **Step 6: `app/product/[slug]/page.tsx` (RSC; async params/searchParams; ?color=; related; generateMetadata; JSON-LD)** `(context7)`
+- [x] **Step 6: `app/product/[slug]/page.tsx` (RSC; async params/searchParams; ?color=; related; generateMetadata; JSON-LD)** `(context7)`
 
 ```tsx
 import type { Metadata } from 'next';
@@ -4074,12 +4074,12 @@ export default async function ProductPage({ params, searchParams }: Params) {
 ```
 > Отзывы и избранное (`♡`, «Купить в один клик») — НЕ рендерим (спека: скрыто/вне Фазы 1). «Таблица размеров» — необязательна; можно добавить ссылку-кнопку, открывающую справочную таблицу из `SIZE_CONVERSION` (опц., не блокер).
 
-- [ ] **Step 7: Проверка**
+- [x] **Step 7: Проверка**
 
 Run: `npm run dev` → перейти с каталога на товар.
 Expected: галерея с миниатюрами; свотчи расцветок (клик меняет `?color=`, галерею и размеры; сбрасывает выбор размера); недоступные размеры перечёркнуты/disabled; цена/скидка/наличие; «Выберите размер» → после выбора «В корзину · цена» → клик добавляет, бейдж корзины +1; specs; related; несуществующий slug → not-found. Остановить.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add stride-app/lib/get-product.ts stride-app/components/shared/product stride-app/app/product
@@ -4088,7 +4088,7 @@ git commit -m "feat(stride-app): PDP — галерея, расцветки (?co
 
 ---
 
-## Task 17: Корзина `/cart` (client + Zustand, по `cart.html`)
+## Task 17: Корзина `/cart` (client + Zustand, по `cart.html`)  ✅
 
 **Files:**
 - Create: `stride-app/components/shared/cart/cart-line-item.tsx`
@@ -4098,7 +4098,7 @@ git commit -m "feat(stride-app): PDP — галерея, расцветки (?co
 
 > Эталон: `cart.html`. Позиция (9–33 отчёта), summary (36–64), пустая корзина (68–76). Индикатор «Бесплатно от 10 000 ₽» — по `FREE_SHIPPING_THRESHOLD` (спека добавляет к прототипу). Кнопка «Оформить заказ» — шов к Фазе 2 (disabled).
 
-- [ ] **Step 1: `cart-line-item.tsx` (client)**
+- [x] **Step 1: `cart-line-item.tsx` (client)**
 
 ```tsx
 'use client';
@@ -4136,7 +4136,7 @@ export function CartLineItem({ item }: { item: CartStateItem }) {
 }
 ```
 
-- [ ] **Step 2: `order-summary.tsx` (client; промокод-заглушка, индикатор доставки, total, checkout-шов)**
+- [x] **Step 2: `order-summary.tsx` (client; промокод-заглушка, индикатор доставки, total, checkout-шов)**
 
 ```tsx
 'use client';
@@ -4186,7 +4186,7 @@ export function OrderSummary({ totalAmount, count }: { totalAmount: number; coun
 }
 ```
 
-- [ ] **Step 3: `empty-cart.tsx` (RSC)**
+- [x] **Step 3: `empty-cart.tsx` (RSC)**
 
 ```tsx
 import Link from 'next/link';
@@ -4204,7 +4204,7 @@ export function EmptyCart() {
 }
 ```
 
-- [ ] **Step 4: `app/cart/page.tsx` (client; useCart)**
+- [x] **Step 4: `app/cart/page.tsx` (client; useCart)**
 
 ```tsx
 'use client';
@@ -4241,12 +4241,12 @@ export default function CartPage() {
 }
 ```
 
-- [ ] **Step 5: Проверка полного флоу**
+- [x] **Step 5: Проверка полного флоу**
 
 Run: `npm run dev` → добавить товар на PDP → открыть `/cart`.
 Expected: позиция с фото/названием/размером/цветом/ценой; степпер меняет количество и подытог; удаление убирает позицию; индикатор «добавьте ещё … / бесплатная доставка»; «Оформить заказ» — disabled; пустая корзина после удаления всех. Перезагрузка страницы сохраняет корзину (cookie). Остановить.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add stride-app/components/shared/cart stride-app/app/cart
