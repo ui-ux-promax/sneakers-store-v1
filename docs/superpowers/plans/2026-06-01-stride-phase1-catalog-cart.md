@@ -2301,7 +2301,7 @@ git commit -m "feat(stride-app): REST-корзина (GET/POST/PATCH/DELETE), co
 
 ---
 
-## Task 11: Клиент корзины (axios + Api.cart + Zustand-стор + use-cart)
+## Task 11: Клиент корзины (axios + Api.cart + Zustand-стор + use-cart)  ✅
 
 **Files:**
 - Create: `stride-app/services/instance.ts`
@@ -2311,7 +2311,7 @@ git commit -m "feat(stride-app): REST-корзина (GET/POST/PATCH/DELETE), co
 - Create: `stride-app/store/index.ts`
 - Create: `stride-app/hooks/use-cart.ts`
 
-- [ ] **Step 1: `services/instance.ts`**
+- [x] **Step 1: `services/instance.ts`**
 
 ```ts
 import axios from 'axios';
@@ -2322,7 +2322,7 @@ export const axiosInstance = axios.create({
 });
 ```
 
-- [ ] **Step 2: `services/cart.ts` (string id, эндпоинты `/cart`)**
+- [x] **Step 2: `services/cart.ts` (string id, эндпоинты `/cart`)**
 
 ```ts
 import { axiosInstance } from './instance';
@@ -2342,7 +2342,7 @@ export const removeCartItem = async (id: string): Promise<CartWithItems> =>
   (await axiosInstance.delete<CartWithItems>(`/cart/${id}`)).data;
 ```
 
-- [ ] **Step 3: `services/api-client.ts`**
+- [x] **Step 3: `services/api-client.ts`**
 
 ```ts
 import * as cart from './cart';
@@ -2350,7 +2350,7 @@ import * as cart from './cart';
 export const Api = { cart };
 ```
 
-- [ ] **Step 4: `store/cart.ts` (Zustand, паттерн set(getCartDetails(data)))** `(context7)`
+- [x] **Step 4: `store/cart.ts` (Zustand, паттерн set(getCartDetails(data)))** `(context7)`
 
 ```ts
 import { create } from 'zustand';
@@ -2430,7 +2430,7 @@ export const useCartStore = create<CartState>((set) => ({
 }));
 ```
 
-- [ ] **Step 5: `store/index.ts` + `hooks/use-cart.ts`**
+- [x] **Step 5: `store/index.ts` + `hooks/use-cart.ts`**
 
 `store/index.ts`:
 ```ts
@@ -2451,12 +2451,12 @@ export const useCart = () => {
 };
 ```
 
-- [ ] **Step 6: Проверка типов**
+- [x] **Step 6: Проверка типов**
 
 Run: `npm run typecheck`
 Expected: 0 ошибок.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add stride-app/services stride-app/store stride-app/hooks
@@ -2465,7 +2465,7 @@ git commit -m "feat(stride-app): клиент корзины — axios instance,
 
 ---
 
-## Task 12: Общий layout + chrome (top-bar, glass-header, footer, шрифты)
+## Task 12: Общий layout + chrome (top-bar, glass-header, footer, шрифты)  ✅
 
 **Files:**
 - Modify: `stride-app/app/layout.tsx` (заменить заглушку Задачи 1)
@@ -2481,7 +2481,7 @@ git commit -m "feat(stride-app): клиент корзины — axios instance,
 
 > Эталон вёрстки: `home.html` (top-bar строки 107–110; header 112–139; footer 469–496) и `cart.html` (header/footer). Эмодзи → `lucide-react`. Контейнер `mx-auto max-w-[1240px] px-4 sm:px-6`.
 
-- [ ] **Step 1: `app/layout.tsx` — шрифты `next/font` + chrome** `(context7)`
+- [x] **Step 1: `app/layout.tsx` — шрифты `next/font` + chrome** `(context7)`
 
 ```tsx
 import type { Metadata } from 'next';
@@ -2514,7 +2514,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ```
 > `(context7)` Сверить, что `Unbounded` поддерживает нужные subsets в текущей версии `next/font` (если `cyrillic` для Unbounded недоступен — оставить `['latin']`, кириллица в заголовках рендерится фолбэком sans; Manrope даёт кириллицу для body).
 
-- [ ] **Step 2: `promo-top-bar.tsx` (RSC, текст из home.html:107–110)**
+- [x] **Step 2: `promo-top-bar.tsx` (RSC, текст из home.html:107–110)**
 
 ```tsx
 export function PromoTopBar() {
@@ -2527,7 +2527,7 @@ export function PromoTopBar() {
 }
 ```
 
-- [ ] **Step 3: `main-nav.tsx` (RSC, ссылки на каталог/категории)**
+- [x] **Step 3: `main-nav.tsx` (RSC, ссылки на каталог/категории)**
 
 ```tsx
 import Link from 'next/link';
@@ -2553,7 +2553,7 @@ export function MainNav() {
 }
 ```
 
-- [ ] **Step 4: `header-search.tsx`, `cart-badge.tsx`, `mobile-nav.tsx` (client islands)**
+- [x] **Step 4: `header-search.tsx`, `cart-badge.tsx`, `mobile-nav.tsx` (client islands)**
 
 `header-search.tsx`:
 ```tsx
@@ -2634,7 +2634,7 @@ export function MobileNav() {
 }
 ```
 
-- [ ] **Step 5: `site-header.tsx` (RSC-обёртка glass + islands)**
+- [x] **Step 5: `site-header.tsx` (RSC-обёртка glass + islands)**
 
 ```tsx
 import Link from 'next/link';
@@ -2664,7 +2664,7 @@ export function SiteHeader() {
 }
 ```
 
-- [ ] **Step 6: `newsletter-form.tsx` (client, без бэкенда) + `site-footer.tsx` (RSC)**
+- [x] **Step 6: `newsletter-form.tsx` (client, без бэкенда) + `site-footer.tsx` (RSC)**
 
 `newsletter-form.tsx`:
 ```tsx
@@ -2734,7 +2734,7 @@ export function SiteFooter() {
 }
 ```
 
-- [ ] **Step 7: `components/shared/index.ts` (barrel)**
+- [x] **Step 7: `components/shared/index.ts` (barrel)**
 
 ```ts
 export { PromoTopBar } from './promo-top-bar';
@@ -2747,12 +2747,12 @@ export { CartBadge } from './cart-badge';
 export { NewsletterForm } from './newsletter-form';
 ```
 
-- [ ] **Step 8: Визуальная проверка**
+- [x] **Step 8: Визуальная проверка**
 
 Run: `npm run dev` → открыть `http://localhost:3000`.
 Expected: тёмная промо-полоса сверху, glass-header с лого STRIDE/навигацией/поиском/иконкой корзины, тёмный футер с колонками и формой подписки. Бейдж корзины пуст (товаров нет). Остановить.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add stride-app/app/layout.tsx stride-app/components/shared
@@ -2990,7 +2990,7 @@ git commit -m "feat(stride-app): ProductCard + маппер карточки (de
 
 ---
 
-## Task 14: Лендинг `/` (RSC, по `home.html`)
+## Task 14: Лендинг `/` (RSC, по `home.html`)  ✅
 
 **Files:**
 - Modify: `stride-app/app/page.tsx` (заменить заглушку Задачи 1)
@@ -3003,7 +3003,7 @@ git commit -m "feat(stride-app): ProductCard + маппер карточки (de
 
 > Эталон: `home.html`. Hero (142–171), bento (173–341), бестселлеры (343–410), drop-promo (412–434), feature (436–456), trust (458–466). Контейнер секций `mx-auto max-w-[1240px] px-4 sm:px-6 pt-16 sm:pt-20`. Статические секции переносить «класс-в-класс», эмодзи → lucide.
 
-- [ ] **Step 1: `hero.tsx` (RSC; CTA → /catalog; product-shot — локальный png)**
+- [x] **Step 1: `hero.tsx` (RSC; CTA → /catalog; product-shot — локальный png)**
 
 Перенести Hero из `home.html:142–171`. Ключевая структура (классы — из прототипа):
 ```tsx
@@ -3036,7 +3036,7 @@ export function Hero() {
 }
 ```
 
-- [ ] **Step 2: `category-bento.tsx` (RSC, data: категории + counts)**
+- [x] **Step 2: `category-bento.tsx` (RSC, data: категории + counts)**
 
 ```tsx
 import Link from 'next/link';
@@ -3072,7 +3072,7 @@ export function CategoryBento({ categories }: { categories: BentoCategory[] }) {
 }
 ```
 
-- [ ] **Step 3: `bestsellers-section.tsx` (RSC, использует ProductCard)**
+- [x] **Step 3: `bestsellers-section.tsx` (RSC, использует ProductCard)**
 
 ```tsx
 import Link from 'next/link';
@@ -3097,7 +3097,7 @@ export function BestsellersSection({ products }: { products: ProductCardData[] }
 }
 ```
 
-- [ ] **Step 4: `drop-promo.tsx` (client, lavender, email-форма без бэкенда), `engineered-feature.tsx`, `trust-strip.tsx` (RSC, static)**
+- [x] **Step 4: `drop-promo.tsx` (client, lavender, email-форма без бэкенда), `engineered-feature.tsx`, `trust-strip.tsx` (RSC, static)**
 
 `drop-promo.tsx` — перенести `home.html:412–434` (лавандовая карточка + email-форма). Минимум:
 ```tsx
@@ -3194,7 +3194,7 @@ export function TrustStrip() {
 }
 ```
 
-- [ ] **Step 5: `app/page.tsx` — сборка лендинга + данные**
+- [x] **Step 5: `app/page.tsx` — сборка лендинга + данные**
 
 ```tsx
 import { prisma } from '@/lib/prisma-client';
@@ -3234,12 +3234,12 @@ export default async function HomePage() {
 }
 ```
 
-- [ ] **Step 6: Визуальная проверка**
+- [x] **Step 6: Визуальная проверка**
 
 Run: `npm run dev` → `http://localhost:3000`.
 Expected: лендинг с hero, бенто-категориями (счётчики моделей из БД), 4 карточками бестселлеров (фото/бейджи/цена), drop-promo, feature, trust. Клик по карточке → `/product/<slug>` (страница появится в Задаче 16; пока 404 — ок). Остановить.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add stride-app/app/page.tsx stride-app/components/shared/home
