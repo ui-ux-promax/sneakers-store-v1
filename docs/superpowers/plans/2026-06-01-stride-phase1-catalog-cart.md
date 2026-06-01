@@ -82,7 +82,7 @@ stride-app/
 
 ---
 
-## Task 1: Скаффолд `stride-app` + тулинг
+## Task 1: Скаффолд `stride-app` + тулинг  ✅
 
 **Files:**
 - Create: `stride-app/package.json`
@@ -94,7 +94,7 @@ stride-app/
 - Create: `stride-app/app/layout.tsx` (временный заглушка-layout, переопределится в Задаче 12)
 - Create: `stride-app/app/page.tsx` (временная заглушка)
 
-- [ ] **Step 1: `package.json` с точными версиями (по референсу) и скриптами**
+- [x] **Step 1: `package.json` с точными версиями (по референсу) и скриптами**
 
 ```json
 {
@@ -161,7 +161,7 @@ stride-app/
 ```
 > `(context7)` Перед `npm install` сверить, что `next@15.1.x` — последняя стабильная в линейке 15 (спека фиксирует Next 15). При необходимости поднять патч-версию.
 
-- [ ] **Step 2: `tsconfig.json` (Next 15, алиас `@/*`)**
+- [x] **Step 2: `tsconfig.json` (Next 15, алиас `@/*`)**
 
 ```json
 {
@@ -187,7 +187,7 @@ stride-app/
 }
 ```
 
-- [ ] **Step 3: `next.config.mjs` (база — security-headers + images, по pizza-app, без Sentry-обёртки)**
+- [x] **Step 3: `next.config.mjs` (база — security-headers + images, по pizza-app, без Sentry-обёртки)**
 
 ```js
 /** @type {import('next').NextConfig} */
@@ -217,7 +217,7 @@ export default nextConfig;
 ```
 > Если при `next build`/Turbopack возникнет ошибка бандлинга Prisma — добавить `serverExternalPackages: ['@prisma/client', '.prisma/client']` (типовой подводный камень Next 15 + Prisma, в референсе не понадобился).
 
-- [ ] **Step 4: `postcss.config.mjs`**
+- [x] **Step 4: `postcss.config.mjs`**
 
 ```js
 export default {
@@ -228,7 +228,7 @@ export default {
 };
 ```
 
-- [ ] **Step 5: `.env.example` (значения даёт пользователь)**
+- [x] **Step 5: `.env.example` (значения даёт пользователь)**
 
 ```bash
 # Neon Postgres (создаёт пользователь). Pooled — для рантайма, non-pooling — directUrl/seed.
@@ -242,7 +242,7 @@ NEON_FETCH_TIMEOUT_MS="15000"
 NEXT_PUBLIC_API_URL="http://localhost:3000/api"
 ```
 
-- [ ] **Step 6: `.gitignore` приложения**
+- [x] **Step 6: `.gitignore` приложения**
 
 ```gitignore
 node_modules/
@@ -260,7 +260,7 @@ test-results/
 .DS_Store
 ```
 
-- [ ] **Step 7: Временные `app/layout.tsx` и `app/page.tsx` (чтобы dev-сервер поднялся)**
+- [x] **Step 7: Временные `app/layout.tsx` и `app/page.tsx` (чтобы dev-сервер поднялся)**
 
 `app/layout.tsx`:
 ```tsx
@@ -284,19 +284,19 @@ export default function Home() {
 ```
 > `app/globals.css` создаётся в Задаче 3; пока создать пустой файл `app/globals.css` с одной строкой `/* tokens in Task 3 */`, чтобы импорт не падал.
 
-- [ ] **Step 8: Установить зависимости и проверить, что dev-сервер стартует**
+- [x] **Step 8: Установить зависимости и проверить, что dev-сервер стартует**
 
 Run: `cd stride-app && npm install`
 Затем: `npm run dev`
 Expected: `▲ Next.js 15.1.x` + `Local: http://localhost:3000`, страница отдаёт «STRIDE — скаффолд работает». Остановить (Ctrl+C).
 > `npm install` потянет `prisma generate` через `postinstall` — он не упадёт даже без schema (сгенерит пустой клиент позже на Задаче 4; если упадёт из-за отсутствия `prisma/schema.prisma`, временно убрать `postinstall` и вернуть в Задаче 4).
 
-- [ ] **Step 9: Установить браузеры Playwright**
+- [x] **Step 9: Установить браузеры Playwright**
 
 Run: `npx playwright install --with-deps chromium`
 Expected: загрузка Chromium завершается успехом.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add stride-app
@@ -305,7 +305,7 @@ git commit -m "feat(stride-app): скаффолд Next 15 + тулинг (deps, 
 
 ---
 
-## Task 2: Перенос инфраструктуры (prisma-client, logger, pii-scrub, request-context, rate-limit, utils)
+## Task 2: Перенос инфраструктуры (prisma-client, logger, pii-scrub, request-context, rate-limit, utils)  ✅
 
 **Files:**
 - Create: `stride-app/lib/prisma-client.ts`
@@ -317,7 +317,7 @@ git commit -m "feat(stride-app): скаффолд Next 15 + тулинг (deps, 
 
 > Sentry в Фазе 1 НЕ вводим (спека: опц.). Поэтому `logger.ts` и `request-context.ts` переносятся **без** `@sentry/nextjs` (вызовы Sentry вырезаны). Если позже понадобится Sentry — вернуть по образцу референса.
 
-- [ ] **Step 1: `lib/utils.ts` (cn — дословно из референса)**
+- [x] **Step 1: `lib/utils.ts` (cn — дословно из референса)**
 
 ```ts
 import { clsx, type ClassValue } from 'clsx';
@@ -328,7 +328,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 ```
 
-- [ ] **Step 2: `lib/prisma-client.ts` (Neon HTTP singleton + retry, по pizza-admin)** `(context7)`
+- [x] **Step 2: `lib/prisma-client.ts` (Neon HTTP singleton + retry, по pizza-admin)** `(context7)`
 
 Полный файл (адаптировано: комментарии сжаты, `maxAttempts=2`, дефолт таймаута 15000; адаптер строится для любого непустого URL):
 ```ts
@@ -434,7 +434,7 @@ if (process.env.NODE_ENV !== 'production') globalThis.prismaGlobal = prisma;
 ```
 > Доступ к БД — ТОЛЬКО через этот `prisma` (обход retry-обёртки запрещён).
 
-- [ ] **Step 3: `lib/pii-scrub.ts` (дословно из референса)**
+- [x] **Step 3: `lib/pii-scrub.ts` (дословно из референса)**
 
 ```ts
 const PII_FIELD_NAMES = new Set([
@@ -472,7 +472,7 @@ export function scrubPii(obj: Record<string, unknown>): Record<string, unknown> 
 }
 ```
 
-- [ ] **Step 4: `lib/request-context.ts` (AsyncLocalStorage, без Sentry)**
+- [x] **Step 4: `lib/request-context.ts` (AsyncLocalStorage, без Sentry)**
 
 ```ts
 export interface RequestContext {
@@ -526,7 +526,7 @@ export async function runWithRequestContext<T>(
 }
 ```
 
-- [ ] **Step 5: `lib/logger.ts` (console-JSON + scrubPii + requestId, без pino/Sentry для простоты Фазы 1)**
+- [x] **Step 5: `lib/logger.ts` (console-JSON + scrubPii + requestId, без pino/Sentry для простоты Фазы 1)**
 
 ```ts
 import { scrubPii } from './pii-scrub';
@@ -578,7 +578,7 @@ function makeLogger(baseFields: LogFields): Logger {
 export const logger: Logger = makeLogger({});
 ```
 
-- [ ] **Step 6: `lib/rate-limit.ts` (Upstash, fail-open; минимально для cart-API)**
+- [x] **Step 6: `lib/rate-limit.ts` (Upstash, fail-open; минимально для cart-API)**
 
 ```ts
 import { logger } from './logger';
@@ -617,12 +617,12 @@ export async function checkCartRateLimit(_ip: string): Promise<RateLimitResult> 
 }
 ```
 
-- [ ] **Step 7: Smoke-проверка типов**
+- [x] **Step 7: Smoke-проверка типов**
 
 Run: `npm run typecheck`
 Expected: 0 ошибок (модули компилируются; `@prisma/client` ещё пуст — типы `prisma` могут быть `any`/общими, это ок до Задачи 4).
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add stride-app/lib
@@ -631,7 +631,7 @@ git commit -m "feat(stride-app): инфра — prisma-client (Neon HTTP), logge
 
 ---
 
-## Task 3: Дизайн-система — `globals.css` (токены + утилиты прототипа) + Tailwind + UI-примитивы
+## Task 3: Дизайн-система — `globals.css` (токены + утилиты прототипа) + Tailwind + UI-примитивы  ✅
 
 **Files:**
 - Create: `stride-app/tailwind.config.ts`
@@ -645,7 +645,7 @@ git commit -m "feat(stride-app): инфра — prisma-client (Neon HTTP), logge
 
 > Цель: один раз перенести CSS-токены и кастомные классы прототипа (`.btn*`, `.inp`, `.label`, `.tnum`, `.glass-header`, `.size`, `.thumb`, `.skel`, `.count-btn`, focus-ring, body-градиент) — тогда вёрстка прототипов переносится почти дословно. Значения — из `proto:design-system` (точные HSL/px).
 
-- [ ] **Step 1: `tailwind.config.ts` (маппинг токенов прототипа в `hsl(var(--color-*))`, шрифты, радиусы)**
+- [x] **Step 1: `tailwind.config.ts` (маппинг токенов прототипа в `hsl(var(--color-*))`, шрифты, радиусы)**
 
 ```ts
 import type { Config } from 'tailwindcss';
@@ -701,7 +701,7 @@ export default config;
 ```
 > Шрифтовые CSS-переменные `--font-manrope`/`--font-unbounded` придут из `next/font` в Задаче 12. `font-display`/`font-sans` Tailwind-утилиты будут работать после этого.
 
-- [ ] **Step 2: `app/globals.css` — токены `:root` (точные значения прототипа)**
+- [x] **Step 2: `app/globals.css` — токены `:root` (точные значения прототипа)**
 
 Заменить содержимое файла. Начало (токены + база):
 ```css
@@ -759,7 +759,7 @@ export default config;
 }
 ```
 
-- [ ] **Step 3: `app/globals.css` — `@layer components` (кнопки/инпуты/бейджи/чипы/skeleton/glass — из прототипа)**
+- [x] **Step 3: `app/globals.css` — `@layer components` (кнопки/инпуты/бейджи/чипы/skeleton/glass — из прототипа)**
 
 Дописать в тот же файл (точные значения из `proto:design-system`):
 ```css
@@ -848,7 +848,7 @@ export default config;
 }
 ```
 
-- [ ] **Step 4: `components/ui/button.tsx` (CVA поверх классов прототипа + loading)**
+- [x] **Step 4: `components/ui/button.tsx` (CVA поверх классов прототипа + loading)**
 
 ```tsx
 'use client';
@@ -902,7 +902,7 @@ Button.displayName = 'Button';
 export { Button, buttonVariants };
 ```
 
-- [ ] **Step 5: `components/ui/badge.tsx` (бейджи товара: Новинка/Бестселлер/Скидка/Лимитка/Распродано)**
+- [x] **Step 5: `components/ui/badge.tsx` (бейджи товара: Новинка/Бестселлер/Скидка/Лимитка/Распродано)**
 
 ```tsx
 import { cva, type VariantProps } from 'class-variance-authority';
@@ -933,7 +933,7 @@ export function Badge({ className, tone, ...props }: BadgeProps) {
 }
 ```
 
-- [ ] **Step 6: `components/ui/input.tsx`, `skeleton.tsx`, `counter.tsx`**
+- [x] **Step 6: `components/ui/input.tsx`, `skeleton.tsx`, `counter.tsx`**
 
 `input.tsx`:
 ```tsx
@@ -989,7 +989,7 @@ export function Counter({ value, onChange, min = 1, max = 99, disabled }: Counte
 }
 ```
 
-- [ ] **Step 7: `components/ui/index.ts` (barrel)**
+- [x] **Step 7: `components/ui/index.ts` (barrel)**
 
 ```ts
 export { Button, buttonVariants } from './button';
@@ -999,12 +999,12 @@ export { Skeleton } from './skeleton';
 export { Counter } from './counter';
 ```
 
-- [ ] **Step 8: Проверка типов**
+- [x] **Step 8: Проверка типов**
 
 Run: `npm run typecheck`
 Expected: 0 ошибок.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add stride-app/app/globals.css stride-app/tailwind.config.ts stride-app/components/ui
@@ -1013,12 +1013,12 @@ git commit -m "feat(stride-app): дизайн-система — токены п
 
 ---
 
-## Task 4: Prisma schema + push
+## Task 4: Prisma schema + push  ✅
 
 **Files:**
 - Create: `stride-app/prisma/schema.prisma`
 
-- [ ] **Step 1: `schema.prisma` — datasource/generator (дословно по референсу, без previewFeatures/output) + модель**
+- [x] **Step 1: `schema.prisma` — datasource/generator (дословно по референсу, без previewFeatures/output) + модель**
 
 ```prisma
 generator client {
@@ -1139,24 +1139,24 @@ model CartItem {
 }
 ```
 
-- [ ] **Step 2: Сгенерировать клиент**
+- [x] **Step 2: Сгенерировать клиент**
 
 Run: `npm run prisma:generate` — если такого скрипта нет, `npx prisma generate`
 Expected: `Generated Prisma Client` без ошибок.
 
-- [ ] **Step 3: Применить схему к Neon (нужен заполненный `.env`)**
+- [x] **Step 3: Применить схему к Neon (нужен заполненный `.env`)**
 
 > Предусловие: пользователь создал Neon-БД и заполнил `.env` (`POSTGRES_URL`, `POSTGRES_URL_NON_POOLING`). Если `.env` нет — остановиться и запросить у пользователя строки подключения.
 
 Run: `npm run prisma:push`
 Expected: `Your database is now in sync with your Prisma schema` + создаются таблицы Category/Product/ProductColorway/ProductImage/ProductVariant/Cart/CartItem.
 
-- [ ] **Step 4: Проверка типов (теперь `prisma` строго типизирован)**
+- [x] **Step 4: Проверка типов (теперь `prisma` строго типизирован)**
 
 Run: `npm run typecheck`
 Expected: 0 ошибок.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add stride-app/prisma/schema.prisma
@@ -1165,12 +1165,12 @@ git commit -m "feat(stride-app): доменная модель Prisma (Category/
 
 ---
 
-## Task 5: Конфигурация (`constants/config.ts`)
+## Task 5: Конфигурация (`constants/config.ts`)  ✅
 
 **Files:**
 - Create: `stride-app/constants/config.ts`
 
-- [ ] **Step 1: `config.ts` — пороги, окна, EU-сетка, US/UK-таблица, опции сортировки**
+- [x] **Step 1: `config.ts` — пороги, окна, EU-сетка, US/UK-таблица, опции сортировки**
 
 ```ts
 // Единый источник бизнес-чисел Фазы 1.
@@ -1223,12 +1223,12 @@ export const GENDER_OPTIONS = [
 ] as const;
 ```
 
-- [ ] **Step 2: Проверка типов**
+- [x] **Step 2: Проверка типов**
 
 Run: `npm run typecheck`
 Expected: 0 ошибок.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add stride-app/constants/config.ts
@@ -1237,7 +1237,7 @@ git commit -m "feat(stride-app): конфиг Фазы 1 (пороги дост�
 
 ---
 
-## Task 6: Доменные хелперы (формат/размер/бейджи) — TDD
+## Task 6: Доменные хелперы (формат/размер/бейджи) — TDD  ✅
 
 **Files:**
 - Create: `stride-app/lib/format.ts`
@@ -1246,7 +1246,7 @@ git commit -m "feat(stride-app): конфиг Фазы 1 (пороги дост�
 - Create: `stride-app/tests/format.test.ts`
 - Create: `stride-app/tests/product-badges.test.ts`
 
-- [ ] **Step 1: `vitest.config.ts`**
+- [x] **Step 1: `vitest.config.ts`**
 
 ```ts
 import { defineConfig } from 'vitest/config';
@@ -1263,7 +1263,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 2: Написать падающий тест `tests/format.test.ts`**
+- [x] **Step 2: Написать падающий тест `tests/format.test.ts`**
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -1289,12 +1289,12 @@ describe('normalizeSize', () => {
 });
 ```
 
-- [ ] **Step 3: Запустить тест — убедиться, что падает (RED)**
+- [x] **Step 3: Запустить тест — убедиться, что падает (RED)**
 
 Run: `npx vitest run tests/format.test.ts`
 Expected: FAIL — `Cannot find module '@/lib/format'`.
 
-- [ ] **Step 4: Реализовать `lib/format.ts` (минимум для GREEN)**
+- [x] **Step 4: Реализовать `lib/format.ts` (минимум для GREEN)**
 
 ```ts
 // Размер приходит как Prisma.Decimal | number | string. Нормализуем к '42' / '42.5'.
@@ -1315,12 +1315,12 @@ export function formatPrice(rub: number): string {
 }
 ```
 
-- [ ] **Step 5: Запустить тест — GREEN**
+- [x] **Step 5: Запустить тест — GREEN**
 
 Run: `npx vitest run tests/format.test.ts`
 Expected: PASS (3 теста).
 
-- [ ] **Step 6: Написать падающий тест `tests/product-badges.test.ts`**
+- [x] **Step 6: Написать падающий тест `tests/product-badges.test.ts`**
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -1395,12 +1395,12 @@ describe('computeBadges', () => {
 });
 ```
 
-- [ ] **Step 7: Запустить — RED**
+- [x] **Step 7: Запустить — RED**
 
 Run: `npx vitest run tests/product-badges.test.ts`
 Expected: FAIL — модуль не найден.
 
-- [ ] **Step 8: Реализовать `lib/product-badges.ts`**
+- [x] **Step 8: Реализовать `lib/product-badges.ts`**
 
 ```ts
 export type BadgeTone = 'new' | 'bestseller' | 'discount' | 'limited' | 'soldout';
@@ -1448,12 +1448,12 @@ export function computeBadges(
 }
 ```
 
-- [ ] **Step 9: Запустить все тесты — GREEN**
+- [x] **Step 9: Запустить все тесты — GREEN**
 
 Run: `npx vitest run`
 Expected: PASS (format + product-badges).
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add stride-app/vitest.config.ts stride-app/lib/format.ts stride-app/lib/product-badges.ts stride-app/tests
@@ -1462,7 +1462,7 @@ git commit -m "feat(stride-app): хелперы формата/размера/б
 
 ---
 
-## Task 7: Построитель фильтров каталога (searchParams → Prisma where/orderBy + counts) — TDD
+## Task 7: Построитель фильтров каталога (searchParams → Prisma where/orderBy + counts) — TDD  ✅
 
 **Files:**
 - Create: `stride-app/lib/catalog-filters.ts`
@@ -1470,7 +1470,7 @@ git commit -m "feat(stride-app): хелперы формата/размера/б
 
 > Назначение: чистая трансформация URL searchParams в Prisma-аргументы. Чтобы тестировать без БД, функция возвращает объект `{ where, orderBy, skip, take, page }` — его проверяем юнит-тестами. Сам запрос делается в `find-products.ts` (Задача 15).
 
-- [ ] **Step 1: Падающий тест `tests/catalog-filters.test.ts`**
+- [x] **Step 1: Падающий тест `tests/catalog-filters.test.ts`**
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -1552,12 +1552,12 @@ describe('buildOrderBy', () => {
 });
 ```
 
-- [ ] **Step 2: Запустить — RED**
+- [x] **Step 2: Запустить — RED**
 
 Run: `npx vitest run tests/catalog-filters.test.ts`
 Expected: FAIL — модуль не найден.
 
-- [ ] **Step 3: Реализовать `lib/catalog-filters.ts`** `(context7)`
+- [x] **Step 3: Реализовать `lib/catalog-filters.ts`** `(context7)`
 
 ```ts
 import type { Prisma } from '@prisma/client';
@@ -1671,17 +1671,17 @@ export function buildPagination(page: number) {
 ```
 > Примечание по цене: точная сортировка по `minPrice`/`discount` требует агрегирования цены вариантов. В Фазе 1 на уровне Prisma `orderBy` это прокси по `sortOrder`; финальная досортировка по вычисленной `minPrice`/`discount` делается в памяти в `find-products.ts` (Задача 15, страница ≤ PAGE_SIZE). Это зафиксировано как допущение.
 
-- [ ] **Step 4: Запустить — GREEN**
+- [x] **Step 4: Запустить — GREEN**
 
 Run: `npx vitest run tests/catalog-filters.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Прогнать все тесты**
+- [x] **Step 5: Прогнать все тесты**
 
 Run: `npm test`
 Expected: PASS (format, product-badges, catalog-filters).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add stride-app/lib/catalog-filters.ts stride-app/tests/catalog-filters.test.ts
@@ -1690,14 +1690,14 @@ git commit -m "feat(stride-app): построитель фильтров кат�
 
 ---
 
-## Task 8: Сид (5 демо-моделей с расцветками/размерами/стоком)
+## Task 8: Сид (5 демо-моделей с расцветками/размерами/стоком)  ✅
 
 **Files:**
 - Create: `stride-app/public/products/` (копии демо-изображений)
 - Create: `stride-app/prisma/seed-data.ts`
 - Create: `stride-app/prisma/seed.ts`
 
-- [ ] **Step 1: Скопировать демо-изображения в `public/products/`**
+- [x] **Step 1: Скопировать демо-изображения в `public/products/`**
 
 Run (из корня репозитория):
 ```bash
@@ -1708,7 +1708,7 @@ ls stride-app/public/products
 ```
 Expected: 7 файлов (nike-air-max-270.jpeg, adidas-ultraboost.jpeg, converse-chuck-70.jpeg, new-balance-550.jpeg, puma-rs-x.jpeg, два Professional_*.png).
 
-- [ ] **Step 2: `prisma/seed-data.ts` — категории + 5 моделей (расцветки/изображения/варианты)**
+- [x] **Step 2: `prisma/seed-data.ts` — категории + 5 моделей (расцветки/изображения/варианты)**
 
 ```ts
 import type { Prisma } from '@prisma/client';
@@ -1832,7 +1832,7 @@ export const products: SeedProduct[] = [
 ];
 ```
 
-- [ ] **Step 3: `prisma/seed.ts` — down() (FK-safe deleteMany) + up() (nested create) + раннер с throw**
+- [x] **Step 3: `prisma/seed.ts` — down() (FK-safe deleteMany) + up() (nested create) + раннер с throw**
 
 ```ts
 import { prisma } from '../lib/prisma-client';
@@ -1883,17 +1883,17 @@ main()
   });
 ```
 
-- [ ] **Step 4: Запустить сид**
+- [x] **Step 4: Запустить сид**
 
 Run: `npm run prisma:seed`
 Expected: `Seed готов: 5 моделей`, без ошибок.
 > Если `ts-node` не находит alias `@` — в seed/seed-data импорты относительные (`../lib/...`, `./seed-data`), alias не используется. Если падает на ESM — секция `prisma.seed` уже в CommonJS-режиме (Задача 1).
 
-- [ ] **Step 5: Проверить данные в Studio (опц.)**
+- [x] **Step 5: Проверить данные в Studio (опц.)**
 
 Run: `npm run prisma:studio` → открыть таблицы Product/ProductColorway/ProductVariant; убедиться, что у Velocity Trail 2 расцветки, есть размер `42.5`, есть варианты со `stock=0`. Закрыть.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add stride-app/prisma/seed.ts stride-app/prisma/seed-data.ts stride-app/public/products
@@ -1902,14 +1902,14 @@ git commit -m "feat(stride-app): сид — 5 демо-моделей с рас�
 
 ---
 
-## Task 9: Доменная логика корзины (recalc/маппинг/DTO) — TDD
+## Task 9: Доменная логика корзины (recalc/маппинг/DTO) — TDD  ✅
 
 **Files:**
 - Create: `stride-app/services/dto/cart.dto.ts`
 - Create: `stride-app/lib/cart.ts`
 - Create: `stride-app/tests/cart.test.ts`
 
-- [ ] **Step 1: `services/dto/cart.dto.ts` — Zod-схемы входа + тип состояния**
+- [x] **Step 1: `services/dto/cart.dto.ts` — Zod-схемы входа + тип состояния**
 
 ```ts
 import { z } from 'zod';
@@ -1947,7 +1947,7 @@ export interface CartDetails {
 }
 ```
 
-- [ ] **Step 2: Падающий тест `tests/cart.test.ts`**
+- [x] **Step 2: Падающий тест `tests/cart.test.ts`**
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -2018,12 +2018,12 @@ describe('zod-схемы корзины', () => {
 });
 ```
 
-- [ ] **Step 3: Запустить — RED**
+- [x] **Step 3: Запустить — RED**
 
 Run: `npx vitest run tests/cart.test.ts`
 Expected: FAIL — `@/lib/cart` не найден.
 
-- [ ] **Step 4: Реализовать `lib/cart.ts` (серверные функции + чистый маппинг)** `(context7)`
+- [x] **Step 4: Реализовать `lib/cart.ts` (серверные функции + чистый маппинг)** `(context7)`
 
 ```ts
 import type { Prisma } from '@prisma/client';
@@ -2097,17 +2097,17 @@ export async function recalcCartTotalByToken(token: string): Promise<CartWithIte
 }
 ```
 
-- [ ] **Step 5: Запустить — GREEN**
+- [x] **Step 5: Запустить — GREEN**
 
 Run: `npx vitest run tests/cart.test.ts`
 Expected: PASS.
 
-- [ ] **Step 6: Прогнать все тесты**
+- [x] **Step 6: Прогнать все тесты**
 
 Run: `npm test`
 Expected: PASS (format, product-badges, catalog-filters, cart).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add stride-app/services/dto/cart.dto.ts stride-app/lib/cart.ts stride-app/tests/cart.test.ts
@@ -2116,14 +2116,14 @@ git commit -m "feat(stride-app): доменная логика корзины (r
 
 ---
 
-## Task 10: REST-роуты корзины (GET/POST/PATCH/DELETE) — без `$transaction`
+## Task 10: REST-роуты корзины (GET/POST/PATCH/DELETE) — без `$transaction`  ✅
 
 **Files:**
 - Create: `stride-app/lib/cart-cookie.ts`
 - Create: `stride-app/app/api/cart/route.ts`
 - Create: `stride-app/app/api/cart/[id]/route.ts`
 
-- [ ] **Step 1: `lib/cart-cookie.ts` — имя/опции cookie**
+- [x] **Step 1: `lib/cart-cookie.ts` — имя/опции cookie**
 
 ```ts
 import { CART_COOKIE_NAME, CART_COOKIE_MAX_AGE } from '@/constants/config';
@@ -2139,7 +2139,7 @@ export const cartCookieOptions = {
 };
 ```
 
-- [ ] **Step 2: `app/api/cart/route.ts` — GET (чтение) + POST (добавление)** `(context7)`
+- [x] **Step 2: `app/api/cart/route.ts` — GET (чтение) + POST (добавление)** `(context7)`
 
 ```ts
 import { NextRequest, NextResponse } from 'next/server';
@@ -2214,7 +2214,7 @@ export async function POST(req: NextRequest) {
 }
 ```
 
-- [ ] **Step 3: `app/api/cart/[id]/route.ts` — PATCH (количество) + DELETE (удаление)** `(context7)`
+- [x] **Step 3: `app/api/cart/[id]/route.ts` — PATCH (количество) + DELETE (удаление)** `(context7)`
 
 > Next 15: второй аргумент роута — `{ params }: { params: Promise<{ id: string }> }`, `params` нужно `await`.
 
@@ -2280,7 +2280,7 @@ export async function DELETE(req: NextRequest, { params }: Ctx) {
 }
 ```
 
-- [ ] **Step 4: Ручная проверка роутов (dev + curl)**
+- [x] **Step 4: Ручная проверка роутов (dev + curl)**
 
 Run: `npm run dev` (в одном терминале). В другом:
 ```bash
@@ -2292,7 +2292,7 @@ echo; curl -s -b /tmp/cj.txt localhost:3000/api/cart | head -c 400
 Expected: POST возвращает объект корзины с `items[0].quantity=1` и `totalAmount=12990`; GET возвращает ту же корзину. Остановить dev.
 > Если `@prisma/client` в инлайн-node не находит сгенерённый клиент — взять variantId из `npm run prisma:studio`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add stride-app/lib/cart-cookie.ts stride-app/app/api/cart
@@ -2761,7 +2761,7 @@ git commit -m "feat(stride-app): общий layout — шрифты, top-bar, gl
 
 ---
 
-## Task 13: Карточка товара (`ProductCard`) + маппер данных — TDD
+## Task 13: Карточка товара (`ProductCard`) + маппер данных — TDD  ✅
 
 **Files:**
 - Create: `stride-app/lib/product-summary.ts`
@@ -2771,7 +2771,7 @@ git commit -m "feat(stride-app): общий layout — шрифты, top-bar, gl
 
 > `ProductCard` — общий для лендинга/каталога/related. Quick-add в Фазе 1 — это `Link` на PDP (без «слепого» добавления, спека §7.2/§14). Вёрстка — `catalog.html` карточка (строки 39–60 отчёта).
 
-- [ ] **Step 1: Падающий тест `tests/product-summary.test.ts`**
+- [x] **Step 1: Падающий тест `tests/product-summary.test.ts`**
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -2825,12 +2825,12 @@ describe('buildProductCardData', () => {
 });
 ```
 
-- [ ] **Step 2: Запустить — RED**
+- [x] **Step 2: Запустить — RED**
 
 Run: `npx vitest run tests/product-summary.test.ts`
 Expected: FAIL — модуль не найден.
 
-- [ ] **Step 3: Реализовать `lib/product-summary.ts`**
+- [x] **Step 3: Реализовать `lib/product-summary.ts`**
 
 ```ts
 import type { Prisma } from '@prisma/client';
@@ -2898,12 +2898,12 @@ export function buildProductCardData(
 }
 ```
 
-- [ ] **Step 4: Запустить — GREEN**
+- [x] **Step 4: Запустить — GREEN**
 
 Run: `npx vitest run tests/product-summary.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: `components/shared/price-tag.tsx` (RSC)**
+- [x] **Step 5: `components/shared/price-tag.tsx` (RSC)**
 
 ```tsx
 import { formatPrice } from '@/lib/format';
@@ -2920,7 +2920,7 @@ export function PriceTag({ price, compareAtPrice, className }: { price: number; 
 }
 ```
 
-- [ ] **Step 6: `components/shared/product-card.tsx` (RSC; quick-add → Link на PDP)**
+- [x] **Step 6: `components/shared/product-card.tsx` (RSC; quick-add → Link на PDP)**
 
 ```tsx
 import Link from 'next/link';
@@ -2976,12 +2976,12 @@ export function ProductCard({ data }: { data: ProductCardData }) {
 ```
 > Добавить `ProductCard`, `PriceTag` в `components/shared/index.ts` (экспорты).
 
-- [ ] **Step 7: Прогнать тесты + типы**
+- [x] **Step 7: Прогнать тесты + типы**
 
 Run: `npm test && npm run typecheck`
 Expected: PASS, 0 ошибок типов.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add stride-app/lib/product-summary.ts stride-app/components/shared/product-card.tsx stride-app/components/shared/price-tag.tsx stride-app/components/shared/index.ts stride-app/tests/product-summary.test.ts
