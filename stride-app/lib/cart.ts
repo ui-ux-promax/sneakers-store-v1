@@ -1,56 +1,13 @@
-import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma-client';
-import { normalizeSize } from '@/lib/format';
-import type { CartDetails, CartStateItem } from '@/services/dto/cart.dto';
+import { cartInclude, calcLineTotal, type CartWithItems } from '@/lib/cart-details';
 
-// Граф включения для всех чтений/мутаций корзины.
-export const cartInclude = {
-  items: {
-    orderBy: { createdAt: 'desc' as const },
-    include: {
-      productVariant: {
-        include: {
-          colorway: {
-            include: {
-              product: { select: { name: true, slug: true } },
-              images: { orderBy: { sortOrder: 'asc' as const }, take: 1 },
-            },
-          },
-        },
-      },
-    },
-  },
-} satisfies Prisma.CartInclude;
-
-export type CartWithItems = Prisma.CartGetPayload<{ include: typeof cartInclude }>;
-
-export function calcLineTotal(unitPrice: number, quantity: number): number {
-  return unitPrice * quantity;
-}
-
-// Чистая функция: разворачивает серверный объект в плоские позиции для клиента.
-export function getCartDetails(cart: CartWithItems): CartDetails {
-  const items: CartStateItem[] = cart.items.map((item) => {
-    const v = item.productVariant;
-    const cw = v.colorway;
-    const unitPrice = v.price;
-    return {
-      id: item.id,
-      quantity: item.quantity,
-      name: cw.product.name,
-      productSlug: cw.product.slug,
-      colorwayName: cw.name,
-      sizeEu: normalizeSize(v.sizeEu as unknown as number),
-      imageUrl: cw.images[0]?.url ?? null,
-      unitPrice,
-      lineTotal: calcLineTotal(unitPrice, item.quantity),
-      stock: v.stock,
-      available: v.active && v.stock > 0,
-    };
-  });
-  const totalAmount = items.reduce((acc, i) => acc + i.lineTotal, 0);
-  return { items, totalAmount };
-}
+// Серверный модуль корзины (использует prisma). Чистые/клиент-safe части
+// (cartInclude, getCartDetails, calcLineTotal, тип CartWithItems) вынесены в
+// `lib/cart-details.ts` и реэкспортируются здесь — чтобы серверные импортёры
+// (API-роуты, тесты) продолжали брать всё из `@/lib/cart`, а клиентский стор
+// импортировал чистые функции из `@/lib/cart-details` без утечки prisma в браузер.
+export { cartInclude, calcLineTotal, getCartDetails } from '@/lib/cart-details';
+export type { CartWithItems } from '@/lib/cart-details';
 
 // findOrCreateCart по cookie-токену.
 export async function findOrCreateCart(token: string) {
