@@ -1,10 +1,52 @@
+import Link from 'next/link';
 import { NewsletterForm } from './newsletter-form';
 
-const columns = [
-  { title: 'Магазин', links: ['Новинки', 'Беговые', 'Лайфстайл', 'Платформы'] },
-  { title: 'Помощь', links: ['Доставка', 'Возврат', 'Размерная сетка', 'Контакты'] },
-  { title: 'Мы рядом', links: ['Telegram', 'VK', 'YouTube'] },
+type FooterLinkItem = { label: string; href: string };
+
+const columns: { title: string; links: FooterLinkItem[] }[] = [
+  {
+    title: 'Магазин',
+    links: [
+      { label: 'Новинки', href: '#' },
+      { label: 'Беговые', href: '#' },
+      { label: 'Лайфстайл', href: '#' },
+      { label: 'Платформы', href: '#' },
+    ],
+  },
+  {
+    title: 'Помощь',
+    links: [
+      { label: 'Доставка', href: '/legal/delivery' },
+      { label: 'Возврат', href: '/legal/refund' },
+      { label: 'Размерная сетка', href: '#' },
+      { label: 'Контакты', href: '#' },
+    ],
+  },
+  {
+    title: 'Мы рядом',
+    links: [
+      { label: 'Telegram', href: '#' },
+      { label: 'VK', href: '#' },
+      { label: 'YouTube', href: '#' },
+    ],
+  },
 ];
+
+// Внутренние маршруты (начинаются с «/») рендерим через next/link; «#»/внешние — обычным <a>.
+function FooterLink({ href, className, children }: { href: string; className?: string; children: React.ReactNode }) {
+  if (href.startsWith('/')) {
+    return (
+      <Link href={href} className={className}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <a href={href} className={className}>
+      {children}
+    </a>
+  );
+}
 
 export function SiteFooter() {
   return (
@@ -25,7 +67,9 @@ export function SiteFooter() {
                 <p className="font-semibold text-sm mb-3">{col.title}</p>
                 <ul className="space-y-2 text-sm text-white/70">
                   {col.links.map((l) => (
-                    <li key={l}><a href="#" className="hover:text-white">{l}</a></li>
+                    <li key={l.label}>
+                      <FooterLink href={l.href} className="hover:text-white">{l.label}</FooterLink>
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -34,8 +78,8 @@ export function SiteFooter() {
           <div className="border-t border-white/10 mt-8 pt-5 flex flex-col sm:flex-row gap-2 justify-between text-xs text-white/70">
             <p>© 2026 STRIDE. Все цены в рублях.</p>
             <div className="flex gap-4">
-              <a href="#" className="hover:text-white">Политика конфиденциальности</a>
-              <a href="#" className="hover:text-white">Условия</a>
+              <Link href="/legal/privacy" className="hover:text-white">Политика конфиденциальности</Link>
+              <Link href="/legal/terms" className="hover:text-white">Условия</Link>
             </div>
           </div>
         </div>
