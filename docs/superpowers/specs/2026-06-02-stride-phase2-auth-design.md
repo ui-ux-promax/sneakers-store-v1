@@ -3,7 +3,7 @@
 - **Дата:** 2026-06-02
 - **Проект:** STRIDE — интернет-магазин кроссовок (Next.js e-commerce)
 - **Фаза:** 2.0 (фундамент авторизации; первый под-проект Фазы 2 — до checkout/оплаты/заказов)
-- **Статус:** на ревью
+- **Статус:** реализовано (P2.0) — код-комплит, гейты зелёные (typecheck/unit/build). Исключение: реальный rate-limit на вход **перенесён в P2.1** (решение пользователя 2026-06-03) — на фундаменте остаётся NOOP/fail-open + дешёвый pre-hash dedupe против argon2-DoS (см. §8 и `docs/TROUBLESHOOTING.md`). Финальная валидация e2e/a11y — в CI после коммита.
 - **Предшественник:** Фаза 1 (каталог + корзина) — завершена, в проде на `main`.
 - **Исследование:** `docs/superpowers/research/2026-06-02-phase2-candidates.md` (карта кандидатов Фазы 2) + workflow `phase2-auth-strategy-research` (выбор auth-стратегии).
 - **UI-контракт:** `ui-designe and prototypes/prototypes-app/{auth,profile,legal-*}.html`.
@@ -45,7 +45,7 @@
 - Экраны: `/login`, `/register` (по `auth.html`), `/profile` вкладка «Личные данные» (по `profile.html`), legal-страницы `/legal/{privacy,terms,delivery,refund}` (по `legal-*.html`).
 - API/server-actions: профиль (`GET`/`PATCH`), эндпоинты Auth.js.
 - Слияние гостевой корзины при входе.
-- Реальный rate-limit на попытки входа (замена NOOP-заглушки Фазы 1).
+- ~~Реальный rate-limit на попытки входа (замена NOOP-заглушки Фазы 1).~~ **Перенесено в P2.1** (решение 2026-06-03): на фундаменте — NOOP/fail-open + pre-hash dedupe (защита от argon2-DoS).
 - Обновление футера: legal-ссылки `href="#"` → реальные маршруты.
 - Тесты: unit (хеш пароля, слияние корзины, правила идентичности) + e2e/a11y (регистрация/вход/выход, защита `/profile`, правка профиля, слияние корзины, legal) + CI на Ubuntu.
 
@@ -217,7 +217,7 @@ mergeGuestCart(guestToken, userId):
 - **Пароли**: argon2id (OWASP-параметры), `runtime='nodejs'`; в логи/ответы не попадают (логгер уже скрабит `password`).
 - **`session.strategy='jwt'`** — явно (footgun: с адаптером дефолт `database`).
 - **Адаптер не импортируется в `middleware`** (edge-split строго).
-- **Rate-limit**: реальный лимитер на `/api/auth` вход (per-IP + per-email), замена NOOP-заглушки `lib/rate-limit.ts`. Реализация (Upstash sliding-window или эквивалент) — деталь плана; каркас `extractClientIp`/`isRateLimitConfigured` уже есть.
+- **Rate-limit**: реальный лимитер на вход (Upstash sliding-window, per-IP + per-email) **перенесён в P2.1** (решение 2026-06-03). На фундаменте `checkAuthRateLimit` остаётся NOOP/fail-open; основная защита от argon2-DoS — дешёвый dedup email **до** хэширования в `registerUser` (см. `docs/TROUBLESHOOTING.md`). Каркас `extractClientIp`/`isRateLimitConfigured` уже есть — точка подключения реального лимитера готова.
 - **CSRF**: для эндпоинтов Auth.js — на стороне библиотеки. Правка профиля реализуется как **Server Action** (`updateProfile`) — Next 15 даёт авто-CSRF для Server Actions, ручная Origin-проверка не нужна. Если в P2.1 появятся собственные мутирующие route-handlers — для них добавить проверку Origin/Referer vs Host + sameSite-cookie.
 - **P2002** вместо find-then-create как гонко-guard.
 
@@ -258,7 +258,7 @@ mergeGuestCart(guestToken, userId):
 - `/profile` защищён; «Личные данные» читаются/редактируются; «Мои заказы» — заглушка.
 - Гостевая корзина переживает вход (слияние корректно: количества суммируются, дубликатов позиций нет).
 - Legal-страницы доступны; футер-ссылки реальны.
-- Rate-limit на вход активен.
+- ~~Rate-limit на вход активен.~~ → **перенесено в P2.1** (см. §8); на фундаменте — pre-hash dedupe.
 - `typecheck` + unit зелёные локально; e2e + a11y зелёные в CI (Ubuntu); `next build` чистый.
 - Соблюдены non-negotiables §8 (jwt-стратегия, nodejs-runtime для argon2, адаптер не в middleware, P2002-guard, без `$transaction`).
 
