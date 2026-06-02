@@ -64,7 +64,7 @@ const isTransientError = (err: unknown): boolean => {
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-const retryOnTransient = async <T>(fn: () => Promise<T>, maxAttempts = 2): Promise<T> => {
+const retryOnTransient = async <T>(fn: () => Promise<T>, maxAttempts = 4): Promise<T> => {
   let lastError: unknown;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {

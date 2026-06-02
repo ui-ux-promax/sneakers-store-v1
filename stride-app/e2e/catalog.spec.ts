@@ -6,7 +6,9 @@ test('каталог: фильтр по категории меняет URL и �
   expect(allCount).toBeGreaterThan(0);
 
   // выбрать категорию «Беговые»
-  await page.getByRole('checkbox', { name: 'Беговые' }).check();
+  // контролируемый чекбокс инициирует навигацию (URL-driven) → используем click + проверку URL,
+  // а не check() (он ждёт мгновенной смены state на том же элементе до ре-рендера).
+  await page.getByRole('checkbox', { name: 'Беговые' }).click();
   await expect(page).toHaveURL(/category=running/);
   // должна остаться хотя бы одна карточка и количество не больше исходного
   const filtered = await page.locator('article').count();

@@ -5,6 +5,8 @@ test('корзина: степпер меняет подытог, удалени
   await page.goto('/product/stride-velocity-trail');
   await page.getByRole('button', { name: '42', exact: true }).click();
   await page.getByRole('button', { name: /В корзину/ }).click();
+  // дождаться завершения добавления (POST + cookie) ДО навигации, иначе переход прервёт запрос
+  await expect(page.getByRole('button', { name: /Добавлено/ })).toBeVisible();
   await page.goto('/cart');
 
   await expect(page.getByRole('heading', { name: 'Корзина' })).toBeVisible();

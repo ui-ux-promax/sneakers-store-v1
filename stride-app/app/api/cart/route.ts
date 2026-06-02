@@ -33,12 +33,14 @@ export async function POST(req: NextRequest) {
       }
       const { productVariantId, quantity = 1 } = parsed.data;
 
-      const cart = await findOrCreateCart(token);
-
-      const variant = await prisma.productVariant.findUnique({
-        where: { id: productVariantId },
-        include: { colorway: { include: { product: { select: { active: true } } } } },
-      });
+      // Корзина и вариант независимы — читаем параллельно (минус один Neon HTTP round-trip).
+      const [cart, variant] = await Promise.all([
+        findOrCreateCart(token),
+        prisma.productVariant.findUnique({
+          where: { id: productVariantId },
+          include: { colorway: { include: { product: { select: { active: true } } } } },
+        }),
+      ]);
       if (!variant) return NextResponse.json({ message: 'Товар не найден' }, { status: 404 });
       if (!variant.active || !variant.colorway.product.active) {
         return NextResponse.json({ message: 'Товар недоступен' }, { status: 409 });

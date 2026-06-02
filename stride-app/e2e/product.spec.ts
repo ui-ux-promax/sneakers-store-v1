@@ -4,8 +4,8 @@ test('PDP: переключение расцветки, выбор размер�
   await page.goto('/product/stride-velocity-trail');
   await expect(page.getByRole('heading', { name: /Velocity Trail/ })).toBeVisible();
 
-  // переключить расцветку → меняется ?color=
-  await page.getByRole('button', { name: /Цвет Trail Black/ }).click();
+  // переключить расцветку → меняется ?color= (свотчи — ссылки <Link>, role=link, для шарящегося URL/SEO)
+  await page.getByRole('link', { name: /Цвет Trail Black/ }).click();
   await expect(page).toHaveURL(/color=trail-black/);
 
   // вернуться на дефолтную и выбрать доступный размер 42
@@ -25,9 +25,12 @@ test('PDP: недоступный размер (stock 0) — disabled', async ({
 test('Корзина: повторное добавление того же варианта увеличивает количество (дедуп)', async ({ page }) => {
   await page.goto('/product/stride-velocity-trail');
   await page.getByRole('button', { name: '42', exact: true }).click();
-  await page.getByRole('button', { name: /В корзину/ }).click();
-  await page.waitForTimeout(500);
-  await page.getByRole('button', { name: /В корзину/ }).click();
+  const addBtn = page.getByRole('button', { name: /В корзину/ });
+  await addBtn.click();
+  // дождаться подтверждения первого добавления, затем возврата кнопки к «В корзину» — и добавить снова
+  await expect(page.getByRole('button', { name: /Добавлено/ })).toBeVisible();
+  await expect(addBtn).toBeVisible();
+  await addBtn.click();
   await page.goto('/cart');
   // одна позиция, количество 2
   await expect(page.locator('article').filter({ hasText: 'Velocity Trail' })).toHaveCount(1);
