@@ -28,10 +28,18 @@ function generateRequestId(): string {
 
 type HeadersLike = { get(name: string): string | null };
 
+// Клиентский x-request-id НЕ доверенный: ограничиваем шейп и длину, чтобы исключить
+// log-amplification (произвольно длинное значение в каждой строке лога) и порчу trace-корреляции
+// в агрегаторе (#13). Не прошло проверку — генерируем свой id.
+const REQUEST_ID_RE = /^[A-Za-z0-9._-]{1,128}$/;
+
+export function sanitizeRequestId(value: string | null | undefined): string | null {
+  return value && REQUEST_ID_RE.test(value) ? value : null;
+}
+
 function extractIncomingRequestId(headers: HeadersLike | undefined): string | null {
   if (!headers || typeof headers.get !== 'function') return null;
-  const value = headers.get('x-request-id');
-  return value && value.length > 0 ? value : null;
+  return sanitizeRequestId(headers.get('x-request-id'));
 }
 
 export function getRequestId(): string | undefined {
