@@ -8,23 +8,18 @@ export default {
   trustHost: true,
   pages: { signIn: '/login' },
   providers: [
-    Google({ allowDangerousEmailAccountLinking: true }),
+    // allowDangerousEmailAccountLinking НЕ включаем: иначе Google-вход авто-линковался бы к
+    // ЛЮБОму существующему User с тем же email — включая аккаунт, заведённый через credentials
+    // на непроверенный email (account pre-seeding / hijack, #1). При коллизии email Auth.js
+    // вернёт OAuthAccountNotLinked — намеренно; явная линковка появится после email-верификации.
+    Google({}),
     Credentials({
       credentials: { email: {}, password: {} },
-      async authorize(creds) {
-        const { normalizeEmail } = await import('@/lib/auth-identity');
-        const { verifyPassword } = await import('@/lib/password');
-        const { prisma } = await import('@/lib/prisma-client');
-
-        const email = normalizeEmail(String(creds?.email ?? ''));
-        const password = String(creds?.password ?? '');
-        if (!email || !password) return null;
-
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (!user?.passwordHash) return null;
-        if (!(await verifyPassword(password, user.passwordHash))) return null;
-
-        return { id: user.id, email: user.email, name: user.name, role: user.role as Role };
+      // Тяжёлую логику (prisma/argon2) держим в отдельном Node-модуле и тянем dynamic import'ом —
+      // чтобы она не попадала в edge-бандл middleware (см. next.config.mjs edge-alias).
+      authorize: async (creds) => {
+        const { authorizeCredentials } = await import('@/lib/auth-credentials');
+        return authorizeCredentials(creds);
       },
     }),
   ],
