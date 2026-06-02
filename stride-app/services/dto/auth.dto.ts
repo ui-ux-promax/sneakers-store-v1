@@ -7,6 +7,19 @@ export const registerSchema = z.object({
 });
 export type RegisterValues = z.infer<typeof registerSchema>;
 
+// Клиентская схема формы регистрации: поверх серверной registerSchema добавляет подтверждение
+// пароля и обязательное согласие. На сервер (registerUser) уходят только поля registerSchema.
+export const registerFormSchema = registerSchema
+  .extend({
+    confirmPassword: z.string(),
+    agree: z.literal(true, { errorMap: () => ({ message: 'Необходимо согласие с условиями' }) }),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: 'Пароли не совпадают',
+    path: ['confirmPassword'],
+  });
+export type RegisterFormValues = z.infer<typeof registerFormSchema>;
+
 export const loginSchema = z.object({
   email: z.string().email('Некорректный email'),
   password: z.string().min(1, 'Введите пароль'),

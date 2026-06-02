@@ -59,6 +59,17 @@
     text-transform: uppercase; color: hsl(var(--color-text-muted));
   }
 
+  .auth-card {
+    background: hsl(var(--color-surface)); border: 1px solid hsl(var(--color-border));
+    border-radius: 20px; padding: 32px; max-width: 420px; width: 100%;
+    box-shadow: 0 4px 24px hsl(var(--color-text) / 0.06);
+  }
+  .auth-link {
+    color: hsl(var(--color-text)); text-decoration: underline; text-underline-offset: 3px;
+    font-weight: 500; transition: color 0.15s;
+  }
+  .auth-link:hover { color: hsl(var(--color-text-muted)); }
+
   .glass-header {
     -webkit-backdrop-filter: blur(24px);
     backdrop-filter: blur(24px);
