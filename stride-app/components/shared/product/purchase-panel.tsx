@@ -62,7 +62,7 @@ export function PurchasePanel({ productName, colorways, activeColorwaySlug, acti
         <p className="font-semibold text-sm">Цвет: <span className="text-ink-muted font-normal">{activeColorwayName}</span></p>
         <div className="flex gap-2.5 mt-2">
           {colorways.map((cw) => (
-            <Link key={cw.slug} href={`/product/${productSlug}?color=${cw.slug}`} scroll={false} aria-pressed={cw.slug === activeColorwaySlug} aria-label={`Цвет ${cw.name}`}
+            <Link key={cw.slug} href={`/product/${productSlug}?color=${cw.slug}`} scroll={false} aria-current={cw.slug === activeColorwaySlug ? 'true' : undefined} aria-label={`Цвет ${cw.name}`}
               className={cn('w-11 h-11 rounded-xl overflow-hidden bg-surface-soft', cw.slug === activeColorwaySlug ? 'ring-2 ring-offset-2 ring-[hsl(var(--color-text))]' : 'border border-line hover:border-ink')}>
               {cw.thumbUrl && <Image src={cw.thumbUrl} alt={cw.name} width={44} height={44} className="object-contain p-1 w-full h-full" />}
             </Link>

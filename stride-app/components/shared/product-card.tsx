@@ -15,7 +15,7 @@ export function ProductCard({ data }: { data: ProductCardData }) {
             <Badge tone={data.badges[0].tone}>{data.badges[0].label}</Badge>
           </span>
         )}
-        <Link href={href} aria-label={data.name}>
+        <Link href={href} aria-label={data.name} className="absolute inset-0">
           {data.imageUrl ? (
             <Image
               src={data.imageUrl}
@@ -32,7 +32,7 @@ export function ProductCard({ data }: { data: ProductCardData }) {
           <Link
             href={href}
             aria-label={`Выбрать размер: ${data.name}`}
-            className="absolute bottom-3 right-3 btn btn-primary w-10 h-10 !p-0 rounded-full opacity-0 group-hover:opacity-100 focus:opacity-100 transition"
+            className="absolute bottom-3 right-3 z-10 btn btn-primary w-10 h-10 !p-0 rounded-full opacity-0 group-hover:opacity-100 focus:opacity-100 transition"
           >
             <Plus className="w-5 h-5" />
           </Link>

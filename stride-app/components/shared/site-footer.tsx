@@ -17,13 +17,13 @@ export function SiteFooter() {
                 <span className="grid place-items-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-display font-bold text-sm">S</span>
                 <span className="font-display font-bold text-lg">STRIDE</span>
               </div>
-              <p className="text-white/60 text-sm max-w-xs leading-relaxed mt-3">Подпишись на дропы и забирай новые модели первым. Без спама.</p>
+              <p className="text-white/70 text-sm max-w-xs leading-relaxed mt-3">Подпишись на дропы и забирай новые модели первым. Без спама.</p>
               <NewsletterForm />
             </div>
             {columns.map((col) => (
               <div key={col.title}>
                 <p className="font-semibold text-sm mb-3">{col.title}</p>
-                <ul className="space-y-2 text-sm text-white/60">
+                <ul className="space-y-2 text-sm text-white/70">
                   {col.links.map((l) => (
                     <li key={l}><a href="#" className="hover:text-white">{l}</a></li>
                   ))}
@@ -31,7 +31,7 @@ export function SiteFooter() {
               </div>
             ))}
           </div>
-          <div className="border-t border-white/10 mt-8 pt-5 flex flex-col sm:flex-row gap-2 justify-between text-xs text-white/40">
+          <div className="border-t border-white/10 mt-8 pt-5 flex flex-col sm:flex-row gap-2 justify-between text-xs text-white/70">
             <p>© 2026 STRIDE. Все цены в рублях.</p>
             <div className="flex gap-4">
               <a href="#" className="hover:text-white">Политика конфиденциальности</a>
