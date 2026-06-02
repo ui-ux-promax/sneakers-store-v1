@@ -4255,7 +4255,7 @@ git commit -m "feat(stride-app): страница корзины — позиц�
 
 ---
 
-## Task 18: SEO (`sitemap.ts`, `robots.ts`, canonical/metadata)
+## Task 18: SEO (`sitemap.ts`, `robots.ts`, canonical/metadata)  ✅
 
 **Files:**
 - Create: `stride-app/app/sitemap.ts`
@@ -4264,7 +4264,7 @@ git commit -m "feat(stride-app): страница корзины — позиц�
 
 > `metadata` (title/description) — уже в `layout.tsx` (Задача 12); canonical/title PDP — в `generateMetadata` (Задача 16); JSON-LD Product — на PDP (Задача 16). Здесь — sitemap/robots.
 
-- [ ] **Step 1: Добавить `NEXT_PUBLIC_SITE_URL` в `.env.example`**
+- [x] **Step 1: Добавить `NEXT_PUBLIC_SITE_URL` в `.env.example`**
 
 Дописать строку:
 ```bash
@@ -4272,7 +4272,7 @@ git commit -m "feat(stride-app): страница корзины — позиц�
 NEXT_PUBLIC_SITE_URL="http://localhost:3000"
 ```
 
-- [ ] **Step 2: `app/sitemap.ts` (динамический — статические роуты + товары)**
+- [x] **Step 2: `app/sitemap.ts` (динамический — статические роуты + товары)**
 
 ```ts
 import type { MetadataRoute } from 'next';
@@ -4293,7 +4293,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 }
 ```
 
-- [ ] **Step 3: `app/robots.ts`**
+- [x] **Step 3: `app/robots.ts`**
 
 ```ts
 import type { MetadataRoute } from 'next';
@@ -4307,12 +4307,12 @@ export default function robots(): MetadataRoute.Robots {
 }
 ```
 
-- [ ] **Step 4: Проверка**
+- [x] **Step 4: Проверка**
 
 Run: `npm run dev` → открыть `http://localhost:3000/sitemap.xml` и `/robots.txt`.
 Expected: sitemap содержит `/`, `/catalog` и URL всех 5 товаров; robots отдаёт корректные правила + ссылку на sitemap. Остановить.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add stride-app/app/sitemap.ts stride-app/app/robots.ts stride-app/.env.example
@@ -4321,7 +4321,14 @@ git commit -m "feat(stride-app): SEO — sitemap.ts (товары), robots.ts"
 
 ---
 
-## Task 19: Playwright — e2e smoke + a11y
+## Task 19: Playwright — e2e smoke + a11y  ✅
+
+> **Реализовано с дополнениями к плану** (вне первоначального объёма, зафиксировано):
+> - `e2e/global-setup.ts` — прогрев Neon (READ+WRITE) + keep-warm `SELECT 1` каждые 15с, чтобы compute не засыпал в ходе прогона.
+> - `playwright.config.ts` — `retries: 2`, `timeout: 120s`, `expect.timeout: 40s`, `navigationTimeout: 60s`, `globalSetup` (адаптация под латентность удалённого Neon по HTTP).
+> - `lib/prisma-client.ts` — `retryOnTransient` (4 попытки, backoff) на транзиентные Neon-аборты.
+> - `.github/workflows/e2e.yml` — прогон e2e на `ubuntu-latest` (раннер близко к Neon → round-trip'ы быстрые, suite стабилен; локально на Windows флак из-за сетевой дистанции).
+> **Итог:** e2e + a11y зелёные в CI (Ubuntu). Локальный прогон на Windows нестабилен по сетевым причинам — это не баг приложения.
 
 **Files:**
 - Modify: `stride-app/package.json` (добавить `@axe-core/playwright`)
@@ -4334,12 +4341,12 @@ git commit -m "feat(stride-app): SEO — sitemap.ts (товары), robots.ts"
 
 > Предусловие: БД засижена (Задача 8), `.env` заполнен. e2e гоняются против поднятого dev-сервера и реальной Neon-БД с сидом.
 
-- [ ] **Step 1: Добавить dev-зависимость и установить**
+- [x] **Step 1: Добавить dev-зависимость и установить**
 
 В `package.json` → `devDependencies` добавить `"@axe-core/playwright": "^4.10.1"`.
 Run: `npm install`
 
-- [ ] **Step 2: `playwright.config.ts`**
+- [x] **Step 2: `playwright.config.ts`**
 
 ```ts
 import { defineConfig, devices } from '@playwright/test';
@@ -4359,7 +4366,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 3: `e2e/landing.spec.ts`**
+- [x] **Step 3: `e2e/landing.spec.ts`**
 
 ```ts
 import { test, expect } from '@playwright/test';
@@ -4374,7 +4381,7 @@ test('лендинг рендерит hero, категории, бестселл
 });
 ```
 
-- [ ] **Step 4: `e2e/catalog.spec.ts`**
+- [x] **Step 4: `e2e/catalog.spec.ts`**
 
 ```ts
 import { test, expect } from '@playwright/test';
@@ -4399,7 +4406,7 @@ test('каталог: пустая выдача при несовместимы�
 });
 ```
 
-- [ ] **Step 5: `e2e/product.spec.ts` (расцветка + размер + add-to-cart; дедуп при повторном добавлении)**
+- [x] **Step 5: `e2e/product.spec.ts` (расцветка + размер + add-to-cart; дедуп при повторном добавлении)**
 
 ```ts
 import { test, expect } from '@playwright/test';
@@ -4439,7 +4446,7 @@ test('Корзина: повторное добавление того же ва
 });
 ```
 
-- [ ] **Step 6: `e2e/cart.spec.ts` (степпер, удаление, подытог, пустое состояние)**
+- [x] **Step 6: `e2e/cart.spec.ts` (степпер, удаление, подытог, пустое состояние)**
 
 ```ts
 import { test, expect } from '@playwright/test';
@@ -4461,7 +4468,7 @@ test('корзина: степпер меняет подытог, удалени
 });
 ```
 
-- [ ] **Step 7: `e2e/a11y.spec.ts` (axe на ключевых страницах + focus-ring)**
+- [x] **Step 7: `e2e/a11y.spec.ts` (axe на ключевых страницах + focus-ring)**
 
 ```ts
 import { test, expect } from '@playwright/test';
@@ -4479,13 +4486,13 @@ for (const path of ['/', '/catalog', '/product/stride-velocity-trail', '/cart'])
 }
 ```
 
-- [ ] **Step 8: Запустить e2e (нужен сид + .env)**
+- [x] **Step 8: Запустить e2e (нужен сид + .env)**
 
 Run: `npx playwright test`
 Expected: все спеки зелёные.
 > Если a11y находит нарушения — устранить (типовое: контраст текста на lime, отсутствующие `aria-label` на иконочных кнопках, `alt` на изображениях). Это часть критериев §11.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add stride-app/playwright.config.ts stride-app/e2e stride-app/package.json
@@ -4498,7 +4505,7 @@ git commit -m "test(stride-app): Playwright e2e (лендинг/каталог/P
 
 **Files:** (нет новых; проверки + возможные точечные правки)
 
-- [ ] **Step 1: Полная проверка качества**
+- [x] **Step 1: Полная проверка качества**
 
 Run по очереди из `stride-app/`:
 ```bash
@@ -4509,17 +4516,17 @@ npx playwright test
 ```
 Expected: typecheck — 0 ошибок; vitest — все unit зелёные; `next build` — успешная сборка без ошибок; e2e — зелёные.
 
-- [ ] **Step 2: Чек-лист критериев готовности Фазы 1 (§15 спеки)**
+- [x] **Step 2: Чек-лист критериев готовности Фазы 1 (§15 спеки)**
 
 Пройти вручную (dev-сервер), отметить каждый пункт:
-- [ ] `prisma:push` + `prisma:seed` создают рабочую БД с 5 моделями (проверено в Задачах 4, 8).
-- [ ] Лендинг: hero, бенто-категории со счётчиками, бестселлеры.
-- [ ] Каталог: фильтры (категория/бренд/пол/размер/цвет/цена/в наличии), сортировки (5), пагинация, состояния loading/empty; счётчики фасетов.
-- [ ] PDP: переключение расцветки (`?color=`), выбор размера (недоступные disabled), add-to-cart обновляет бейдж; specs; related; 404 для неизвестного slug.
-- [ ] Корзина: степпер, удаление, корректный подытог, индикатор бесплатной доставки, шов checkout (disabled), пустое состояние.
-- [ ] Корзина переживает перезагрузку (cookie `cartToken`); сток/`active` учитываются при добавлении (нельзя добавить sold-out/сверх стока).
-- [ ] Все unit- и e2e-тесты зелёные; a11y-проверки проходят.
-- [ ] Визуальное соответствие прототипам (токены/радиусы/типографика/glass-header/footer).
+- [x] `prisma:push` + `prisma:seed` создают рабочую БД с 5 моделями (проверено в Задачах 4, 8).
+- [x] Лендинг: hero, бенто-категории со счётчиками, бестселлеры.
+- [x] Каталог: фильтры (категория/бренд/пол/размер/цвет/цена/в наличии), сортировки (5), пагинация, состояния loading/empty; счётчики фасетов.
+- [x] PDP: переключение расцветки (`?color=`), выбор размера (недоступные disabled), add-to-cart обновляет бейдж; specs; related; 404 для неизвестного slug.
+- [x] Корзина: степпер, удаление, корректный подытог, индикатор бесплатной доставки, шов checkout (disabled), пустое состояние.
+- [x] Корзина переживает перезагрузку (cookie `cartToken`); сток/`active` учитываются при добавлении (нельзя добавить sold-out/сверх стока).
+- [x] Все unit- и e2e-тесты зелёные; a11y-проверки проходят.
+- [x] Визуальное соответствие прототипам (токены/радиусы/типографика/glass-header/footer).
 
 - [ ] **Step 3: Финальный commit (если были правки)**
 
