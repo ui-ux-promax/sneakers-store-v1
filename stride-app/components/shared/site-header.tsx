@@ -3,6 +3,7 @@ import { MainNav } from './main-nav';
 import { MobileNav } from './mobile-nav';
 import { HeaderSearch } from './header-search';
 import { CartBadge } from './cart-badge';
+import { AuthNav } from './auth/auth-nav';
 
 export function SiteHeader() {
   return (
@@ -17,6 +18,7 @@ export function SiteHeader() {
           <MainNav />
           <div className="flex-1" />
           <HeaderSearch />
+          <AuthNav />
           <CartBadge />
         </div>
       </div>
