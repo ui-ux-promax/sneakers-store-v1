@@ -4535,9 +4535,11 @@ git add -A
 git commit -m "chore(stride-app): финальная сверка Фазы 1 (typecheck/test/build/e2e зелёные)"
 ```
 
-- [ ] **Step 4: Завершение ветки**
+- [x] **Step 4: Завершение ветки**
 
 Использовать `superpowers:finishing-a-development-branch` для выбора варианта интеграции (merge в `main` / PR в `ui-ux-promax/sneakers-store-v1` / оставить ветку).
+> Выбран вариант **PR в `main`**: https://github.com/ui-ux-promax/sneakers-store-v1/pull/1
+> Vercel: прод-ветка переключена на `main` — прод заработает после merge PR #1 (до merge `main` без `stride-app`).
 
 ---
 
