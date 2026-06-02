@@ -1,0 +1,25 @@
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  testDir: './e2e',
+  fullyParallel: false,
+  retries: 2, // транзиентные Neon-аборты (cold start «operation aborted») на медленном соединении
+  timeout: 120_000,
+  expect: { timeout: 40_000 },
+  globalSetup: './e2e/global-setup.ts',
+  use: {
+    baseURL: 'http://localhost:3000',
+    trace: 'on-first-retry',
+    actionTimeout: 40_000,
+    navigationTimeout: 60_000,
+  },
+  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  webServer: {
+    // dev-сервер: NODE_ENV=development → cookie cartToken без secure → сохраняется по http
+    // (в prod-сборке secure:true и cookie не персистится по http в e2e). Прогрев маршрутов — в globalSetup.
+    command: 'npm run dev',
+    url: 'http://localhost:3000',
+    reuseExistingServer: false,
+    timeout: 180_000,
+  },
+});

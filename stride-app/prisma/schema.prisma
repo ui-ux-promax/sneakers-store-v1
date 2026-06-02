@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+enum Gender {
+  MEN
+  WOMEN
+  UNISEX
+  KIDS
+}
+
+model Category {
+  id         String    @id @default(cuid())
+  name       String
+  slug       String    @unique
+  tagline    String?
+  coverImage String?
+  sortOrder  Int       @default(0)
+  products   Product[]
+
+  @@index([sortOrder])
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  brand        String
+  gender       Gender   @default(UNISEX)
+  categoryId   String
+  category     Category @relation(fields: [categoryId], references: [id])
+  description  String?
+  fitNote      String?
+  specs        Json?
+  isBestseller Boolean  @default(false)
+  active       Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  colorways    ProductColorway[]
+
+  @@index([categoryId, sortOrder])
+  @@index([brand])
+  @@index([gender])
+  @@index([active])
+}
+
+model ProductColorway {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String
+  slug      String
+  swatchHex String?
+  isDefault Boolean @default(false)
+  sortOrder Int     @default(0)
+  images    ProductImage[]
+  variants  ProductVariant[]
+
+  @@unique([productId, slug])
+  @@index([productId])
+}
+
+model ProductImage {
+  id         String          @id @default(cuid())
+  colorwayId String
+  colorway   ProductColorway @relation(fields: [colorwayId], references: [id], onDelete: Cascade)
+  url        String
+  alt        String?
+  sortOrder  Int             @default(0)
+
+  @@index([colorwayId, sortOrder])
+}
+
+model ProductVariant {
+  id             String          @id @default(cuid())
+  colorwayId     String
+  colorway       ProductColorway @relation(fields: [colorwayId], references: [id], onDelete: Cascade)
+  sizeEu         Decimal         @db.Decimal(3, 1)
+  sku            String          @unique
+  price          Int
+  compareAtPrice Int?
+  stock          Int             @default(0)
+  active         Boolean         @default(true)
+  cartItems      CartItem[]
+
+  @@unique([colorwayId, sizeEu])
+  @@index([colorwayId])
+}
+
+model Cart {
+  id          String     @id @default(cuid())
+  token       String     @unique
+  userId      String?
+  totalAmount Int        @default(0)
+  items       CartItem[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model CartItem {
+  id               String         @id @default(cuid())
+  cartId           String
+  cart             Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productVariantId String
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+  quantity         Int            @default(1)
+  createdAt        DateTime       @default(now())
+
+  @@unique([cartId, productVariantId])
+}
