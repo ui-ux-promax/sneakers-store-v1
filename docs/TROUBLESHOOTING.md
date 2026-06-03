@@ -183,3 +183,26 @@
   ходят) — проявляется только живым OAuth-входом. Сверять схему с эталоном Auth.js при добавлении
   провайдеров.
 - **Коммиты:** `af5919c`.
+
+---
+
+## P9. `placeOrder` падал `Transactions are not supported in HTTP mode` — nested-create И createMany триггерят транзакцию
+
+- **Когда:** 2026-06-03, Фаза 2.1a (e2e в CI, первый реальный прогон `placeOrder`).
+- **Симптом:** e2e чекаута падали — после «Оформить заказ» страница оставалась на `/checkout`; сервер-лог
+  `⨯ [Error: Transactions are not supported in HTTP mode]` ×6 (= 2 теста × 3 попытки). `placeOrder`
+  ловил ошибку в catch → `{ok:false}` → форма показывала ошибку и не редиректила.
+- **Причина:** хотя `$transaction` НЕ использовался, Prisma исполняет в **неявной интерактивной
+  транзакции** как вложенный `order.create({ data: { items: { create: [...] } } })`, ТАК И
+  `orderItem.createMany(...)`. Neon HTTP-адаптер транзакции не поддерживает (см. P5). Unit-тесты мокали
+  `prisma` → не ловили. **Проверено repro против живого адаптера** (на Cart/CartItem как прокси):
+  nested-create → fail, `createMany` → fail (!), одиночный `create` + каскадный `delete` → OK.
+- **Решение:** позиции заказа создавать **по одной** в цикле (`for (it of items) prisma.orderItem.create(...)`);
+  откат при сбое — `prisma.order.delete({ where: { id } })` (DB-каскад `onDelete: Cascade` удаляет
+  созданные позиции одним DELETE — без транзакции) + возврат стока. Файл `app/actions/order.ts`.
+- **На будущее:** на Neon HTTP **запрещены** nested-write (`{ create }`/`{ createMany }` в relation),
+  `createMany`, и любые `$transaction`. Только одиночные `create`/`update`/`updateMany`/`delete` +
+  ручная компенсация (паттерн cart-merge, P5). `relationMode` по умолчанию `foreignKeys` → каскадные
+  удаления делает БД одним statement, это безопасно. Юнит-мок Prisma не отлавливает этот класс —
+  ловится только интеграцией/repro против реального адаптера.
+- **Коммиты:** `067c845`.
