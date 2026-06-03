@@ -1,6 +1,6 @@
 # STRIDE — Фаза 2.1a (Checkout COD + Orders): дизайн
 
-> **Статус:** на ревью.
+> **Статус:** реализовано (P2.1a).
 > **Дата:** 2026-06-03. **Ветка:** `feat/phase2.1-checkout`.
 > **Предшественники:** P2.0 Auth (в проде, `main`). Research-карта: `docs/superpowers/research/2026-06-02-phase2-candidates.md`.
 > **Прототип UI:** `ui-designe and prototypes/prototypes-app/checkout.html`, `profile.html` (вкладка «Мои заказы»).
@@ -158,9 +158,9 @@ Relation-поля: `User.orders Order[]`, `ProductVariant.orderItems OrderItem[]
 | `components/shared/cart/order-summary.tsx` | disabled-кнопка (стр. 40) → `<Link href="/checkout">`. Промо-инпут остаётся disabled. |
 | `constants/*` | `SHIPPING_FLAT` — конфиг-константа курьерской ставки ниже порога (стартовое значение 500₽, меняется правкой конфига, не кода); `FREE_SHIPPING_THRESHOLD` уже есть. |
 
-**Статусы → UI (`ORDER_STATUS_META`):** `PENDING`→«Оформлен» (info); `PROCESSING`→«Обрабатывается» (warning); `SHIPPED`→«В пути» (info); `DELIVERED`→«Доставлен» (success); `CANCELLED`→«Отменён» (danger, сумма зачёркнута). Кнопка карточки: `PENDING`→«Отменить», иначе «Подробнее».
+**Статусы → UI (`ORDER_STATUS_META`):** `PENDING`→«Оформлен» (info); `PROCESSING`→«Обрабатывается» (warning); `SHIPPED`→«В пути» (info); `DELIVERED`→«Доставлен» (success); `CANCELLED`→«Отменён» (danger, сумма зачёркнута). Ссылка карточки всегда «Подробнее» → ведёт на деталь заказа.
 
-**Отмена — единое действие:** и кнопка «Отменить» на карточке (PENDING), и «Отменить заказ» на детали вызывают **один** `cancelOrder` с предварительным подтверждением (client confirm). Два входа в одно действие, не разное поведение.
+**Отмена — единая точка на детали заказа:** действие `cancelOrder` (с предварительным client-confirm) живёт только на странице `/orders/[number]` (кнопка «Отменить заказ» при `PENDING`). Карточка в «Мои заказы» отмену не вызывает — только навигирует на деталь, чтобы подпись не вводила в заблуждение.
 
 **Поток:** `/cart` → «Оформить заказ» → `/checkout` → `placeOrder` → `/orders/[number]` → виден в `/profile`; пока PENDING — отменяем.
 
