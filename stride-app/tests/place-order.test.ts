@@ -8,7 +8,8 @@ vi.mock('@/lib/prisma-client', () => ({
   prisma: {
     cart: { findFirst: vi.fn() },
     productVariant: { updateMany: vi.fn(), update: vi.fn() },
-    order: { create: vi.fn() },
+    order: { create: vi.fn(), delete: vi.fn() },
+    orderItem: { create: vi.fn() },
     cartItem: { deleteMany: vi.fn() },
   },
 }));
@@ -25,6 +26,8 @@ const updateMany = prisma.productVariant.updateMany as unknown as ReturnType<typ
 const variantUpdate = prisma.productVariant.update as unknown as ReturnType<typeof vi.fn>;
 const orderCreate = prisma.order.create as unknown as ReturnType<typeof vi.fn>;
 const cartItemDeleteMany = prisma.cartItem.deleteMany as unknown as ReturnType<typeof vi.fn>;
+const orderItemCreate = prisma.orderItem.create as unknown as ReturnType<typeof vi.fn>;
+const orderDelete = prisma.order.delete as unknown as ReturnType<typeof vi.fn>;
 
 const validForm = {
   contactName: 'Neo', contactPhone: '+79990000000', contactEmail: 'neo@e.test',
@@ -51,17 +54,20 @@ beforeEach(() => {
   cookiesMock.mockResolvedValue({ get: () => ({ value: 't' }) });
   variantUpdate.mockResolvedValue({});
   cartItemDeleteMany.mockResolvedValue({ count: 1 });
+  orderItemCreate.mockResolvedValue({});
+  orderDelete.mockResolvedValue({});
 });
 
 describe('placeOrder', () => {
   it('успех — декремент, создание заказа, очистка корзины', async () => {
     findFirst.mockResolvedValue(cartWith('v1'));
     updateMany.mockResolvedValue({ count: 1 });
-    orderCreate.mockResolvedValue({ orderNumber: 1025 });
+    orderCreate.mockResolvedValue({ id: 'o1', orderNumber: 1025 });
     const r = await placeOrder(validForm);
     expect(r).toEqual({ ok: true, orderNumber: 1025 });
     expect(updateMany).toHaveBeenCalledTimes(1);
     expect(orderCreate).toHaveBeenCalledOnce();
+    expect(orderItemCreate).toHaveBeenCalledTimes(1);
     expect(cartItemDeleteMany).toHaveBeenCalledOnce();
   });
 
@@ -80,6 +86,18 @@ describe('placeOrder', () => {
     orderCreate.mockRejectedValue(new Error('db down'));
     const r = await placeOrder(validForm);
     expect(r.ok).toBe(false);
+    expect(variantUpdate).toHaveBeenCalledTimes(2);
+    expect(orderItemCreate).not.toHaveBeenCalled();
+  });
+
+  it('сбой создания позиций — откат заказа и возврат стока', async () => {
+    findFirst.mockResolvedValue(cartWith('v1', 'v2'));
+    updateMany.mockResolvedValue({ count: 1 });
+    orderCreate.mockResolvedValue({ id: 'o1', orderNumber: 1026 });
+    orderItemCreate.mockRejectedValue(new Error('items down'));
+    const r = await placeOrder(validForm);
+    expect(r.ok).toBe(false);
+    expect(orderDelete).toHaveBeenCalledWith({ where: { id: 'o1' } });
     expect(variantUpdate).toHaveBeenCalledTimes(2);
   });
 

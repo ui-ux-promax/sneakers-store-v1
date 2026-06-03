@@ -67,6 +67,7 @@ export async function placeOrder(raw: unknown): Promise<PlaceOrderResult> {
     }
   }
 
+  let orderId: string;
   let orderNumber: number;
   try {
     const order = await prisma.order.create({
@@ -84,14 +85,33 @@ export async function placeOrder(raw: unknown): Promise<PlaceOrderResult> {
         shippingAmount,
         totalAmount,
         paymentMethod: 'cod',
-        items: { create: snapshot.items },
       },
-      select: { orderNumber: true },
+      select: { id: true, orderNumber: true },
     });
+    orderId = order.id;
     orderNumber = order.orderNumber;
   } catch (e) {
     await restoreStock(decremented);
     logger.error('place_order_create_failed', e);
+    return { ok: false, error: 'Не удалось оформить заказ. Попробуйте позже' };
+  }
+
+  // Позиции — ПО ОДНОЙ (одиночные INSERT). И вложенный `items: { create }`, и
+  // `createMany` Prisma исполняет в НЕЯВНОЙ транзакции, которую Neon HTTP не поддерживает
+  // (проверено против адаптера; TROUBLESHOOTING P5/P7). Сбой → откат: удалить заказ
+  // (каскад onDelete уберёт уже созданные позиции — одиночный DELETE, без транзакции) + вернуть сток.
+  try {
+    for (const it of snapshot.items) {
+      await prisma.orderItem.create({ data: { ...it, orderId } });
+    }
+  } catch (e) {
+    try {
+      await prisma.order.delete({ where: { id: orderId } });
+    } catch (delErr) {
+      logger.error('place_order_order_rollback_failed', delErr, { orderId });
+    }
+    await restoreStock(decremented);
+    logger.error('place_order_items_failed', e, { orderId });
     return { ok: false, error: 'Не удалось оформить заказ. Попробуйте позже' };
   }
 
