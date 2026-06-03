@@ -90,6 +90,16 @@ describe('placeOrder', () => {
     expect(updateMany).not.toHaveBeenCalled();
   });
 
+  it('неактивный товар — отказ до списания стока', async () => {
+    const cart = cartWith('v1');
+    cart.items[0].productVariant.active = false;
+    findFirst.mockResolvedValue(cart);
+    const r = await placeOrder(validForm);
+    expect(r.ok).toBe(false);
+    expect(updateMany).not.toHaveBeenCalled();
+    expect(orderCreate).not.toHaveBeenCalled();
+  });
+
   it('paymentMethod != cod — отказ', async () => {
     const r = await placeOrder({ ...validForm, paymentMethod: 'card' });
     expect(r.ok).toBe(false);
