@@ -1,6 +1,7 @@
 'use server';
 
 import { auth } from '@/auth';
+import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma-client';
 import { cartInclude } from '@/lib/cart-details';
@@ -102,4 +103,38 @@ export async function placeOrder(raw: unknown): Promise<PlaceOrderResult> {
   }
 
   return { ok: true, orderNumber };
+}
+
+export type CancelOrderResult = { ok: true } | { ok: false; error: string };
+
+export async function cancelOrder(orderId: string): Promise<CancelOrderResult> {
+  const session = await auth();
+  if (!session?.user?.id) return { ok: false, error: 'Не авторизован' };
+  const userId = session.user.id;
+
+  const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } });
+  if (!order || order.userId !== userId || order.status !== 'PENDING') {
+    return { ok: false, error: 'Этот заказ нельзя отменить' };
+  }
+
+  const locked = await prisma.order.updateMany({
+    where: { id: orderId, userId, status: 'PENDING' },
+    data: { status: 'CANCELLED' },
+  });
+  if (locked.count === 0) return { ok: false, error: 'Заказ уже обработан' };
+
+  for (const item of order.items) {
+    try {
+      await prisma.productVariant.update({
+        where: { id: item.productVariantId },
+        data: { stock: { increment: item.quantity } },
+      });
+    } catch (e) {
+      logger.error('cancel_stock_restore_failed', e, { orderId, variantId: item.productVariantId });
+    }
+  }
+
+  revalidatePath('/profile');
+  revalidatePath(`/orders/${order.orderNumber}`);
+  return { ok: true };
 }
