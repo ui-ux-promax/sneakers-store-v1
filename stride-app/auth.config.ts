@@ -26,7 +26,10 @@ export default {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = Boolean(auth?.user);
-      const isProtected = nextUrl.pathname.startsWith('/profile');
+      const isProtected =
+        nextUrl.pathname.startsWith('/profile') ||
+        nextUrl.pathname.startsWith('/checkout') ||
+        nextUrl.pathname.startsWith('/orders');
       if (isProtected) return isLoggedIn;
       return true;
     },
