@@ -7,6 +7,7 @@ import { hashPassword } from '@/lib/password';
 import { normalizeEmail } from '@/lib/auth-identity';
 import { registerSchema } from '@/services/dto/auth.dto';
 import { checkAuthRateLimit, extractClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 import { signIn } from '@/auth';
 
 export type RegisterResult = { ok: true } | { ok: false; error: string };
@@ -18,24 +19,31 @@ export async function registerUser(raw: unknown): Promise<RegisterResult> {
   const email = normalizeEmail(parsed.data.email);
   if (!email) return { ok: false, error: 'Некорректный email' };
 
-  // Rate-limit ДО любой дорогой работы (argon2-хэш ~19 МБ/попытка) — анти-DoS (#10).
-  const ip = extractClientIp({ headers: await headers() });
-  const limit = await checkAuthRateLimit(ip);
-  if (!limit.success) return { ok: false, error: 'Слишком много попыток. Попробуйте позже' };
-
-  // Дешёвая проверка дубликата ДО argon2: спам существующих email не оплачивает хэш (#10).
-  // P2002-catch ниже всё равно нужен — закрывает гонку двух одновременных регистраций.
-  const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
-  if (existing) return { ok: false, error: 'Такой email уже зарегистрирован' };
-
-  const passwordHash = await hashPassword(parsed.data.password);
   try {
+    // Rate-limit ДО любой дорогой работы (argon2-хэш ~19 МБ/попытка) — анти-DoS (#10).
+    const ip = extractClientIp({ headers: await headers() });
+    const limit = await checkAuthRateLimit(ip);
+    if (!limit.success) return { ok: false, error: 'Слишком много попыток. Попробуйте позже' };
+
+    // Дешёвая проверка дубликата ДО argon2: спам существующих email не оплачивает хэш (#10).
+    // P2002-catch ниже всё равно нужен — закрывает гонку двух одновременных регистраций.
+    const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+    if (existing) return { ok: false, error: 'Такой email уже зарегистрирован' };
+
+    const passwordHash = await hashPassword(parsed.data.password);
     await prisma.user.create({ data: { email, passwordHash, name: parsed.data.name } });
   } catch (e) {
+    // Гонка двух одновременных регистраций — уникальный индекс email.
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
       return { ok: false, error: 'Такой email уже зарегистрирован' };
     }
-    throw e;
+    // Любой другой сбой (нет таблиц / коннект / инициализация) НЕ роняем молча: логируем
+    // и возвращаем понятную ошибку с кодом Prisma (P2021/P1017/…) для быстрой диагностики.
+    // TODO(P2.1): убрать код ошибки из текста для пользователя, оставить только в логах.
+    const code = (e as { code?: unknown })?.code;
+    logger.error('register_failed', e, { code: typeof code === 'string' ? code : undefined });
+    const suffix = typeof code === 'string' ? ` (${code})` : '';
+    return { ok: false, error: `Не удалось завершить регистрацию${suffix}. Попробуйте позже` };
   }
 
   // redirect:false — устанавливаем сессию и ВОЗВРАЩАЕМ управление (не бросаем NEXT_REDIRECT),
@@ -44,7 +52,6 @@ export async function registerUser(raw: unknown): Promise<RegisterResult> {
   try {
     await signIn('credentials', { email, password: parsed.data.password, redirect: false });
   } catch (err) {
-    const { logger } = await import('@/lib/logger');
     logger.error('auto_signin_after_register_failed', err);
   }
   return { ok: true };
