@@ -1,7 +1,24 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  serverExternalPackages: ['@node-rs/argon2', '@prisma/client', '@prisma/adapter-neon', '@neondatabase/serverless'],
   poweredByHeader: false,
+  webpack(config, { nextRuntime }) {
+    // Edge middleware bundles auth.config.ts which lazy-imports argon2/prisma.
+    // Those are Node-only; stub them out so the edge bundle compiles cleanly.
+    // The `authorize` callback inside Credentials runs only in the Node runtime (auth.ts),
+    // never in the edge middleware (which only uses the `authorized` callback).
+    if (nextRuntime === 'edge') {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        '@node-rs/argon2': false,
+        '@prisma/client': false,
+        '@prisma/adapter-neon': false,
+        '@neondatabase/serverless': false,
+      };
+    }
+    return config;
+  },
   async headers() {
     return [
       {

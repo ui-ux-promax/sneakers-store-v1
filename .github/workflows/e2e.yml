@@ -22,6 +22,12 @@ jobs:
       POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING }}
       # NEXT_PUBLIC_API_URL не нужен — axios по умолчанию ходит на относительный /api.
       NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+      # Auth.js (Фаза 2.0): AUTH_SECRET обязателен для подписи JWT, иначе auth-e2e падают.
+      # Если GH-секрет не задан — используем фиктивное значение (CI бьёт тестовую БД, не прод).
+      AUTH_SECRET: ${{ secrets.AUTH_SECRET || 'ci-e2e-insecure-test-secret-not-for-prod-0001' }}
+      # Google OAuth: для инициализации провайдера; credentials-e2e их не используют (пусто — ок).
+      AUTH_GOOGLE_ID: ${{ secrets.AUTH_GOOGLE_ID }}
+      AUTH_GOOGLE_SECRET: ${{ secrets.AUTH_GOOGLE_SECRET }}
     steps:
       - uses: actions/checkout@v4
 
@@ -36,6 +42,11 @@ jobs:
 
       # Браузер + системные зависимости для Chromium (в playwright.config только chromium).
       - run: npx playwright install --with-deps chromium
+
+      # Применить схему Prisma к CI-БД ДО e2e. Идемпотентно: таблицы Фазы 1 уже есть,
+      # db push до-создаёт auth-таблицы Фазы 2 (User/Account/VerificationToken + Cart.userId FK).
+      # Без этого шага auth-e2e падают на `relation "public.User" does not exist` (42P01).
+      - run: npm run prisma:push
 
       # Если CI гоняется против ЧИСТОЙ тестовой БД (не засиженного dev/prod Neon),
       # раскомментируй сид — тесты ждут товар stride-velocity-trail (размер 42 stock>0, 43 stock 0):

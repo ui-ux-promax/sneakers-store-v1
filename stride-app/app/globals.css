@@ -59,6 +59,17 @@
     text-transform: uppercase; color: hsl(var(--color-text-muted));
   }
 
+  .auth-card {
+    background: hsl(var(--color-surface)); border: 1px solid hsl(var(--color-border));
+    border-radius: 20px; padding: 32px; max-width: 420px; width: 100%;
+    box-shadow: 0 4px 24px hsl(var(--color-text) / 0.06);
+  }
+  .auth-link {
+    color: hsl(var(--color-text)); text-decoration: underline; text-underline-offset: 3px;
+    font-weight: 500; transition: color 0.15s;
+  }
+  .auth-link:hover { color: hsl(var(--color-text-muted)); }
+
   .glass-header {
     -webkit-backdrop-filter: blur(24px);
     backdrop-filter: blur(24px);
@@ -133,4 +144,18 @@
   .skel { background-image: linear-gradient(90deg, hsl(var(--color-surface-soft)) 0%, hsl(48 30% 89%) 50%, hsl(var(--color-surface-soft)) 100%); background-size: 200% 100%; animation: shimmer 1.4s ease infinite; }
   @keyframes shimmer { to { background-position: -200% 0; } }
   @media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
+
+  /* Длинный текстовый контент (legal-страницы). Ширину задаёт контейнер страницы. */
+  .prose { color: hsl(var(--color-text)); }
+  .prose h2 {
+    font-family: var(--font-unbounded), 'Unbounded', sans-serif;
+    font-weight: 700; font-size: 1.5rem; line-height: 1.2;
+    margin-top: 2.5rem; margin-bottom: 1rem;
+  }
+  .prose p { line-height: 1.7; margin-bottom: 1rem; }
+  .prose ul { margin-bottom: 1.5rem; padding-left: 1.5rem; }
+  .prose li { line-height: 1.7; margin-bottom: 0.5rem; }
+  .prose a { color: hsl(var(--color-text)); text-decoration: underline; text-underline-offset: 2px; }
+  .prose a:hover { color: hsl(var(--color-text-muted)); }
+  .prose strong { font-weight: 600; }
 }

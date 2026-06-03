@@ -32,3 +32,13 @@ export async function checkCartRateLimit(_ip: string): Promise<RateLimitResult> 
   logger.debug('rate_limit_noop_phase1');
   return NOOP_RESULT;
 }
+
+// Лимитер для auth-операций (регистрация/логин) — строже корзины. Точка подключения:
+// при сконфигурированном Upstash здесь включится реальный sliding-window. Пока fail-open (NOOP),
+// поэтому основная защита от argon2-DoS — дешёвая проверка дубликата ДО хэша в registerUser
+// (см. docs/TROUBLESHOOTING.md). Без Upstash полноценного троттлинга нет — это осознанно.
+export async function checkAuthRateLimit(_ip: string): Promise<RateLimitResult> {
+  if (!isRateLimitConfigured()) return NOOP_RESULT;
+  logger.debug('auth_rate_limit_noop_phase1');
+  return NOOP_RESULT;
+}
