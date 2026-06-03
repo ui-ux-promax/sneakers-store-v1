@@ -88,6 +88,7 @@ model ProductVariant {
   stock          Int             @default(0)
   active         Boolean         @default(true)
   cartItems      CartItem[]
+  orderItems     OrderItem[]
 
   @@unique([colorwayId, sizeEu])
   @@index([colorwayId])
@@ -125,6 +126,7 @@ model User {
   updatedAt     DateTime  @updatedAt
   accounts      Account[]
   carts         Cart[]
+  orders        Order[]
 
   @@index([role])
 }
@@ -166,4 +168,61 @@ model CartItem {
   createdAt        DateTime       @default(now())
 
   @@unique([cartId, productVariantId])
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  orderNumber    Int         @unique @default(autoincrement())
+  userId         String
+  user           User        @relation(fields: [userId], references: [id])
+  status         OrderStatus @default(PENDING)
+
+  contactName    String
+  contactPhone   String
+  contactEmail   String
+
+  shippingMethod String
+  city           String
+  addressLine    String
+  addressComment String?
+
+  itemsTotal     Int
+  shippingAmount Int
+  totalAmount    Int
+
+  paymentMethod  String
+
+  items          OrderItem[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([status])
+}
+
+model OrderItem {
+  id               String         @id @default(cuid())
+  orderId          String
+  order            Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productVariantId String
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+
+  sku          String
+  productName  String
+  colorwayName String
+  sizeEu       String
+  imageUrl     String?
+  unitPrice    Int
+  quantity     Int
+  lineTotal    Int
+
+  @@index([orderId])
 }
