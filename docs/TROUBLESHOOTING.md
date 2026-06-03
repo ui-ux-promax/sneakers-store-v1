@@ -158,3 +158,28 @@
   `db push` / `Your database is now in sync`). При добавлении preview-окружений помнить: **ветка БД —
   на каждую git-ветку**, схему туда применяет именно build-команда.
 - **Коммиты:** `30e47f4` (vercel.json db push); диагностика `490b1ac`, `b5c0272`.
+
+---
+
+## P8. Google-вход падал `Unknown argument image` — в модели `User` не было колонки `image`
+
+- **Когда:** 2026-06-03, Фаза 2.0 (постдеплойная проверка прод-домена — первый реальный Google-вход).
+- **Симптом:** email/пароль работали везде, но вход через Google на проде падал. В логах —
+  `AdapterError` → `PrismaClientValidationError: Invalid prisma.user.create() invocation … Unknown
+  argument 'image'. Did you mean 'email'?`. OAuth-обмен и redirect-URI были исправны (юзер уже
+  возвращался из Google) — падало строго на записи пользователя.
+- **Причина:** `@auth/prisma-adapter` на ПЕРВОМ OAuth-входе вызывает
+  `createUser({ data: { name, email, image, emailVerified } })` — это стандартная форма Auth.js
+  `User`. В нашей модели (Task 2 плана) колонку `image` не перенесли, поэтому Prisma отвергала
+  payload. email/пароль не задевало: тот путь `image` никогда не пишет, только Google.
+- **Решение:** добавить `image String?` в модель `User` (`prisma/schema.prisma`). Прод-`db push`
+  в Vercel-build добавляет колонку (nullable → без потери данных, см. [[neon-schema-not-auto-applied]]).
+  Проверено вживую: вход двумя разными Google-аккаунтами создаёт пользователей, `/profile` показывает
+  имя/почту.
+- **Проверка / на будущее:** при подключении любого OAuth-провайдера через `@auth/prisma-adapter`
+  модель `User` должна включать поля, которые пишет адаптер: как минимум `name`, `email`, `image`,
+  `emailVerified` (+ модель `Account`, а для `session.strategy='database'` — ещё `Session`; у нас JWT,
+  поэтому `Session` не нужен). Юнит-тесты/`build`/`typecheck` это НЕ ловят (Prisma мокается, в БД не
+  ходят) — проявляется только живым OAuth-входом. Сверять схему с эталоном Auth.js при добавлении
+  провайдеров.
+- **Коммиты:** `af5919c`.
