@@ -37,6 +37,8 @@ test('сквозной COD-заказ: cart → checkout → order → исто�
   await addSeedProductToCart(page);
 
   await page.goto('/checkout');
+  // Телефон обязателен (checkoutSchema min 5) и НЕ префиллится у юзера без телефона — заполняем явно.
+  await page.getByLabel('Телефон').fill('+79990000000');
   await page.getByLabel('Город').fill('Москва');
   await page.getByLabel('Улица, дом, квартира').fill('Тверская 1');
   await page.getByRole('button', { name: 'Оформить заказ →' }).click();
@@ -57,6 +59,8 @@ test('отмена PENDING-заказа переводит его в стату�
   await addSeedProductToCart(page);
 
   await page.goto('/checkout');
+  // Телефон обязателен (checkoutSchema min 5) и НЕ префиллится у юзера без телефона — заполняем явно.
+  await page.getByLabel('Телефон').fill('+79990000000');
   await page.getByLabel('Город').fill('Москва');
   await page.getByLabel('Улица, дом, квартира').fill('Тверская 1');
   await page.getByRole('button', { name: 'Оформить заказ →' }).click();
