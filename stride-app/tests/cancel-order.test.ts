@@ -7,7 +7,8 @@ vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: 
 vi.mock('@/lib/cart', () => ({ recalcCartTotalByToken: vi.fn() }));
 vi.mock('@/lib/prisma-client', () => ({
   prisma: {
-    order: { findUnique: vi.fn(), updateMany: vi.fn() },
+    $executeRaw: vi.fn(),
+    order: { findUnique: vi.fn() },
     productVariant: { update: vi.fn() },
   },
 }));
@@ -18,7 +19,7 @@ import { prisma } from '@/lib/prisma-client';
 
 const authMock = auth as unknown as ReturnType<typeof vi.fn>;
 const findUnique = prisma.order.findUnique as unknown as ReturnType<typeof vi.fn>;
-const orderUpdateMany = prisma.order.updateMany as unknown as ReturnType<typeof vi.fn>;
+const execRaw = prisma.$executeRaw as unknown as ReturnType<typeof vi.fn>;
 const variantUpdate = prisma.productVariant.update as unknown as ReturnType<typeof vi.fn>;
 
 function pendingOrder() {
@@ -32,12 +33,13 @@ beforeEach(() => {
   vi.clearAllMocks();
   authMock.mockResolvedValue({ user: { id: 'u1' } });
   variantUpdate.mockResolvedValue({});
+  execRaw.mockResolvedValue(1);
 });
 
 describe('cancelOrder', () => {
   it('успех — статус CANCELLED, возврат стока по всем позициям', async () => {
     findUnique.mockResolvedValue(pendingOrder());
-    orderUpdateMany.mockResolvedValue({ count: 1 });
+    execRaw.mockResolvedValue(1);
     const r = await cancelOrder('o1');
     expect(r).toEqual({ ok: true });
     expect(variantUpdate).toHaveBeenCalledTimes(2);
@@ -48,7 +50,7 @@ describe('cancelOrder', () => {
     findUnique.mockResolvedValue({ ...pendingOrder(), userId: 'other' });
     const r = await cancelOrder('o1');
     expect(r.ok).toBe(false);
-    expect(orderUpdateMany).not.toHaveBeenCalled();
+    expect(execRaw).not.toHaveBeenCalled();
     expect(variantUpdate).not.toHaveBeenCalled();
   });
 
@@ -56,12 +58,12 @@ describe('cancelOrder', () => {
     findUnique.mockResolvedValue({ ...pendingOrder(), status: 'SHIPPED' });
     const r = await cancelOrder('o1');
     expect(r.ok).toBe(false);
-    expect(orderUpdateMany).not.toHaveBeenCalled();
+    expect(execRaw).not.toHaveBeenCalled();
   });
 
-  it('гонка: updateMany count=0 — сток НЕ возвращается', async () => {
+  it('гонка: лок не сработал (0 строк) — сток НЕ возвращается', async () => {
     findUnique.mockResolvedValue(pendingOrder());
-    orderUpdateMany.mockResolvedValue({ count: 0 });
+    execRaw.mockResolvedValue(0);
     const r = await cancelOrder('o1');
     expect(r.ok).toBe(false);
     expect(variantUpdate).not.toHaveBeenCalled();

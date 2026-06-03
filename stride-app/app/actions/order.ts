@@ -55,11 +55,13 @@ export async function placeOrder(raw: unknown): Promise<PlaceOrderResult> {
 
   const decremented: { id: string; qty: number }[] = [];
   for (const it of snapshot.items) {
-    const res = await prisma.productVariant.updateMany({
-      where: { id: it.productVariantId, stock: { gte: it.quantity } },
-      data: { stock: { decrement: it.quantity } },
-    });
-    if (res.count === 1) {
+    // Атомарный условный декремент. `updateMany` на Neon HTTP идёт через транзакцию
+    // (запрещено — TROUBLESHOOTING P9), поэтому $executeRaw: одиночный UPDATE,
+    // возвращает число затронутых строк (0 = не хватило стока).
+    const affected = await prisma.$executeRaw`
+      UPDATE "ProductVariant" SET stock = stock - ${it.quantity}
+      WHERE id = ${it.productVariantId} AND stock >= ${it.quantity}`;
+    if (affected === 1) {
       decremented.push({ id: it.productVariantId, qty: it.quantity });
     } else {
       await restoreStock(decremented);
@@ -137,11 +139,12 @@ export async function cancelOrder(orderId: string): Promise<CancelOrderResult> {
     return { ok: false, error: 'Этот заказ нельзя отменить' };
   }
 
-  const locked = await prisma.order.updateMany({
-    where: { id: orderId, userId, status: 'PENDING' },
-    data: { status: 'CANCELLED' },
-  });
-  if (locked.count === 0) return { ok: false, error: 'Заказ уже обработан' };
+  // Атомарный замок: `updateMany` транзакционен на Neon HTTP (P9) → $executeRaw,
+  // один UPDATE с возвратом числа строк. 0 → заказ уже не PENDING (гонка/двойной клик).
+  const locked = await prisma.$executeRaw`
+    UPDATE "Order" SET status = 'CANCELLED'::"OrderStatus", "updatedAt" = now()
+    WHERE id = ${orderId} AND "userId" = ${userId} AND status = 'PENDING'::"OrderStatus"`;
+  if (locked === 0) return { ok: false, error: 'Заказ уже обработан' };
 
   for (const item of order.items) {
     try {

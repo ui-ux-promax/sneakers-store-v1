@@ -192,17 +192,21 @@
 - **Симптом:** e2e чекаута падали — после «Оформить заказ» страница оставалась на `/checkout`; сервер-лог
   `⨯ [Error: Transactions are not supported in HTTP mode]` ×6 (= 2 теста × 3 попытки). `placeOrder`
   ловил ошибку в catch → `{ok:false}` → форма показывала ошибку и не редиректила.
-- **Причина:** хотя `$transaction` НЕ использовался, Prisma исполняет в **неявной интерактивной
-  транзакции** как вложенный `order.create({ data: { items: { create: [...] } } })`, ТАК И
-  `orderItem.createMany(...)`. Neon HTTP-адаптер транзакции не поддерживает (см. P5). Unit-тесты мокали
-  `prisma` → не ловили. **Проверено repro против живого адаптера** (на Cart/CartItem как прокси):
-  nested-create → fail, `createMany` → fail (!), одиночный `create` + каскадный `delete` → OK.
-- **Решение:** позиции заказа создавать **по одной** в цикле (`for (it of items) prisma.orderItem.create(...)`);
-  откат при сбое — `prisma.order.delete({ where: { id } })` (DB-каскад `onDelete: Cascade` удаляет
-  созданные позиции одним DELETE — без транзакции) + возврат стока. Файл `app/actions/order.ts`.
-- **На будущее:** на Neon HTTP **запрещены** nested-write (`{ create }`/`{ createMany }` в relation),
-  `createMany`, и любые `$transaction`. Только одиночные `create`/`update`/`updateMany`/`delete` +
-  ручная компенсация (паттерн cart-merge, P5). `relationMode` по умолчанию `foreignKeys` → каскадные
-  удаления делает БД одним statement, это безопасно. Юнит-мок Prisma не отлавливает этот класс —
-  ловится только интеграцией/repro против реального адаптера.
-- **Коммиты:** `067c845`.
+- **Причина:** хотя `$transaction` НЕ использовался, Prisma исполняет в **неявной транзакции** целый
+  класс операций, и Neon HTTP их не поддерживает. **Полная карта снята probe-скриптом против живого
+  адаптера:** FAIL → `updateMany`, `createMany`, nested-create (`{ create }` в relation); OK → одиночные
+  `create` (scalar/по одному), `update` (по unique-where), `delete`/`deleteMany`, `$queryRaw`/`$executeRaw`,
+  каскадный delete (`onDelete: Cascade`, `relationMode=foreignKeys` → БД делает одним DELETE).
+  **Фактический первый блокер** в `placeOrder` был НЕ nested-create, а условный декремент стока
+  `productVariant.updateMany({ where:{ stock:{ gte } }, … })` — он выполняется ДО `order.create`, поэтому
+  ранние фиксы create-части не помогали. Unit-тесты мокают `prisma` → этот класс не ловят в принципе.
+- **Решение:** условные/атомарные и мультистрочные записи — через **`$executeRaw`** (одиночный SQL,
+  возвращает число затронутых строк):
+  - декремент стока: `` await prisma.$executeRaw`UPDATE "ProductVariant" SET stock = stock - ${q} WHERE id = ${id} AND stock >= ${q}` `` → `affected===1` или откат;
+  - замок отмены: `` `UPDATE "Order" SET status='CANCELLED'::"OrderStatus", "updatedAt"=now() WHERE id=${id} AND "userId"=${uid} AND status='PENDING'::"OrderStatus"` `` → `locked===0` = гонка;
+  - позиции заказа — по одной `orderItem.create` в цикле; откат — `order.delete` (каскад). Файл `app/actions/order.ts`.
+- **На будущее:** на Neon HTTP **запрещены** `$transaction`, nested-write, `createMany`, **`updateMany`**.
+  Разрешены одиночные `create`/`update`(by unique)/`delete`/`deleteMany` + `$queryRaw`/`$executeRaw`.
+  Любая **условная** запись (`WHERE col >= …`, статус-лок) или мультистрочная — только `$executeRaw`.
+  Этот класс багов юнит-мок Prisma НЕ ловит — проверять repro против реального адаптера.
+- **Коммиты:** `067c845` (per-item create), затем `$executeRaw` для updateMany-замены (этот коммит).

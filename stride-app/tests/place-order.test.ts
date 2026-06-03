@@ -6,8 +6,9 @@ vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: 
 vi.mock('@/lib/cart', () => ({ recalcCartTotalByToken: vi.fn(async () => null) }));
 vi.mock('@/lib/prisma-client', () => ({
   prisma: {
+    $executeRaw: vi.fn(),
     cart: { findFirst: vi.fn() },
-    productVariant: { updateMany: vi.fn(), update: vi.fn() },
+    productVariant: { update: vi.fn() },
     order: { create: vi.fn(), delete: vi.fn() },
     orderItem: { create: vi.fn() },
     cartItem: { deleteMany: vi.fn() },
@@ -22,7 +23,7 @@ import { prisma } from '@/lib/prisma-client';
 const authMock = auth as unknown as ReturnType<typeof vi.fn>;
 const cookiesMock = cookies as unknown as ReturnType<typeof vi.fn>;
 const findFirst = prisma.cart.findFirst as unknown as ReturnType<typeof vi.fn>;
-const updateMany = prisma.productVariant.updateMany as unknown as ReturnType<typeof vi.fn>;
+const execRaw = prisma.$executeRaw as unknown as ReturnType<typeof vi.fn>;
 const variantUpdate = prisma.productVariant.update as unknown as ReturnType<typeof vi.fn>;
 const orderCreate = prisma.order.create as unknown as ReturnType<typeof vi.fn>;
 const cartItemDeleteMany = prisma.cartItem.deleteMany as unknown as ReturnType<typeof vi.fn>;
@@ -56,16 +57,17 @@ beforeEach(() => {
   cartItemDeleteMany.mockResolvedValue({ count: 1 });
   orderItemCreate.mockResolvedValue({});
   orderDelete.mockResolvedValue({});
+  execRaw.mockResolvedValue(1);
 });
 
 describe('placeOrder', () => {
   it('успех — декремент, создание заказа, очистка корзины', async () => {
     findFirst.mockResolvedValue(cartWith('v1'));
-    updateMany.mockResolvedValue({ count: 1 });
+    execRaw.mockResolvedValue(1);
     orderCreate.mockResolvedValue({ id: 'o1', orderNumber: 1025 });
     const r = await placeOrder(validForm);
     expect(r).toEqual({ ok: true, orderNumber: 1025 });
-    expect(updateMany).toHaveBeenCalledTimes(1);
+    expect(execRaw).toHaveBeenCalledTimes(1);
     expect(orderCreate).toHaveBeenCalledOnce();
     expect(orderItemCreate).toHaveBeenCalledTimes(1);
     expect(cartItemDeleteMany).toHaveBeenCalledOnce();
@@ -73,7 +75,7 @@ describe('placeOrder', () => {
 
   it('нехватка на 2-й позиции — компенсация 1-й, заказ НЕ создан', async () => {
     findFirst.mockResolvedValue(cartWith('v1', 'v2'));
-    updateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ count: 0 });
+    execRaw.mockResolvedValueOnce(1).mockResolvedValueOnce(0);
     const r = await placeOrder(validForm);
     expect(r.ok).toBe(false);
     expect(variantUpdate).toHaveBeenCalledWith({ where: { id: 'v1' }, data: { stock: { increment: 1 } } });
@@ -82,7 +84,7 @@ describe('placeOrder', () => {
 
   it('сбой order.create — компенсация всех декрементов', async () => {
     findFirst.mockResolvedValue(cartWith('v1', 'v2'));
-    updateMany.mockResolvedValue({ count: 1 });
+    execRaw.mockResolvedValue(1);
     orderCreate.mockRejectedValue(new Error('db down'));
     const r = await placeOrder(validForm);
     expect(r.ok).toBe(false);
@@ -92,7 +94,7 @@ describe('placeOrder', () => {
 
   it('сбой создания позиций — откат заказа и возврат стока', async () => {
     findFirst.mockResolvedValue(cartWith('v1', 'v2'));
-    updateMany.mockResolvedValue({ count: 1 });
+    execRaw.mockResolvedValue(1);
     orderCreate.mockResolvedValue({ id: 'o1', orderNumber: 1026 });
     orderItemCreate.mockRejectedValue(new Error('items down'));
     const r = await placeOrder(validForm);
@@ -105,7 +107,7 @@ describe('placeOrder', () => {
     findFirst.mockResolvedValue({ id: 'c1', token: 't', items: [] });
     const r = await placeOrder(validForm);
     expect(r).toEqual({ ok: false, error: 'Корзина пуста' });
-    expect(updateMany).not.toHaveBeenCalled();
+    expect(execRaw).not.toHaveBeenCalled();
   });
 
   it('неактивный товар — отказ до списания стока', async () => {
@@ -114,7 +116,7 @@ describe('placeOrder', () => {
     findFirst.mockResolvedValue(cart);
     const r = await placeOrder(validForm);
     expect(r.ok).toBe(false);
-    expect(updateMany).not.toHaveBeenCalled();
+    expect(execRaw).not.toHaveBeenCalled();
     expect(orderCreate).not.toHaveBeenCalled();
   });
 
