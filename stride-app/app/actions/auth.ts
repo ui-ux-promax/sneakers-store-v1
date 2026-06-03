@@ -38,12 +38,10 @@ export async function registerUser(raw: unknown): Promise<RegisterResult> {
       return { ok: false, error: 'Такой email уже зарегистрирован' };
     }
     // Любой другой сбой (нет таблиц / коннект / инициализация) НЕ роняем молча: логируем
-    // и возвращаем понятную ошибку с кодом Prisma (P2021/P1017/…) для быстрой диагностики.
-    // TODO(P2.1): убрать код ошибки из текста для пользователя, оставить только в логах.
+    // код Prisma (P2021/P1017/…) для диагностики; пользователю — нейтральный текст без кода.
     const code = (e as { code?: unknown })?.code;
     logger.error('register_failed', e, { code: typeof code === 'string' ? code : undefined });
-    const suffix = typeof code === 'string' ? ` (${code})` : '';
-    return { ok: false, error: `Не удалось завершить регистрацию${suffix}. Попробуйте позже` };
+    return { ok: false, error: 'Не удалось завершить регистрацию. Попробуйте позже' };
   }
 
   // redirect:false — устанавливаем сессию и ВОЗВРАЩАЕМ управление (не бросаем NEXT_REDIRECT),
