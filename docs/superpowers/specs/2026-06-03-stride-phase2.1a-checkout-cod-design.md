@@ -85,7 +85,7 @@ model OrderItem {
   sku          String
   productName  String
   colorwayName String
-  sizeEu       Decimal @db.Decimal(3, 1)
+  sizeEu       String    // нормализованный снапшот для отображения, напр. «42.5» (display-only)
   imageUrl     String?
   unitPrice    Int
   quantity     Int
