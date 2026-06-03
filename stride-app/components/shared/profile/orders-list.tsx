@@ -28,7 +28,7 @@ export function OrdersList({ orders }: { orders: OrderRow[] }) {
           </div>
           <div className="flex items-center justify-between mt-3">
             <span className={o.status === 'CANCELLED' ? 'tnum line-through text-ink-muted' : 'font-semibold tnum'}>{formatPrice(o.totalAmount)}</span>
-            <Link href={`/orders/${o.orderNumber}`} className="text-sm text-ink-muted hover:text-ink">{o.status === 'PENDING' ? 'Отменить' : 'Подробнее'}</Link>
+            <Link href={`/orders/${o.orderNumber}`} className="text-sm text-ink-muted hover:text-ink">Подробнее</Link>
           </div>
         </li>
       ))}
