@@ -10,7 +10,9 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const info = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
-      `select current_database() as database, current_schema() as schema, version() as version`,
+      // current_database()/current_schema() возвращают PG-тип `name` (OID 19), который
+      // Neon-адаптер Prisma не умеет десериализовать (P2010) — приводим к text.
+      `select current_database()::text as database, current_schema()::text as schema, version() as version`,
     );
     const reg = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
       `select to_regclass('public."User"')::text as user_table,
@@ -18,7 +20,8 @@ export async function GET() {
               to_regclass('public."CartItem"')::text as cartitem_table`,
     );
     const tablesRows = await prisma.$queryRawUnsafe<Array<{ table_name: string }>>(
-      `select table_name from information_schema.tables where table_schema = 'public' order by table_name`,
+      // information_schema.tables.table_name — домен sql_identifier поверх `name`; тот же P2010.
+      `select table_name::text as table_name from information_schema.tables where table_schema = 'public' order by table_name`,
     );
     const counts: Record<string, unknown> = {};
     try {
