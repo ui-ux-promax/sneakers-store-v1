@@ -1,6 +1,6 @@
 # STRIDE — Фаза 2.1b (ЮKassa + DaData): дизайн
 
-> **Статус:** на ревью.
+> **Статус:** реализовано (P2.1b).
 > **Дата:** 2026-06-04. **Ветка:** `feat/phase2.1b-yookassa`.
 > **Предшественник:** P2.1a COD-чекаут (в проде, `main`). Research-карта: `docs/superpowers/research/2026-06-02-phase2-candidates.md`.
 > **Прототип UI:** `ui-designe and prototypes/prototypes-app/checkout.html` (секция оплаты: «Картой онлайн» выбрана первой).
