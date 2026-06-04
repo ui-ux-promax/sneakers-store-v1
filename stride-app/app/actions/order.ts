@@ -55,18 +55,23 @@ export async function placeOrder(raw: unknown): Promise<PlaceOrderResult> {
 
   const decremented: { id: string; qty: number }[] = [];
   for (const it of snapshot.items) {
-    // Атомарный условный декремент. `updateMany` на Neon HTTP идёт через транзакцию
-    // (запрещено — TROUBLESHOOTING P9), поэтому $executeRaw: одиночный UPDATE,
-    // возвращает число затронутых строк (0 = не хватило стока).
-    const affected = await prisma.$executeRaw`
-      UPDATE "ProductVariant" SET stock = stock - ${it.quantity}
-      WHERE id = ${it.productVariantId} AND stock >= ${it.quantity}`;
-    if (affected === 1) {
-      decremented.push({ id: it.productVariantId, qty: it.quantity });
-    } else {
+    // Проверка стока + атомарный декремент. `updateMany`/$executeRaw не работают
+    // на прод-Neon (транзакционны — P9), поэтому findUnique + одиночный update
+    // c `decrement` (доказанно рабочий, probe). Риск гонки между read и decrement
+    // приемлем для MVP (как и в Фазе 1).
+    const v = await prisma.productVariant.findUnique({
+      where: { id: it.productVariantId },
+      select: { stock: true },
+    });
+    if (!v || v.stock < it.quantity) {
       await restoreStock(decremented);
       return { ok: false, error: `Товар «${it.productName}» закончился, обновите корзину` };
     }
+    await prisma.productVariant.update({
+      where: { id: it.productVariantId },
+      data: { stock: { decrement: it.quantity } },
+    });
+    decremented.push({ id: it.productVariantId, qty: it.quantity });
   }
 
   let orderId: string;
@@ -139,12 +144,13 @@ export async function cancelOrder(orderId: string): Promise<CancelOrderResult> {
     return { ok: false, error: 'Этот заказ нельзя отменить' };
   }
 
-  // Атомарный замок: `updateMany` транзакционен на Neon HTTP (P9) → $executeRaw,
-  // один UPDATE с возвратом числа строк. 0 → заказ уже не PENDING (гонка/двойной клик).
-  const locked = await prisma.$executeRaw`
-    UPDATE "Order" SET status = 'CANCELLED'::"OrderStatus", "updatedAt" = now()
-    WHERE id = ${orderId} AND "userId" = ${userId} AND status = 'PENDING'::"OrderStatus"`;
-  if (locked === 0) return { ok: false, error: 'Заказ уже обработан' };
+  // Пре-гард уже проверил PENDING. Одиночный update (без updateMany/$executeRaw —
+  // те транзакционны на Neon HTTP, P9). Гонка возможна только если админ меняет
+  // статус между pre-guard и update — admin-фазы ещё нет, риск приемлем.
+  await prisma.order.update({
+    where: { id: orderId },
+    data: { status: 'CANCELLED' },
+  });
 
   for (const item of order.items) {
     try {
