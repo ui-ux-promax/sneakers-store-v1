@@ -201,6 +201,7 @@ model Order {
   paymentMethod  String
 
   items          OrderItem[]
+  payment        Payment?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
@@ -225,4 +226,16 @@ model OrderItem {
   lineTotal    Int
 
   @@index([orderId])
+}
+
+model Payment {
+  id              String    @id
+  orderId         String    @unique
+  order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status          String    @default("pending")
+  confirmationUrl String?
+  amount          Int
+  paidAt          DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
