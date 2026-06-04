@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { Button, Input } from '@/components/ui';
@@ -10,6 +10,7 @@ import { calcShipping } from '@/lib/order';
 import { FREE_SHIPPING_THRESHOLD } from '@/constants/config';
 import { checkoutSchema, type CheckoutValues } from '@/services/dto/order.dto';
 import { placeOrder } from '@/app/actions/order';
+import { AddressSuggest } from './address-suggest';
 import type { CartDetails } from '@/services/dto/cart.dto';
 
 type Defaults = { contactName: string; contactPhone: string; contactEmail: string };
@@ -17,10 +18,11 @@ type Defaults = { contactName: string; contactPhone: string; contactEmail: strin
 export function CheckoutForm({ details, defaults }: { details: CartDetails; defaults: Defaults }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<CheckoutValues>({
+  const methods = useForm<CheckoutValues>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: { ...defaults, shippingMethod: 'courier', paymentMethod: 'online', city: '', addressLine: '', addressComment: '' },
   });
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = methods;
 
   const shippingMethod = watch('shippingMethod');
   const shipping = calcShipping(details.totalAmount, shippingMethod);
@@ -36,7 +38,8 @@ export function CheckoutForm({ details, defaults }: { details: CartDetails; defa
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="grid lg:grid-cols-[1fr_360px] gap-6 lg:gap-8" noValidate>
+    <FormProvider {...methods}>
+      <form onSubmit={handleSubmit(onSubmit)} className="grid lg:grid-cols-[1fr_360px] gap-6 lg:gap-8" noValidate>
       <div className="space-y-6">
         <section className="rounded-2xl border border-line bg-surface p-5 space-y-4">
           <h2 className="font-display font-bold text-xl">Контактные данные</h2>
@@ -59,9 +62,10 @@ export function CheckoutForm({ details, defaults }: { details: CartDetails; defa
 
         <section className="rounded-2xl border border-line bg-surface p-5 space-y-4">
           <h2 className="font-display font-bold text-xl">Адрес доставки</h2>
-          <div>
+          <div className="relative">
             <label className="block text-sm font-medium mb-1" htmlFor="city">Город</label>
-            <Input id="city" autoComplete="address-level2" {...register('city')} />
+            <Input id="city" autoComplete="off" {...register('city')} />
+            <AddressSuggest />
             {errors.city && <p className="text-danger text-xs mt-1">{errors.city.message}</p>}
           </div>
           <div>
@@ -123,6 +127,7 @@ export function CheckoutForm({ details, defaults }: { details: CartDetails; defa
           <Button type="submit" variant="primary" size="lg" className="w-full" loading={isSubmitting}>Оформить заказ →</Button>
         </div>
       </aside>
-    </form>
+      </form>
+    </FormProvider>
   );
 }
