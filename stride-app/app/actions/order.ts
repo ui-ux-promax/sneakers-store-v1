@@ -2,7 +2,7 @@
 
 import { auth } from '@/auth';
 import { revalidatePath } from 'next/cache';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { prisma } from '@/lib/prisma-client';
 import { cartInclude } from '@/lib/cart-details';
 import { cartCookieName } from '@/lib/cart-cookie';
@@ -126,7 +126,9 @@ export async function placeOrder(raw: unknown): Promise<PlaceOrderResult> {
   let paymentUrl: string | undefined;
   if (form.paymentMethod === 'online') {
     try {
-      const pay = await createPayment({ orderNumber, amountRub: totalAmount });
+      const host = (await headers()).get('host') || '';
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || (host ? `https://${host}` : 'http://localhost:3000');
+      const pay = await createPayment({ orderNumber, amountRub: totalAmount, baseUrl });
       await prisma.payment.create({
         data: { id: pay.id, orderId, amount: totalAmount * 100, confirmationUrl: pay.confirmationUrl, status: 'pending' },
       });

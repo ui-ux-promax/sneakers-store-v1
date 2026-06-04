@@ -29,6 +29,13 @@ describe('createPayment', () => {
     expect(payload.metadata).toEqual({ orderNumber: '1025' });
     expect(idempotencyKey).toBe('order-1025');
   });
+
+  it('использует baseUrl если передан, приоритетнее siteUrl', async () => {
+    createMock.mockResolvedValue({ id: 'pay_2', confirmation: { confirmation_url: 'https://yoo/r2' } });
+    await createPayment({ orderNumber: 1026, amountRub: 100, baseUrl: 'https://preview.vercel.app' });
+    const [payload] = createMock.mock.calls[0];
+    expect(payload.confirmation.return_url).toBe('https://preview.vercel.app/orders/1026');
+  });
 });
 
 describe('cancelPayment', () => {

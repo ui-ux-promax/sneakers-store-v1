@@ -21,6 +21,7 @@ export function siteUrl(): string {
 export interface CreatePaymentInput {
   orderNumber: number;
   amountRub: number;
+  baseUrl?: string;  // перекрывает siteUrl() — для рантайм-определения хоста из запроса
 }
 export interface CreatePaymentResult {
   id: string;
@@ -29,10 +30,11 @@ export interface CreatePaymentResult {
 
 export async function createPayment(input: CreatePaymentInput): Promise<CreatePaymentResult> {
   const sdk = getYooKassa();
+  const base = input.baseUrl || siteUrl();
   const payment = await sdk.payments.create(
     {
       amount: { value: (input.amountRub * 100).toString(), currency: CurrencyEnum.RUB },
-      confirmation: { type: 'redirect', return_url: `${siteUrl()}/orders/${input.orderNumber}`, locale: LocaleEnum.ru_RU },
+      confirmation: { type: 'redirect', return_url: `${base}/orders/${input.orderNumber}`, locale: LocaleEnum.ru_RU },
       capture: true,
       description: `Заказ #${input.orderNumber}`,
       metadata: { orderNumber: String(input.orderNumber) },

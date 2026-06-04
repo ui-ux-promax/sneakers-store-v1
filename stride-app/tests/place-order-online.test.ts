@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 vi.mock('@/auth', () => ({ auth: vi.fn() }));
-vi.mock('next/headers', () => ({ cookies: vi.fn() }));
+vi.mock('next/headers', () => ({ cookies: vi.fn(), headers: vi.fn() }));
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() } }));
 vi.mock('@/lib/cart', () => ({ recalcCartTotalByToken: vi.fn(async () => null) }));
 vi.mock('@/lib/yookassa', () => ({ createPayment: vi.fn() }));
@@ -18,12 +18,13 @@ vi.mock('@/lib/prisma-client', () => ({
 
 import { placeOrder } from '@/app/actions/order';
 import { auth } from '@/auth';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { prisma } from '@/lib/prisma-client';
 import { createPayment } from '@/lib/yookassa';
 
 const authMock = auth as unknown as ReturnType<typeof vi.fn>;
 const cookiesMock = cookies as unknown as ReturnType<typeof vi.fn>;
+const headersMock = headers as unknown as ReturnType<typeof vi.fn>;
 const cartFindFirst = prisma.cart.findFirst as unknown as ReturnType<typeof vi.fn>;
 const variantFindUnique = prisma.productVariant.findUnique as unknown as ReturnType<typeof vi.fn>;
 const variantUpdate = prisma.productVariant.update as unknown as ReturnType<typeof vi.fn>;
@@ -57,6 +58,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   authMock.mockResolvedValue({ user: { id: 'u1' } });
   cookiesMock.mockResolvedValue({ get: () => ({ value: 't' }) });
+  headersMock.mockResolvedValue({ get: () => 'preview.vercel.app' });
   variantFindUnique.mockResolvedValue({ stock: 9 });
   variantUpdate.mockResolvedValue({});
   cartItemDeleteMany.mockResolvedValue({ count: 1 });
@@ -72,7 +74,7 @@ describe('placeOrder online', () => {
     createPaymentMock.mockResolvedValue({ id: 'pay_1', confirmationUrl: 'https://yoo/redirect' });
     const r = await placeOrder(onlineForm);
     expect(r).toEqual({ ok: true, orderNumber: 1025, paymentUrl: 'https://yoo/redirect' });
-    expect(createPaymentMock).toHaveBeenCalledWith({ orderNumber: 1025, amountRub: 5000 });
+    expect(createPaymentMock).toHaveBeenCalledWith({ orderNumber: 1025, amountRub: 5000, baseUrl: 'https://preview.vercel.app' });
     expect(paymentCreate).toHaveBeenCalledWith({
       data: { id: 'pay_1', orderId: 'o1', amount: 500000, confirmationUrl: 'https://yoo/redirect', status: 'pending' },
     });
