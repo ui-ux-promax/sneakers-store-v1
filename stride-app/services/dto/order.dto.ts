@@ -8,6 +8,6 @@ export const checkoutSchema = z.object({
   city: z.string().trim().min(1, 'Укажите город').max(100),
   addressLine: z.string().trim().min(1, 'Укажите адрес').max(200),
   addressComment: z.string().trim().max(300).optional(),
-  paymentMethod: z.literal('cod'),
+  paymentMethod: z.enum(['cod', 'online']),
 });
 export type CheckoutValues = z.infer<typeof checkoutSchema>;
