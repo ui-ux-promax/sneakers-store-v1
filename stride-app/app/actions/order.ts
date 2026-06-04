@@ -10,7 +10,7 @@ import { recalcCartTotalByToken } from '@/lib/cart';
 import { checkoutSchema } from '@/services/dto/order.dto';
 import { buildOrderSnapshot, calcShipping } from '@/lib/order';
 import { logger } from '@/lib/logger';
-import { createPayment } from '@/lib/yookassa';
+import { createPayment, cancelPayment } from '@/lib/yookassa';
 
 export type PlaceOrderResult = { ok: true; orderNumber: number; paymentUrl?: string } | { ok: false; error: string };
 
@@ -160,7 +160,7 @@ export async function cancelOrder(orderId: string): Promise<CancelOrderResult> {
   if (!session?.user?.id) return { ok: false, error: 'Не авторизован' };
   const userId = session.user.id;
 
-  const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } });
+  const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true, payment: true } });
   if (!order || order.userId !== userId || order.status !== 'PENDING') {
     return { ok: false, error: 'Этот заказ нельзя отменить' };
   }
@@ -172,6 +172,14 @@ export async function cancelOrder(orderId: string): Promise<CancelOrderResult> {
     where: { id: orderId },
     data: { status: 'CANCELLED' },
   });
+
+  if (order.payment && order.payment.status === 'pending') {
+    try {
+      await cancelPayment(order.payment.id);
+    } catch (e) {
+      logger.error('cancel_payment_failed', e, { orderId, paymentId: order.payment.id });
+    }
+  }
 
   for (const item of order.items) {
     try {

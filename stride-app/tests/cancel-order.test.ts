@@ -11,10 +11,13 @@ vi.mock('@/lib/prisma-client', () => ({
     productVariant: { update: vi.fn() },
   },
 }));
+vi.mock('@/lib/yookassa', () => ({ cancelPayment: vi.fn() }));
 
 import { cancelOrder } from '@/app/actions/order';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma-client';
+import { cancelPayment } from '@/lib/yookassa';
+const cancelPaymentMock = cancelPayment as unknown as ReturnType<typeof vi.fn>;
 
 const authMock = auth as unknown as ReturnType<typeof vi.fn>;
 const findUnique = prisma.order.findUnique as unknown as ReturnType<typeof vi.fn>;
@@ -24,6 +27,7 @@ const variantUpdate = prisma.productVariant.update as unknown as ReturnType<type
 function pendingOrder() {
   return {
     id: 'o1', orderNumber: 1025, userId: 'u1', status: 'PENDING',
+    payment: null,
     items: [{ productVariantId: 'v1', quantity: 2 }, { productVariantId: 'v2', quantity: 1 }],
   };
 }
@@ -33,6 +37,7 @@ beforeEach(() => {
   authMock.mockResolvedValue({ user: { id: 'u1' } });
   variantUpdate.mockResolvedValue({});
   orderUpdate.mockResolvedValue({});
+  cancelPaymentMock.mockResolvedValue(undefined);
 });
 
 describe('cancelOrder', () => {
@@ -65,5 +70,13 @@ describe('cancelOrder', () => {
     const r = await cancelOrder('o1');
     expect(r.ok).toBe(false);
     expect(findUnique).not.toHaveBeenCalled();
+  });
+
+  it('online-заказ с pending-платежом — отменяет платёж в ЮKassa', async () => {
+    findUnique.mockResolvedValue({ ...pendingOrder(), payment: { id: 'pay_1', status: 'pending' } });
+    const r = await cancelOrder('o1');
+    expect(r).toEqual({ ok: true });
+    expect(cancelPaymentMock).toHaveBeenCalledWith('pay_1');
+    expect(variantUpdate).toHaveBeenCalledTimes(2);
   });
 });
