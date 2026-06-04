@@ -10,8 +10,9 @@ import { recalcCartTotalByToken } from '@/lib/cart';
 import { checkoutSchema } from '@/services/dto/order.dto';
 import { buildOrderSnapshot, calcShipping } from '@/lib/order';
 import { logger } from '@/lib/logger';
+import { createPayment } from '@/lib/yookassa';
 
-export type PlaceOrderResult = { ok: true; orderNumber: number } | { ok: false; error: string };
+export type PlaceOrderResult = { ok: true; orderNumber: number; paymentUrl?: string } | { ok: false; error: string };
 
 async function restoreStock(items: { id: string; qty: number }[]): Promise<void> {
   for (const it of items) {
@@ -91,7 +92,7 @@ export async function placeOrder(raw: unknown): Promise<PlaceOrderResult> {
         itemsTotal: snapshot.itemsTotal,
         shippingAmount,
         totalAmount,
-        paymentMethod: 'cod',
+        paymentMethod: form.paymentMethod,
       },
       select: { id: true, orderNumber: true },
     });
@@ -122,6 +123,26 @@ export async function placeOrder(raw: unknown): Promise<PlaceOrderResult> {
     return { ok: false, error: 'Не удалось оформить заказ. Попробуйте позже' };
   }
 
+  let paymentUrl: string | undefined;
+  if (form.paymentMethod === 'online') {
+    try {
+      const pay = await createPayment({ orderNumber, amountRub: totalAmount });
+      await prisma.payment.create({
+        data: { id: pay.id, orderId, amount: totalAmount * 100, confirmationUrl: pay.confirmationUrl, status: 'pending' },
+      });
+      paymentUrl = pay.confirmationUrl;
+    } catch (e) {
+      try {
+        await prisma.order.delete({ where: { id: orderId } });
+      } catch (delErr) {
+        logger.error('place_order_payment_rollback_failed', delErr, { orderId });
+      }
+      await restoreStock(decremented);
+      logger.error('place_order_payment_failed', e, { orderId });
+      return { ok: false, error: 'Не удалось создать платёж. Попробуйте позже' };
+    }
+  }
+
   try {
     await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
     await recalcCartTotalByToken(token);
@@ -129,7 +150,7 @@ export async function placeOrder(raw: unknown): Promise<PlaceOrderResult> {
     logger.error('order_cart_cleanup_failed', e, { orderNumber });
   }
 
-  return { ok: true, orderNumber };
+  return { ok: true, orderNumber, paymentUrl };
 }
 
 export type CancelOrderResult = { ok: true } | { ok: false; error: string };
