@@ -18,6 +18,21 @@ export function siteUrl(): string {
   return 'http://localhost:3000';
 }
 
+/**
+ * Нормализует кандидата в чистый origin: убирает пробелы/переносы строк и любой путь.
+ * Защищает return_url от загрязнённого источника (напр. в NEXT_PUBLIC_SITE_URL по ошибке
+ * оказался URL вебхука с хвостовым "\n") — иначе ЮKassa получает битый return_url
+ * и виджет падает с «Платёж не прошёл».
+ */
+export function toOrigin(raw: string): string {
+  const trimmed = raw.trim();
+  try {
+    return new URL(trimmed).origin;
+  } catch {
+    return trimmed.replace(/\/+$/, '');
+  }
+}
+
 export interface CreatePaymentInput {
   orderNumber: number;
   amountRub: number;
@@ -30,10 +45,11 @@ export interface CreatePaymentResult {
 
 export async function createPayment(input: CreatePaymentInput): Promise<CreatePaymentResult> {
   const sdk = getYooKassa();
-  const base = input.baseUrl || siteUrl();
+  const base = toOrigin(input.baseUrl || siteUrl());
   const payment = await sdk.payments.create(
     {
-      amount: { value: (input.amountRub * 100).toString(), currency: CurrencyEnum.RUB },
+      // ЮKassa ждёт сумму в рублях (major units), напр. "15490.00" — НЕ в копейках.
+      amount: { value: input.amountRub.toFixed(2), currency: CurrencyEnum.RUB },
       confirmation: { type: 'redirect', return_url: `${base}/orders/${input.orderNumber}`, locale: LocaleEnum.ru_RU },
       capture: true,
       description: `Заказ #${input.orderNumber}`,

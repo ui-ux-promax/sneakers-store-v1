@@ -76,7 +76,7 @@ describe('placeOrder online', () => {
     expect(r).toEqual({ ok: true, orderNumber: 1025, paymentUrl: 'https://yoo/redirect' });
     expect(createPaymentMock).toHaveBeenCalledWith({ orderNumber: 1025, amountRub: 5000, baseUrl: 'https://preview.vercel.app' });
     expect(paymentCreate).toHaveBeenCalledWith({
-      data: { id: 'pay_1', orderId: 'o1', amount: 500000, confirmationUrl: 'https://yoo/redirect', status: 'pending' },
+      data: { id: 'pay_1', orderId: 'o1', amount: 5000, confirmationUrl: 'https://yoo/redirect', status: 'pending' },
     });
     expect(cartItemDeleteMany).toHaveBeenCalledOnce();
   });

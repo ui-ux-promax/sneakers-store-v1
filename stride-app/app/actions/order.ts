@@ -130,7 +130,7 @@ export async function placeOrder(raw: unknown): Promise<PlaceOrderResult> {
       const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || (host ? `https://${host}` : 'http://localhost:3000');
       const pay = await createPayment({ orderNumber, amountRub: totalAmount, baseUrl });
       await prisma.payment.create({
-        data: { id: pay.id, orderId, amount: totalAmount * 100, confirmationUrl: pay.confirmationUrl, status: 'pending' },
+        data: { id: pay.id, orderId, amount: totalAmount, confirmationUrl: pay.confirmationUrl, status: 'pending' },
       });
       paymentUrl = pay.confirmationUrl;
     } catch (e) {
