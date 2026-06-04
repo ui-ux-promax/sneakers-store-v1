@@ -19,7 +19,7 @@ export function CheckoutForm({ details, defaults }: { details: CartDetails; defa
   const [error, setError] = useState<string | null>(null);
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<CheckoutValues>({
     resolver: zodResolver(checkoutSchema),
-    defaultValues: { ...defaults, shippingMethod: 'courier', paymentMethod: 'cod', city: '', addressLine: '', addressComment: '' },
+    defaultValues: { ...defaults, shippingMethod: 'courier', paymentMethod: 'online', city: '', addressLine: '', addressComment: '' },
   });
 
   const shippingMethod = watch('shippingMethod');
@@ -30,6 +30,7 @@ export function CheckoutForm({ details, defaults }: { details: CartDetails; defa
     setError(null);
     const res = await placeOrder(v);
     if (!res.ok) { setError(res.error); return; }
+    if (res.paymentUrl) { window.location.href = res.paymentUrl; return; }
     router.push(`/orders/${res.orderNumber}`);
     router.refresh();
   };
@@ -89,12 +90,12 @@ export function CheckoutForm({ details, defaults }: { details: CartDetails; defa
         <section className="rounded-2xl border border-line bg-surface p-5 space-y-3">
           <h2 className="font-display font-bold text-xl">Способ оплаты</h2>
           <label className="flex items-center gap-3 rounded-xl border border-line p-3 cursor-pointer">
-            <input type="radio" value="cod" {...register('paymentMethod')} defaultChecked />
-            <span className="flex-1"><span className="font-semibold">При получении</span><br /><span className="text-xs text-ink-muted">Наличными или картой курьеру</span></span>
+            <input type="radio" value="online" {...register('paymentMethod')} />
+            <span className="flex-1"><span className="font-semibold">Картой онлайн</span><br /><span className="text-xs text-ink-muted">Visa, MasterCard, МИР</span></span>
           </label>
-          <label className="flex items-center gap-3 rounded-xl border border-line p-3 opacity-50 cursor-not-allowed" title="Появится в следующей фазе">
-            <input type="radio" disabled />
-            <span className="flex-1"><span className="font-semibold">Картой онлайн</span><br /><span className="text-xs text-ink-muted">Visa, MasterCard, МИР — скоро</span></span>
+          <label className="flex items-center gap-3 rounded-xl border border-line p-3 cursor-pointer">
+            <input type="radio" value="cod" {...register('paymentMethod')} />
+            <span className="flex-1"><span className="font-semibold">При получении</span><br /><span className="text-xs text-ink-muted">Наличными или картой курьеру</span></span>
           </label>
         </section>
       </div>

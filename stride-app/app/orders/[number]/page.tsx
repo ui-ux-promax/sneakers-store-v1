@@ -16,7 +16,7 @@ export default async function OrderPage({ params }: { params: Promise<{ number: 
   const orderNumber = Number(number);
   if (!Number.isInteger(orderNumber)) notFound();
 
-  const order = await prisma.order.findUnique({ where: { orderNumber }, include: { items: true } });
+  const order = await prisma.order.findUnique({ where: { orderNumber }, include: { items: true, payment: true } });
   if (!order || order.userId !== session.user.id) notFound();
 
   return (
@@ -48,7 +48,15 @@ export default async function OrderPage({ params }: { params: Promise<{ number: 
         <p className="font-semibold">Доставка</p>
         <p className="text-ink-muted">{order.shippingMethod === 'pickup' ? 'Самовывоз' : 'Курьер'} · {order.city}, {order.addressLine}</p>
         <p className="text-ink-muted">{order.contactName} · {order.contactPhone}</p>
-        <p className="text-ink-muted">Оплата при получении</p>
+        <p className="text-ink-muted">
+            {order.payment
+              ? order.payment.status === 'succeeded'
+                ? 'Оплачено онлайн'
+                : order.payment.status === 'canceled'
+                  ? 'Оплата отменена'
+                  : 'Ожидание оплаты…'
+              : 'Оплата при получении'}
+          </p>
       </div>
 
       {order.status === 'PENDING' && <CancelOrderButton orderId={order.id} />}
