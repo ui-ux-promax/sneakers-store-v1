@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { Button, Input } from '@/components/ui';
 import { formatPrice } from '@/lib/format';
 import { FREE_SHIPPING_THRESHOLD } from '@/constants/config';
@@ -37,8 +38,8 @@ export function OrderSummary({ totalAmount, count }: { totalAmount: number; coun
           <span className="font-display font-bold text-2xl tnum">{formatPrice(totalAmount)}</span>
         </div>
 
-        <Button variant="primary" size="lg" className="w-full" disabled title="Оформление заказа появится в Фазе 2">Оформить заказ →</Button>
-        <p className="text-xs text-ink-muted leading-relaxed">Оформление, оплата и доставка появятся в следующей фазе.</p>
+        <Button asChild variant="primary" size="lg" className="w-full"><Link href="/checkout">Оформить заказ →</Link></Button>
+        <p className="text-xs text-ink-muted leading-relaxed">Оплата при получении. Онлайн-оплата появится позже.</p>
       </div>
     </aside>
   );

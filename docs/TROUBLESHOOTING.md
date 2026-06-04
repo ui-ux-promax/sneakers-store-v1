@@ -183,3 +183,30 @@
   ходят) — проявляется только живым OAuth-входом. Сверять схему с эталоном Auth.js при добавлении
   провайдеров.
 - **Коммиты:** `af5919c`.
+
+---
+
+## P9. `placeOrder` падал `Transactions are not supported in HTTP mode` — nested-create И createMany триггерят транзакцию
+
+- **Когда:** 2026-06-03, Фаза 2.1a (e2e в CI, первый реальный прогон `placeOrder`).
+- **Симптом:** e2e чекаута падали — после «Оформить заказ» страница оставалась на `/checkout`; сервер-лог
+  `⨯ [Error: Transactions are not supported in HTTP mode]` ×6 (= 2 теста × 3 попытки). `placeOrder`
+  ловил ошибку в catch → `{ok:false}` → форма показывала ошибку и не редиректила.
+- **Причина:** хотя `$transaction` НЕ использовался, Prisma исполняет в **неявной транзакции** целый
+  класс операций, и Neon HTTP их не поддерживает. **Полная карта снята probe-скриптом против живого
+  адаптера:** FAIL → `updateMany`, `createMany`, nested-create (`{ create }` в relation); OK → одиночные
+  `create` (scalar/по одному), `update` (по unique-where), `delete`/`deleteMany`, `$queryRaw`/`$executeRaw`,
+  каскадный delete (`onDelete: Cascade`, `relationMode=foreignKeys` → БД делает одним DELETE).
+  **Фактический первый блокер** в `placeOrder` был НЕ nested-create, а условный декремент стока
+  `productVariant.updateMany({ where:{ stock:{ gte } }, … })` — он выполняется ДО `order.create`, поэтому
+  ранние фиксы create-части не помогали. Unit-тесты мокают `prisma` → этот класс не ловят в принципе.
+- **Решение:** условные/атомарные и мультистрочные записи — через **`$executeRaw`** (одиночный SQL,
+  возвращает число затронутых строк):
+  - декремент стока: `` await prisma.$executeRaw`UPDATE "ProductVariant" SET stock = stock - ${q} WHERE id = ${id} AND stock >= ${q}` `` → `affected===1` или откат;
+  - замок отмены: `` `UPDATE "Order" SET status='CANCELLED'::"OrderStatus", "updatedAt"=now() WHERE id=${id} AND "userId"=${uid} AND status='PENDING'::"OrderStatus"` `` → `locked===0` = гонка;
+  - позиции заказа — по одной `orderItem.create` в цикле; откат — `order.delete` (каскад). Файл `app/actions/order.ts`.
+- **На будущее:** на Neon HTTP **запрещены** `$transaction`, nested-write, `createMany`, **`updateMany`**.
+  Разрешены одиночные `create`/`update`(by unique)/`delete`/`deleteMany` + `$queryRaw`/`$executeRaw`.
+  Любая **условная** запись (`WHERE col >= …`, статус-лок) или мультистрочная — только `$executeRaw`.
+  Этот класс багов юнит-мок Prisma НЕ ловит — проверять repro против реального адаптера.
+- **Коммиты:** `067c845` (per-item create), затем `$executeRaw` для updateMany-замены (этот коммит).

@@ -2,14 +2,29 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma-client';
 import { ProfileView } from '@/components/shared/profile/profile-view';
+import type { OrderRow } from '@/components/shared/profile/orders-list';
 
+export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Профиль' };
 
 export default async function ProfilePage() {
   const session = await auth();
-  if (!session?.user?.id) redirect('/login'); // дублирует middleware (страховка)
+  if (!session?.user?.id) redirect('/login');
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
   if (!user) redirect('/login');
+
+  const orders = await prisma.order.findMany({
+    where: { userId: user.id },
+    orderBy: { createdAt: 'desc' },
+    select: { orderNumber: true, status: true, createdAt: true, totalAmount: true, _count: { select: { items: true } } },
+  });
+  const orderRows: OrderRow[] = orders.map((o) => ({
+    orderNumber: o.orderNumber,
+    status: o.status,
+    createdAt: o.createdAt.toISOString(),
+    totalAmount: o.totalAmount,
+    itemCount: o._count.items,
+  }));
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
@@ -21,6 +36,7 @@ export default async function ProfilePage() {
           phone: user.phone ?? '',
           birthdate: user.birthdate ? user.birthdate.toISOString().slice(0, 10) : '',
         }}
+        orders={orderRows}
       />
     </main>
   );

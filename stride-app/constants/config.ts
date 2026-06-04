@@ -1,6 +1,7 @@
 // Единый источник бизнес-чисел Фазы 1.
 
 export const FREE_SHIPPING_THRESHOLD = 10_000; // ₽, индикатор «Бесплатно от …»
+export const SHIPPING_FLAT = 500; // ₽, курьер ниже порога бесплатной доставки
 export const NEW_PRODUCT_WINDOW_DAYS = 30;     // окно бейджа «Новинка» по createdAt
 export const LOW_STOCK_THRESHOLD = 3;          // «Осталось N пар»
 

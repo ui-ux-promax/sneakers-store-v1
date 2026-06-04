@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { PersonalDataForm } from './personal-data-form';
+import { OrdersList, type OrderRow } from './orders-list';
 import type { ProfileValues } from '@/services/dto/auth.dto';
 
-export function ProfileView({ email, initial }: { email: string; initial: ProfileValues }) {
+export function ProfileView({ email, initial, orders }: { email: string; initial: ProfileValues; orders: OrderRow[] }) {
   const [tab, setTab] = useState<'data' | 'orders'>('data');
   const tabCls = (active: boolean) =>
     cn(
@@ -23,11 +24,7 @@ export function ProfileView({ email, initial }: { email: string; initial: Profil
           Мои заказы
         </button>
       </div>
-      {tab === 'data' ? (
-        <PersonalDataForm initial={initial} email={email} />
-      ) : (
-        <p className="text-ink-muted">Заказов пока нет.</p>
-      )}
+      {tab === 'data' ? <PersonalDataForm initial={initial} email={email} /> : <OrdersList orders={orders} />}
     </div>
   );
 }

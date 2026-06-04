@@ -15,7 +15,7 @@ export const cartInclude = {
         include: {
           colorway: {
             include: {
-              product: { select: { name: true, slug: true } },
+              product: { select: { name: true, slug: true, active: true } },
               images: { orderBy: { sortOrder: 'asc' as const }, take: 1 },
             },
           },
