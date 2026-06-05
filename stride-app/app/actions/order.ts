@@ -126,10 +126,13 @@ export async function placeOrder(raw: unknown): Promise<PlaceOrderResult> {
   let paymentUrl: string | undefined;
   if (form.paymentMethod === 'online') {
     try {
-      // return_url должен вести на стабильный домен (не на хэш-URL конкретного деплоя).
-      // Приоритет: рантайм SITE_URL → build-time NEXT_PUBLIC_SITE_URL → host (фолбэк для localhost/preview).
+      // return_url ДОЛЖЕН вести на тот же деплой, где оформлен заказ: там сессия, кука и
+      // нужная ветка Neon (БД заводит ветку на каждое окружение, P7). Поэтому приоритет —
+      // host текущего запроса; env (SITE_URL/NEXT_PUBLIC_SITE_URL) — только фолбэк для localhost.
       const host = (await headers()).get('host') || '';
-      const baseUrl = process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || (host ? `https://${host}` : 'http://localhost:3000');
+      const baseUrl = host
+        ? `https://${host}`
+        : (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000');
       const pay = await createPayment({ orderNumber, amountRub: totalAmount, baseUrl });
       await prisma.payment.create({
         data: { id: pay.id, orderId, amount: totalAmount, confirmationUrl: pay.confirmationUrl, status: 'pending' },
