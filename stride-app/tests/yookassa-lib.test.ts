@@ -2,13 +2,14 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 const createMock = vi.fn();
 const cancelMock = vi.fn();
+const loadMock = vi.fn();
 vi.mock('@webzaytsev/yookassa-ts-sdk', () => ({
-  YooKassa: () => ({ payments: { create: createMock, cancel: cancelMock } }),
+  YooKassa: () => ({ payments: { create: createMock, cancel: cancelMock, load: loadMock } }),
   CurrencyEnum: { RUB: 'RUB' },
   LocaleEnum: { ru_RU: 'ru_RU' },
 }));
 
-import { createPayment, cancelPayment } from '@/lib/yookassa';
+import { createPayment, cancelPayment, getPaymentStatus } from '@/lib/yookassa';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -73,5 +74,14 @@ describe('cancelPayment', () => {
     cancelMock.mockResolvedValue({ id: 'pay_1', status: 'canceled' });
     await cancelPayment('pay_1');
     expect(cancelMock).toHaveBeenCalledWith('pay_1');
+  });
+});
+
+describe('getPaymentStatus', () => {
+  it('возвращает статус платежа от sdk.payments.load', async () => {
+    loadMock.mockResolvedValue({ id: 'pay_1', status: 'succeeded' });
+    const status = await getPaymentStatus('pay_1');
+    expect(loadMock).toHaveBeenCalledWith('pay_1');
+    expect(status).toBe('succeeded');
   });
 });

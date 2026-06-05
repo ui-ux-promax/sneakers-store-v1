@@ -5,6 +5,9 @@ import { formatPrice } from '@/lib/format';
 import { OrderStatusBadge } from '@/components/shared/orders/order-status-badge';
 import { CancelOrderButton } from '@/components/shared/orders/cancel-order-button';
 import { Button } from '@/components/ui';
+import { getPaymentStatus } from '@/lib/yookassa';
+import { applyPaymentSucceeded, applyPaymentCanceled } from '@/lib/payment-sync';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Заказ' };
@@ -17,8 +20,26 @@ export default async function OrderPage({ params }: { params: Promise<{ number: 
   const orderNumber = Number(number);
   if (!Number.isInteger(orderNumber)) notFound();
 
-  const order = await prisma.order.findUnique({ where: { orderNumber }, include: { items: true, payment: true } });
+  let order = await prisma.order.findUnique({ where: { orderNumber }, include: { items: true, payment: true } });
   if (!order || order.userId !== session.user.id) notFound();
+
+  // Источник правды по оплате — ЮKassa, а не вебхук (он может не дойти на preview/хэш-URL).
+  // Если платёж ещё pending — спрашиваем актуальный статус и синхронизируем БД при возврате с оплаты.
+  if (order.status === 'PENDING' && order.payment && order.payment.status === 'pending') {
+    try {
+      const remote = await getPaymentStatus(order.payment.id);
+      if (remote === 'succeeded') {
+        await applyPaymentSucceeded(order.payment.id);
+        order = await prisma.order.findUnique({ where: { orderNumber }, include: { items: true, payment: true } });
+      } else if (remote === 'canceled') {
+        await applyPaymentCanceled(order.payment.id);
+        order = await prisma.order.findUnique({ where: { orderNumber }, include: { items: true, payment: true } });
+      }
+    } catch (e) {
+      logger.error('order_payment_sync_failed', e, { orderNumber });
+    }
+    if (!order) notFound();
+  }
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 space-y-6">
