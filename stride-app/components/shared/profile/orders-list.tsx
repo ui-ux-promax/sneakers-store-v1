@@ -9,6 +9,7 @@ export interface OrderRow {
   createdAt: string; // ISO; форматируем на клиенте
   totalAmount: number;
   itemCount: number;
+  paymentStatus?: string | null;
 }
 
 export function OrdersList({ orders }: { orders: OrderRow[] }) {
@@ -24,7 +25,7 @@ export function OrdersList({ orders }: { orders: OrderRow[] }) {
               <Link href={`/orders/${o.orderNumber}`} className="font-semibold hover:underline">Заказ #{o.orderNumber}</Link>
               <p className="text-xs text-ink-muted">{new Date(o.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })} · {o.itemCount} шт.</p>
             </div>
-            <OrderStatusBadge status={o.status} />
+            <OrderStatusBadge status={o.status} paymentStatus={o.paymentStatus} />
           </div>
           <div className="flex items-center justify-between mt-3">
             <span className={o.status === 'CANCELLED' ? 'tnum line-through text-ink-muted' : 'font-semibold tnum'}>{formatPrice(o.totalAmount)}</span>

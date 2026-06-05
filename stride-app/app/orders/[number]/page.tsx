@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma-client';
 import { formatPrice } from '@/lib/format';
 import { OrderStatusBadge } from '@/components/shared/orders/order-status-badge';
 import { CancelOrderButton } from '@/components/shared/orders/cancel-order-button';
+import { Button } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Заказ' };
@@ -23,7 +24,7 @@ export default async function OrderPage({ params }: { params: Promise<{ number: 
     <main className="mx-auto max-w-3xl px-4 py-10 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-display font-bold text-2xl">Заказ #{order.orderNumber}</h1>
-        <OrderStatusBadge status={order.status} />
+        <OrderStatusBadge status={order.status} paymentStatus={order.payment?.status} />
       </div>
       <p className="text-ink-muted text-sm">
         {order.createdAt.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -59,7 +60,16 @@ export default async function OrderPage({ params }: { params: Promise<{ number: 
           </p>
       </div>
 
-      {order.status === 'PENDING' && <CancelOrderButton orderId={order.id} />}
+      {order.status === 'PENDING' && (
+        <div className="flex flex-wrap gap-3">
+          {order.payment && order.payment.status === 'pending' && order.payment.confirmationUrl && (
+            <Button asChild variant="primary" size="lg">
+              <a href={order.payment.confirmationUrl}>Продолжить оплату</a>
+            </Button>
+          )}
+          <CancelOrderButton orderId={order.id} />
+        </div>
+      )}
     </main>
   );
 }

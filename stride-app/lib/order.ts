@@ -57,3 +57,15 @@ export const ORDER_STATUS_META: Record<
   DELIVERED: { label: 'Доставлен', badge: 'badge-success' },
   CANCELLED: { label: 'Отменён', badge: 'badge-danger' },
 };
+
+// Онлайн-заказ ждёт оплаты (PENDING + платёж pending) — показываем «Ожидает оплаты»,
+// а не «Оформлен» (последнее путает с реально оформленным COD-заказом).
+export function orderStatusView(
+  status: keyof typeof ORDER_STATUS_META,
+  paymentStatus?: string | null,
+): { label: string; badge: string } {
+  if (status === 'PENDING' && paymentStatus === 'pending') {
+    return { label: 'Ожидает оплаты', badge: 'badge-warning' };
+  }
+  return ORDER_STATUS_META[status];
+}

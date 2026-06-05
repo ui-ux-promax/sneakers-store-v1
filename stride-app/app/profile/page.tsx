@@ -16,7 +16,7 @@ export default async function ProfilePage() {
   const orders = await prisma.order.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: 'desc' },
-    select: { orderNumber: true, status: true, createdAt: true, totalAmount: true, _count: { select: { items: true } } },
+    select: { orderNumber: true, status: true, createdAt: true, totalAmount: true, _count: { select: { items: true } }, payment: { select: { status: true } } },
   });
   const orderRows: OrderRow[] = orders.map((o) => ({
     orderNumber: o.orderNumber,
@@ -24,6 +24,7 @@ export default async function ProfilePage() {
     createdAt: o.createdAt.toISOString(),
     totalAmount: o.totalAmount,
     itemCount: o._count.items,
+    paymentStatus: o.payment?.status ?? null,
   }));
 
   return (
