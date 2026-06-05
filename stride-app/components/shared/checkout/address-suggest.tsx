@@ -9,20 +9,25 @@ interface Suggestion {
   data: { city: string | null; street_with_type: string | null; house: string | null };
 }
 
+// Автоподсказки полного адреса DaData на поле «Улица, дом, квартира».
+// Триггер — ввод в addressLine; запрос скоупится уже введённым городом (если есть),
+// выбор заполняет и city, и addressLine (улица + дом).
 export function AddressSuggest() {
-  const { setValue, watch } = useFormContext<CheckoutValues>();
-  const city = watch('city');
+  const { setValue, watch, getValues } = useFormContext<CheckoutValues>();
+  const line = watch('addressLine');
   const [items, setItems] = useState<Suggestion[]>([]);
   const [open, setOpen] = useState(false);
   const skip = useRef(false);
 
   useEffect(() => {
     if (skip.current) { skip.current = false; return; }
-    if (!city || city.trim().length < 2) { setItems([]); return; }
+    if (!line || line.trim().length < 2) { setItems([]); return; }
     const t = setTimeout(async () => {
       try {
+        const city = getValues('city');
+        const query = city && city.trim() ? `${city}, ${line}` : line;
         const res = await fetch('/api/dadata/suggest', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: city }),
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query }),
         });
         const data = await res.json();
         setItems(Array.isArray(data.suggestions) ? data.suggestions : []);
@@ -30,15 +35,14 @@ export function AddressSuggest() {
       } catch { setItems([]); }
     }, 300);
     return () => clearTimeout(t);
-  }, [city]);
+  }, [line, getValues]);
 
   if (!open || items.length === 0) return null;
 
   const pick = (s: Suggestion) => {
-    skip.current = true;
-    setValue('city', s.data.city ?? s.value);
-    const line = [s.data.street_with_type, s.data.house].filter(Boolean).join(', ');
-    if (line) setValue('addressLine', line);
+    if (s.data.city) setValue('city', s.data.city);
+    const street = [s.data.street_with_type, s.data.house].filter(Boolean).join(', ');
+    if (street) { skip.current = true; setValue('addressLine', street); }
     setItems([]);
     setOpen(false);
   };
