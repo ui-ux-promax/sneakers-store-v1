@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { Button, Input } from '@/components/ui';
@@ -10,6 +10,7 @@ import { calcShipping } from '@/lib/order';
 import { FREE_SHIPPING_THRESHOLD } from '@/constants/config';
 import { checkoutSchema, type CheckoutValues } from '@/services/dto/order.dto';
 import { placeOrder } from '@/app/actions/order';
+import { AddressSuggest } from './address-suggest';
 import type { CartDetails } from '@/services/dto/cart.dto';
 
 type Defaults = { contactName: string; contactPhone: string; contactEmail: string };
@@ -17,10 +18,11 @@ type Defaults = { contactName: string; contactPhone: string; contactEmail: strin
 export function CheckoutForm({ details, defaults }: { details: CartDetails; defaults: Defaults }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<CheckoutValues>({
+  const methods = useForm<CheckoutValues>({
     resolver: zodResolver(checkoutSchema),
-    defaultValues: { ...defaults, shippingMethod: 'courier', paymentMethod: 'cod', city: '', addressLine: '', addressComment: '' },
+    defaultValues: { ...defaults, shippingMethod: 'courier', paymentMethod: 'online', city: '', addressLine: '', addressComment: '' },
   });
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = methods;
 
   const shippingMethod = watch('shippingMethod');
   const shipping = calcShipping(details.totalAmount, shippingMethod);
@@ -30,12 +32,14 @@ export function CheckoutForm({ details, defaults }: { details: CartDetails; defa
     setError(null);
     const res = await placeOrder(v);
     if (!res.ok) { setError(res.error); return; }
+    if (res.paymentUrl) { window.location.href = res.paymentUrl; return; }
     router.push(`/orders/${res.orderNumber}`);
     router.refresh();
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="grid lg:grid-cols-[1fr_360px] gap-6 lg:gap-8" noValidate>
+    <FormProvider {...methods}>
+      <form onSubmit={handleSubmit(onSubmit)} className="grid lg:grid-cols-[1fr_360px] gap-6 lg:gap-8" noValidate>
       <div className="space-y-6">
         <section className="rounded-2xl border border-line bg-surface p-5 space-y-4">
           <h2 className="font-display font-bold text-xl">Контактные данные</h2>
@@ -58,14 +62,10 @@ export function CheckoutForm({ details, defaults }: { details: CartDetails; defa
 
         <section className="rounded-2xl border border-line bg-surface p-5 space-y-4">
           <h2 className="font-display font-bold text-xl">Адрес доставки</h2>
-          <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="city">Город</label>
-            <Input id="city" autoComplete="address-level2" {...register('city')} />
-            {errors.city && <p className="text-danger text-xs mt-1">{errors.city.message}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="addressLine">Улица, дом, квартира</label>
-            <Input id="addressLine" autoComplete="street-address" {...register('addressLine')} />
+          <div className="relative">
+            <label className="block text-sm font-medium mb-1" htmlFor="addressLine">Адрес</label>
+            <Input id="addressLine" autoComplete="off" placeholder="Город, улица, дом, квартира" {...register('addressLine')} />
+            <AddressSuggest />
             {errors.addressLine && <p className="text-danger text-xs mt-1">{errors.addressLine.message}</p>}
           </div>
           <div>
@@ -89,12 +89,12 @@ export function CheckoutForm({ details, defaults }: { details: CartDetails; defa
         <section className="rounded-2xl border border-line bg-surface p-5 space-y-3">
           <h2 className="font-display font-bold text-xl">Способ оплаты</h2>
           <label className="flex items-center gap-3 rounded-xl border border-line p-3 cursor-pointer">
-            <input type="radio" value="cod" {...register('paymentMethod')} defaultChecked />
-            <span className="flex-1"><span className="font-semibold">При получении</span><br /><span className="text-xs text-ink-muted">Наличными или картой курьеру</span></span>
+            <input type="radio" value="online" {...register('paymentMethod')} />
+            <span className="flex-1"><span className="font-semibold">Картой онлайн</span><br /><span className="text-xs text-ink-muted">Visa, MasterCard, МИР</span></span>
           </label>
-          <label className="flex items-center gap-3 rounded-xl border border-line p-3 opacity-50 cursor-not-allowed" title="Появится в следующей фазе">
-            <input type="radio" disabled />
-            <span className="flex-1"><span className="font-semibold">Картой онлайн</span><br /><span className="text-xs text-ink-muted">Visa, MasterCard, МИР — скоро</span></span>
+          <label className="flex items-center gap-3 rounded-xl border border-line p-3 cursor-pointer">
+            <input type="radio" value="cod" {...register('paymentMethod')} />
+            <span className="flex-1"><span className="font-semibold">При получении</span><br /><span className="text-xs text-ink-muted">Наличными или картой курьеру</span></span>
           </label>
         </section>
       </div>
@@ -122,6 +122,7 @@ export function CheckoutForm({ details, defaults }: { details: CartDetails; defa
           <Button type="submit" variant="primary" size="lg" className="w-full" loading={isSubmitting}>Оформить заказ →</Button>
         </div>
       </aside>
-    </form>
+      </form>
+    </FormProvider>
   );
 }

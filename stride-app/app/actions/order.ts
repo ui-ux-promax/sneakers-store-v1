@@ -2,7 +2,7 @@
 
 import { auth } from '@/auth';
 import { revalidatePath } from 'next/cache';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { prisma } from '@/lib/prisma-client';
 import { cartInclude } from '@/lib/cart-details';
 import { cartCookieName } from '@/lib/cart-cookie';
@@ -10,8 +10,9 @@ import { recalcCartTotalByToken } from '@/lib/cart';
 import { checkoutSchema } from '@/services/dto/order.dto';
 import { buildOrderSnapshot, calcShipping } from '@/lib/order';
 import { logger } from '@/lib/logger';
+import { createPayment, cancelPayment } from '@/lib/yookassa';
 
-export type PlaceOrderResult = { ok: true; orderNumber: number } | { ok: false; error: string };
+export type PlaceOrderResult = { ok: true; orderNumber: number; paymentUrl?: string } | { ok: false; error: string };
 
 async function restoreStock(items: { id: string; qty: number }[]): Promise<void> {
   for (const it of items) {
@@ -85,13 +86,13 @@ export async function placeOrder(raw: unknown): Promise<PlaceOrderResult> {
         contactPhone: form.contactPhone,
         contactEmail: form.contactEmail,
         shippingMethod: form.shippingMethod,
-        city: form.city,
+        city: form.city ?? '',
         addressLine: form.addressLine,
         addressComment: form.addressComment || null,
         itemsTotal: snapshot.itemsTotal,
         shippingAmount,
         totalAmount,
-        paymentMethod: 'cod',
+        paymentMethod: form.paymentMethod,
       },
       select: { id: true, orderNumber: true },
     });
@@ -122,6 +123,28 @@ export async function placeOrder(raw: unknown): Promise<PlaceOrderResult> {
     return { ok: false, error: 'Не удалось оформить заказ. Попробуйте позже' };
   }
 
+  let paymentUrl: string | undefined;
+  if (form.paymentMethod === 'online') {
+    try {
+      const host = (await headers()).get('host') || '';
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || (host ? `https://${host}` : 'http://localhost:3000');
+      const pay = await createPayment({ orderNumber, amountRub: totalAmount, baseUrl });
+      await prisma.payment.create({
+        data: { id: pay.id, orderId, amount: totalAmount, confirmationUrl: pay.confirmationUrl, status: 'pending' },
+      });
+      paymentUrl = pay.confirmationUrl;
+    } catch (e) {
+      try {
+        await prisma.order.delete({ where: { id: orderId } });
+      } catch (delErr) {
+        logger.error('place_order_payment_rollback_failed', delErr, { orderId });
+      }
+      await restoreStock(decremented);
+      logger.error('place_order_payment_failed', e, { orderId });
+      return { ok: false, error: 'Не удалось создать платёж. Попробуйте позже' };
+    }
+  }
+
   try {
     await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
     await recalcCartTotalByToken(token);
@@ -129,7 +152,7 @@ export async function placeOrder(raw: unknown): Promise<PlaceOrderResult> {
     logger.error('order_cart_cleanup_failed', e, { orderNumber });
   }
 
-  return { ok: true, orderNumber };
+  return { ok: true, orderNumber, paymentUrl };
 }
 
 export type CancelOrderResult = { ok: true } | { ok: false; error: string };
@@ -139,7 +162,7 @@ export async function cancelOrder(orderId: string): Promise<CancelOrderResult> {
   if (!session?.user?.id) return { ok: false, error: 'Не авторизован' };
   const userId = session.user.id;
 
-  const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } });
+  const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true, payment: true } });
   if (!order || order.userId !== userId || order.status !== 'PENDING') {
     return { ok: false, error: 'Этот заказ нельзя отменить' };
   }
@@ -151,6 +174,14 @@ export async function cancelOrder(orderId: string): Promise<CancelOrderResult> {
     where: { id: orderId },
     data: { status: 'CANCELLED' },
   });
+
+  if (order.payment && order.payment.status === 'pending') {
+    try {
+      await cancelPayment(order.payment.id);
+    } catch (e) {
+      logger.error('cancel_payment_failed', e, { orderId, paymentId: order.payment.id });
+    }
+  }
 
   for (const item of order.items) {
     try {

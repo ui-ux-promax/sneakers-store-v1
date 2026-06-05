@@ -48,9 +48,12 @@ jobs:
       # Без этого шага auth-e2e падают на `relation "public.User" does not exist` (42P01).
       - run: npm run prisma:push
 
-      # Если CI гоняется против ЧИСТОЙ тестовой БД (не засиженного dev/prod Neon),
-      # раскомментируй сид — тесты ждут товар stride-velocity-trail (размер 42 stock>0, 43 stock 0):
-      # - run: npm run prisma:seed
+      # Сид ПЕРЕД каждым e2e: TRUNCATE + пере-создание из seed-data (идемпотентно, upsert).
+      # КРИТИЧНО для повторяемости — e2e создают реальные заказы и списывают сток из CI-Neon-ветки
+      # (фиксированный POSTGRES_URL-секрет → всегда одна и та же ветка). Без сброса сток размера 42
+      # у stride-velocity-trail исчерпывается за несколько прогонов → кнопка размера disabled → флак.
+      # Сид возвращает сток к исходному (42=5, 43=0 — как ждут тесты). См. TROUBLESHOOTING P7/P10.
+      - run: npm run prisma:seed
 
       - run: npm run e2e
 
