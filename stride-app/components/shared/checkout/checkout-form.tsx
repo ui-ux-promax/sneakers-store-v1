@@ -62,14 +62,9 @@ export function CheckoutForm({ details, defaults }: { details: CartDetails; defa
 
         <section className="rounded-2xl border border-line bg-surface p-5 space-y-4">
           <h2 className="font-display font-bold text-xl">Адрес доставки</h2>
-          <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="city">Город</label>
-            <Input id="city" autoComplete="off" {...register('city')} />
-            {errors.city && <p className="text-danger text-xs mt-1">{errors.city.message}</p>}
-          </div>
           <div className="relative">
-            <label className="block text-sm font-medium mb-1" htmlFor="addressLine">Улица, дом, квартира</label>
-            <Input id="addressLine" autoComplete="off" {...register('addressLine')} />
+            <label className="block text-sm font-medium mb-1" htmlFor="addressLine">Адрес</label>
+            <Input id="addressLine" autoComplete="off" placeholder="Город, улица, дом, квартира" {...register('addressLine')} />
             <AddressSuggest />
             {errors.addressLine && <p className="text-danger text-xs mt-1">{errors.addressLine.message}</p>}
           </div>

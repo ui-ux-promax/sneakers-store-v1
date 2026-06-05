@@ -86,7 +86,7 @@ export async function placeOrder(raw: unknown): Promise<PlaceOrderResult> {
         contactPhone: form.contactPhone,
         contactEmail: form.contactEmail,
         shippingMethod: form.shippingMethod,
-        city: form.city,
+        city: form.city ?? '',
         addressLine: form.addressLine,
         addressComment: form.addressComment || null,
         itemsTotal: snapshot.itemsTotal,

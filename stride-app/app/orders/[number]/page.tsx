@@ -46,7 +46,7 @@ export default async function OrderPage({ params }: { params: Promise<{ number: 
 
       <div className="rounded-2xl border border-line bg-surface p-5 text-sm space-y-1">
         <p className="font-semibold">Доставка</p>
-        <p className="text-ink-muted">{order.shippingMethod === 'pickup' ? 'Самовывоз' : 'Курьер'} · {order.city}, {order.addressLine}</p>
+        <p className="text-ink-muted">{order.shippingMethod === 'pickup' ? 'Самовывоз' : 'Курьер'} · {[order.city, order.addressLine].filter(Boolean).join(', ')}</p>
         <p className="text-ink-muted">{order.contactName} · {order.contactPhone}</p>
         <p className="text-ink-muted">
             {order.payment

@@ -5,7 +5,7 @@ export const checkoutSchema = z.object({
   contactPhone: z.string().trim().min(5, 'Укажите телефон').max(20),
   contactEmail: z.string().trim().email('Некорректный email'),
   shippingMethod: z.enum(['courier', 'pickup']),
-  city: z.string().trim().min(1, 'Укажите город').max(100),
+  city: z.string().trim().max(100).optional(),
   addressLine: z.string().trim().min(1, 'Укажите адрес').max(200),
   addressComment: z.string().trim().max(300).optional(),
   paymentMethod: z.enum(['cod', 'online']),

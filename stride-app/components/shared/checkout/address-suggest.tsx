@@ -9,11 +9,10 @@ interface Suggestion {
   data: { city: string | null; street_with_type: string | null; house: string | null };
 }
 
-// Автоподсказки полного адреса DaData на поле «Улица, дом, квартира».
-// Триггер — ввод в addressLine; запрос скоупится уже введённым городом (если есть),
-// выбор заполняет и city, и addressLine (улица + дом).
+// Автоподсказки полного адреса DaData на единственном поле «Адрес».
+// Триггер — ввод в addressLine; выбор подставляет полный адрес одной строкой.
 export function AddressSuggest() {
-  const { setValue, watch, getValues } = useFormContext<CheckoutValues>();
+  const { setValue, watch } = useFormContext<CheckoutValues>();
   const line = watch('addressLine');
   const [items, setItems] = useState<Suggestion[]>([]);
   const [open, setOpen] = useState(false);
@@ -24,10 +23,8 @@ export function AddressSuggest() {
     if (!line || line.trim().length < 2) { setItems([]); return; }
     const t = setTimeout(async () => {
       try {
-        const city = getValues('city');
-        const query = city && city.trim() ? `${city}, ${line}` : line;
         const res = await fetch('/api/dadata/suggest', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query }),
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: line }),
         });
         const data = await res.json();
         setItems(Array.isArray(data.suggestions) ? data.suggestions : []);
@@ -35,14 +32,13 @@ export function AddressSuggest() {
       } catch { setItems([]); }
     }, 300);
     return () => clearTimeout(t);
-  }, [line, getValues]);
+  }, [line]);
 
   if (!open || items.length === 0) return null;
 
   const pick = (s: Suggestion) => {
-    if (s.data.city) setValue('city', s.data.city);
-    const street = [s.data.street_with_type, s.data.house].filter(Boolean).join(', ');
-    if (street) { skip.current = true; setValue('addressLine', street); }
+    skip.current = true;
+    setValue('addressLine', s.value);
     setItems([]);
     setOpen(false);
   };
