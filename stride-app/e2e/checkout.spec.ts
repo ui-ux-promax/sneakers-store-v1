@@ -39,7 +39,7 @@ test('сквозной COD-заказ: cart → checkout → order → исто�
   await page.goto('/checkout');
   // Телефон обязателен (checkoutSchema min 5) и НЕ префиллится у юзера без телефона — заполняем явно.
   await page.getByLabel('Телефон').fill('+79990000000');
-  await page.getByLabel('Адрес').fill('Москва, Тверская 1');
+  await page.getByLabel('Адрес', { exact: true }).fill('Москва, Тверская 1');
   // Онлайн-оплата теперь выбрана по умолчанию — для COD-теста явно переключаем на «При получении»
   // (иначе placeOrder уйдёт в online-ветку и упрётся в отсутствие YooKassa-ключей в CI).
   await page.getByRole('radio', { name: /При получении/ }).check();
@@ -63,7 +63,7 @@ test('отмена PENDING-заказа переводит его в стату�
   await page.goto('/checkout');
   // Телефон обязателен (checkoutSchema min 5) и НЕ префиллится у юзера без телефона — заполняем явно.
   await page.getByLabel('Телефон').fill('+79990000000');
-  await page.getByLabel('Адрес').fill('Москва, Тверская 1');
+  await page.getByLabel('Адрес', { exact: true }).fill('Москва, Тверская 1');
   // Онлайн-оплата теперь выбрана по умолчанию — для COD-теста явно переключаем на «При получении»
   // (иначе placeOrder уйдёт в online-ветку и упрётся в отсутствие YooKassa-ключей в CI).
   await page.getByRole('radio', { name: /При получении/ }).check();

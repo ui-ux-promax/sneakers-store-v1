@@ -23,8 +23,7 @@ async function addSeedProductToCart(page: Page) {
 
 async function fillCheckout(page: Page) {
   await page.getByLabel('Телефон').fill('+79990000000');
-  await page.getByLabel('Город').fill('Москва');
-  await page.getByLabel('Улица, дом, квартира').fill('Тверская 1');
+  await page.getByLabel('Адрес', { exact: true }).fill('Москва, Тверская 1');
 }
 
 test('COD-заказ по-прежнему работает (регрессия)', async ({ page }) => {
