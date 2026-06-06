@@ -73,4 +73,6 @@ const adapter = new PrismaNeon({ connectionString })   // pooled URL
 - **Смена провайдера (Supabase/Railway/RDS)** — переезд БД, теряются ветки-на-окружение Neon, не решает serverless-tension лучше. Избыточно: проблема не в Neon.
 
 ## Решение
-Пользователь (2026-06-06): **мигрировать HTTP→WebSocket отдельным слайсом ПЕРЕД P2.1c.** План: `docs/superpowers/plans/2026-06-06-stride-neon-websocket-migration.md`. После миграции [[prisma-neon-no-transaction]] перестаёт быть ограничением — обновить памятку/TROUBLESHOOTING.
+Пользователь (2026-06-06): **мигрировать HTTP→WebSocket отдельным слайсом ПЕРЕД P2.1c.** План: `docs/superpowers/plans/2026-06-06-stride-neon-websocket-migration.md`.
+
+**ВЫПОЛНЕНО (2026-06-06), ветка `feat/neon-websocket`:** `PrismaNeon`+`ws`, pooled `POSTGRES_URL`, `ws` вне edge-бандла (middleware 86 kB). Гейты: typecheck 0 / vitest 102/102 / build OK. **CI e2e зелёный** (run 27052814591) — checkout/order/cancel/payment/cart-merge на WS против живого Neon прошли → транзакции работают, обходы не сломались. [[prisma-neon-no-transaction]] и TROUBLESHOOTING P5/P9 помечены снятыми (новая запись P12). Транзакционный класс закрыт; перевод компенсаций на транзакции — follow-up. PR `feat/neon-websocket`→`main`, мержит пользователь.
