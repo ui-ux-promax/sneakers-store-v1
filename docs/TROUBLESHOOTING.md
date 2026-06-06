@@ -90,6 +90,8 @@
 
 ## P5. Neon HTTP-адаптер НЕ поддерживает `$transaction` — мультизаписи через компенсацию
 
+> **СНЯТО 2026-06-06 (см. P12):** транспорт мигрирован HTTP→WebSocket (`PrismaNeon`), `$transaction` доступен. Ниже — историческое описание (объясняет, почему текущий код на компенсациях; их можно постепенно заменить транзакциями — follow-up).
+
 - **Когда:** 2026-06-02, Фаза 2.0 (фикс слияния корзины после ревью).
 - **Симптом:** ревью предложило обернуть `mergeGuestCart` в `prisma.$transaction([...])` для атомарности.
   Неприменимо: наш Prisma работает через `PrismaNeonHTTP` (`lib/prisma-client.ts`), а HTTP-режим Neon
@@ -188,6 +190,8 @@
 
 ## P9. `placeOrder` падал `Transactions are not supported in HTTP mode` — nested-create И createMany триггерят транзакцию
 
+> **СНЯТО 2026-06-06 (см. P12):** транспорт мигрирован HTTP→WebSocket — `$transaction`/`updateMany`/`createMany`/nested-create и `$executeRaw`-UPDATE на проде снова работают. Ниже — историческое описание (текущий код всё ещё на одиночных write + findUnique-пре-гард; перевод на транзакции — follow-up).
+
 - **Когда:** 2026-06-03, Фаза 2.1a (e2e в CI, первый реальный прогон `placeOrder`).
 - **Симптом:** e2e чекаута падали — после «Оформить заказ» страница оставалась на `/checkout`; сервер-лог
   `⨯ [Error: Transactions are not supported in HTTP mode]` ×6 (= 2 теста × 3 попытки). `placeOrder`
@@ -280,3 +284,38 @@
   - Оба бага юзер-видимы только на живой оплате; `next build`/`typecheck`/unit их по сети не ловят — но
     содержимое payload (units/URL) юнит-моки SDK ловят, регрессы добавлены.
 - **Коммиты:** `f33df37` (оба фикса); ранее `7bf62ae` (рантайм-хост для `return_url`).
+
+---
+
+## P12. Миграция транспорта Neon HTTP → WebSocket — снят транзакционный класс (P5/P9)
+
+- **Когда:** 2026-06-06, перед Фазой 2.1c (отдельный слайс `feat/neon-websocket`).
+- **Проблема:** транзакционный класс багов (P5 cart-merge, P9 placeOrder) — следствие **HTTP-транспорта**
+  Neon (`PrismaNeonHTTP`), а не Neon как БД. HTTP — single-shot запросы без сессии → `$transaction`/
+  `updateMany`/`createMany`/nested-create невозможны; на проде даже `$executeRaw`-UPDATE молча не применялся.
+- **Причина выбора HTTP:** транспорт спроектирован под edge (Workers/Vercel Edge), где нет TCP. **Греп
+  доказал: приложение нигде не обращается к БД с edge** — `runtime='edge'` отсутствует; `middleware.ts`
+  не импортирует `prisma-client` (ходит только в JWT через `auth.config` без адаптера). То есть платили
+  налог (нет транзакций), не используя выгоду (edge).
+- **Решение:** перейти на **WebSocket-транспорт** (`PrismaNeon` + `ws`, `neonConfig.webSocketConstructor=ws`),
+  connection string → pooled `POSTGRES_URL` (был приоритет non-pooling — HTTP-специфика). Убран HTTP-only
+  `fetchWithTimeout`/`neonConfig.fetchFunction`; `retryOnTransient` сохранён (теперь поглощает обрывы сокета:
+  `Connection terminated`/`socket hang up`). `ws` добавлен в `serverExternalPackages` + edge-alias-стаб
+  (`next.config.mjs`), чтобы не утёк в edge-бандл middleware (остался 86 kB). Код запросов НЕ переписывался —
+  обходы P5/P9 работают как есть (WS ⊇ HTTP по операциям).
+- **Верификация:** локально typecheck 0 / vitest 102/102 / build OK (middleware 86 kB); **CI e2e зелёный**
+  (run 27052814591) — реальные checkout/order/cancel/payment/cart-merge на WS против живого Neon прошли =
+  транзакции/сессии работают, компенсации не сломались.
+- **Что НЕ трогает эта миграция (другие классы, ОСТАЮТСЯ):** P1 (edge-бандл — `ws` теперь в том же списке
+  стабов), P2 (имена env/секретов), P3 (shell-env), **P7 (Neon-ветка БД на каждую git-ветку — схему
+  применяет `db push` в `vercel.json`/CI; НЕ про транспорт)**, P8 (полнота модели под адаптеры), P10 (сток
+  в e2e — seed-сброс перед прогоном), P11 (единицы денег/URL-гигиена). Они требуют той же дисциплины, что
+  и раньше. В частности P2.1c добавляет таблицу `Coupon` + колонки `Order` → схему надо db-push'ить в каждую
+  ветку (класс P7).
+- **На будущее:** новые мультизаписи можно делать через `$transaction`/`createMany`/nested-create. Перевод
+  существующих компенсаций (`placeOrder`/`cancelOrder`/`mergeGuestCart`) на транзакции — отдельные follow-up
+  слайсы (по одному месту + e2e), НЕ в этой миграции. Откат миграции = revert коммитов транспорта (код
+  запросов не тронут).
+- **Коммиты:** `73716b1` (ws), `8d70bdd` (PrismaNeon transport), `0ce9284` (ws вне edge); оценка/план —
+  `docs/superpowers/research/2026-06-06-neon-http-vs-websocket-assessment.md`,
+  `docs/superpowers/plans/2026-06-06-stride-neon-websocket-migration.md`.

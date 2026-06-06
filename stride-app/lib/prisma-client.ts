@@ -1,45 +1,22 @@
-import { PrismaNeonHTTP } from '@prisma/adapter-neon';
+import { PrismaNeon } from '@prisma/adapter-neon';
 import { neonConfig } from '@neondatabase/serverless';
 import { PrismaClient } from '@prisma/client';
+import ws from 'ws';
 
-// Neon HTTP-транспорт: каждый запрос — отдельный HTTPS-вызов (нет пула/идл-дисконнектов,
-// работает в dev/node/edge). ВАЖНО: $transaction НЕ поддерживается в HTTP-режиме —
-// мультизаписи делать последовательными await с ручной компенсацией.
+// Neon WebSocket-транспорт: постоянный сокет поверх @neondatabase/serverless (Pool).
+// В ОТЛИЧИЕ от HTTP-режима поддерживает $transaction / createMany / nested-create.
+// Connection string — POOLED (эндпоинт -pooler); миграции (db push) используют directUrl/NON_POOLING.
+// Транзиентные обрывы постоянного сокета («Connection terminated», «socket hang up») поглощает
+// retryOnTransient ниже.
+neonConfig.webSocketConstructor = ws;
 
 const getConnectionString = () =>
-  process.env.POSTGRES_URL_NON_POOLING ?? process.env.POSTGRES_URL;
-
-const getNeonFetchTimeoutMs = () => {
-  const value = Number(process.env.NEON_FETCH_TIMEOUT_MS);
-  return Number.isFinite(value) && value > 0 ? value : 15000;
-};
-
-const NEON_FETCH_TIMEOUT_MS = getNeonFetchTimeoutMs();
-
-const fetchWithTimeout: typeof fetch = async (input, init) => {
-  const controller = new AbortController();
-  const parentSignal = init?.signal;
-  const timeout = setTimeout(() => controller.abort(), NEON_FETCH_TIMEOUT_MS);
-  const abortFromParent = () => controller.abort(parentSignal?.reason);
-  if (parentSignal?.aborted) controller.abort(parentSignal.reason);
-  else parentSignal?.addEventListener('abort', abortFromParent, { once: true });
-  try {
-    const requestInit: RequestInit = init
-      ? { ...init, signal: controller.signal }
-      : { signal: controller.signal };
-    return await fetch(input, requestInit);
-  } finally {
-    clearTimeout(timeout);
-    parentSignal?.removeEventListener('abort', abortFromParent);
-  }
-};
-
-neonConfig.fetchFunction = fetchWithTimeout;
+  process.env.POSTGRES_URL ?? process.env.POSTGRES_URL_NON_POOLING;
 
 const buildAdapter = () => {
-  const url = getConnectionString();
-  if (!url) return undefined;
-  return new PrismaNeonHTTP(url, {});
+  const connectionString = getConnectionString();
+  if (!connectionString) return undefined;
+  return new PrismaNeon({ connectionString });
 };
 
 const TRANSIENT_ERROR_CODES = new Set([
