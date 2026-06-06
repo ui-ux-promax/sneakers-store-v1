@@ -8,9 +8,24 @@ import { Button } from '@/components/ui';
 import { getPaymentStatus } from '@/lib/yookassa';
 import { applyPaymentSucceeded, applyPaymentCanceled } from '@/lib/payment-sync';
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
+import Link from 'next/link';
+import { ReviewForm } from '@/components/shared/product/review-form';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Заказ' };
+
+// Позиции + связь товара (productId/slug/name) — нужно для формы отзыва на странице заказа.
+const orderInclude = {
+  items: {
+    include: {
+      productVariant: {
+        select: { colorway: { select: { productId: true, product: { select: { slug: true, name: true } } } } },
+      },
+    },
+  },
+  payment: true,
+} satisfies Prisma.OrderInclude;
 
 export default async function OrderPage({ params }: { params: Promise<{ number: string }> }) {
   const session = await auth();
@@ -20,7 +35,7 @@ export default async function OrderPage({ params }: { params: Promise<{ number: 
   const orderNumber = Number(number);
   if (!Number.isInteger(orderNumber)) notFound();
 
-  let order = await prisma.order.findUnique({ where: { orderNumber }, include: { items: true, payment: true } });
+  let order = await prisma.order.findUnique({ where: { orderNumber }, include: orderInclude });
   if (!order || order.userId !== session.user.id) notFound();
 
   // Источник правды по оплате — ЮKassa, а не вебхук (он может не дойти на preview/хэш-URL).
@@ -30,16 +45,38 @@ export default async function OrderPage({ params }: { params: Promise<{ number: 
       const remote = await getPaymentStatus(order.payment.id);
       if (remote === 'succeeded') {
         await applyPaymentSucceeded(order.payment.id);
-        order = await prisma.order.findUnique({ where: { orderNumber }, include: { items: true, payment: true } });
+        order = await prisma.order.findUnique({ where: { orderNumber }, include: orderInclude });
       } else if (remote === 'canceled') {
         await applyPaymentCanceled(order.payment.id);
-        order = await prisma.order.findUnique({ where: { orderNumber }, include: { items: true, payment: true } });
+        order = await prisma.order.findUnique({ where: { orderNumber }, include: orderInclude });
       }
     } catch (e) {
       logger.error('order_payment_sync_failed', e, { orderNumber });
     }
     if (!order) notFound();
   }
+
+  // Товары заказа (дедуп по productId) + уже оставленные отзывы — для формы «Оцените покупку».
+  const productsInOrder: { id: string; slug: string; name: string }[] = [];
+  const seenProductIds = new Set<string>();
+  for (const it of order.items) {
+    const cw = it.productVariant.colorway;
+    if (!seenProductIds.has(cw.productId)) {
+      seenProductIds.add(cw.productId);
+      productsInOrder.push({ id: cw.productId, slug: cw.product.slug, name: cw.product.name });
+    }
+  }
+  const canLeaveReviews = order.status !== 'CANCELLED' && productsInOrder.length > 0;
+  const reviewedProductIds = canLeaveReviews
+    ? new Set(
+        (
+          await prisma.review.findMany({
+            where: { userId: session.user.id, productId: { in: productsInOrder.map((p) => p.id) } },
+            select: { productId: true },
+          })
+        ).map((r) => r.productId),
+      )
+    : new Set<string>();
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 space-y-6">
@@ -59,6 +96,22 @@ export default async function OrderPage({ params }: { params: Promise<{ number: 
           </li>
         ))}
       </ul>
+
+      {canLeaveReviews && (
+        <section className="rounded-2xl border border-line bg-surface p-5 space-y-4">
+          <h2 className="font-semibold">Оцените покупку</h2>
+          {productsInOrder.map((p) => (
+            <div key={p.id} className="space-y-2">
+              <Link href={`/product/${p.slug}`} className="text-sm font-medium underline-offset-2 hover:underline">{p.name}</Link>
+              {reviewedProductIds.has(p.id) ? (
+                <p className="text-sm text-ink-muted">Вы уже оставили отзыв на этот товар. Спасибо!</p>
+              ) : (
+                <ReviewForm productId={p.id} />
+              )}
+            </div>
+          ))}
+        </section>
+      )}
 
       <div className="rounded-2xl border border-line bg-surface p-5 space-y-2 text-sm">
         <div className="flex justify-between"><span className="text-ink-muted">Товары</span><span className="tnum">{formatPrice(order.itemsTotal)}</span></div>

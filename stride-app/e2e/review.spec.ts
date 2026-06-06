@@ -28,21 +28,23 @@ async function buyVelocityTrail(page: Page) {
   await expect(page).toHaveURL(/\/orders\/\d+/);
 }
 
-test('купивший оставляет отзыв → виден; форма исчезает после отправки', async ({ page }) => {
+test('купивший оставляет отзыв со страницы заказа → виден на PDP, повтор недоступен', async ({ page }) => {
   await registerAndLogin(page);
-  await buyVelocityTrail(page);
+  await buyVelocityTrail(page); // заканчивается на /orders/N (COD, не-CANCELLED) — один заказ, без доп. стока
 
-  await page.goto('/product/stride-velocity-trail');
-  // Звёздный radiogroup «Оценка» + текст.
+  // п.3: форма отзыва прямо на странице заказа (тот же ReviewForm, что и на PDP).
+  await expect(page.getByRole('heading', { name: 'Оцените покупку' })).toBeVisible();
   await page.getByRole('radio', { name: '5 из 5' }).click();
   await page.getByPlaceholder(/Поделитесь впечатлением/).fill('Супер кроссовки e2e');
   await page.getByRole('button', { name: 'Оставить отзыв' }).click();
+  // RSC перечитает состояние: форма на странице заказа сменяется подтверждением.
+  await expect(page.getByText('Вы уже оставили отзыв на этот товар. Спасибо!')).toBeVisible();
 
+  // п.1: на PDP отзыв виден, формы нет, состояние «уже оставили» (а не «после покупки»).
+  await page.goto('/product/stride-velocity-trail');
   await expect(page.getByText('Супер кроссовки e2e')).toBeVisible();
-
-  // Повтор недоступен: после отправки пользователь уже оставил отзыв → формы нет.
-  await page.reload();
   await expect(page.getByRole('button', { name: 'Оставить отзыв' })).toHaveCount(0);
+  await expect(page.getByText('Вы уже оставили отзыв на этот товар. Спасибо!')).toBeVisible();
 });
 
 test('гость на PDP → формы нет, видит «Войдите»', async ({ page }) => {

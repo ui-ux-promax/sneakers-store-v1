@@ -7,7 +7,7 @@ vi.mock('@/lib/prisma-client', () => ({
   },
 }));
 
-import { isValidRating, canReview } from '@/lib/review';
+import { isValidRating, canReview, getReviewEligibility } from '@/lib/review';
 import { prisma } from '@/lib/prisma-client';
 
 const orderFindFirst = prisma.order.findFirst as unknown as ReturnType<typeof vi.fn>;
@@ -44,5 +44,23 @@ describe('canReview', () => {
     orderFindFirst.mockResolvedValue({ id: 'o1' });
     reviewFindUnique.mockResolvedValue({ id: 'r1' });
     expect(await canReview('u1', 'p1')).toBe(false);
+  });
+});
+
+describe('getReviewEligibility', () => {
+  it('нет заказа → not-purchased (отзыв не проверяется)', async () => {
+    orderFindFirst.mockResolvedValue(null);
+    expect(await getReviewEligibility('u1', 'p1')).toBe('not-purchased');
+    expect(reviewFindUnique).not.toHaveBeenCalled();
+  });
+  it('есть заказ + нет отзыва → eligible', async () => {
+    orderFindFirst.mockResolvedValue({ id: 'o1' });
+    reviewFindUnique.mockResolvedValue(null);
+    expect(await getReviewEligibility('u1', 'p1')).toBe('eligible');
+  });
+  it('есть заказ + уже есть отзыв → already-reviewed', async () => {
+    orderFindFirst.mockResolvedValue({ id: 'o1' });
+    reviewFindUnique.mockResolvedValue({ id: 'r1' });
+    expect(await getReviewEligibility('u1', 'p1')).toBe('already-reviewed');
   });
 });

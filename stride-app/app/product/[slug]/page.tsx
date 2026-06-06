@@ -11,7 +11,7 @@ import { ProductGallery } from '@/components/shared/product/product-gallery';
 import { PurchasePanel } from '@/components/shared/product/purchase-panel';
 import { SpecsTable } from '@/components/shared/product/specs-table';
 import { auth } from '@/auth';
-import { canReview } from '@/lib/review';
+import { getReviewEligibility } from '@/lib/review';
 import { RatingStars } from '@/components/shared/product/rating-stars';
 import { ReviewsSection } from '@/components/shared/product/reviews-section';
 import type { ReviewItem } from '@/components/shared/product/review-list';
@@ -59,9 +59,8 @@ export default async function ProductPage({ params, searchParams }: Params) {
   }));
   const avg = agg._avg.rating ?? 0;
   const count = agg._count; // _count: true → number (НЕ { _all }; подтверждено типами Prisma)
-  const eligible = session?.user?.id ? await canReview(session.user.id, product.id) : false;
-  const reviewState: 'eligible' | 'guest' | 'not-eligible' =
-    !session?.user?.id ? 'guest' : eligible ? 'eligible' : 'not-eligible';
+  const reviewState: 'eligible' | 'guest' | 'not-purchased' | 'already-reviewed' =
+    session?.user?.id ? await getReviewEligibility(session.user.id, product.id) : 'guest';
 
   const galleryImages = active.images.map((im) => ({ url: im.url, alt: im.alt ?? product.name }));
   const panelColorways = product.colorways.map((cw) => ({ slug: cw.slug, name: cw.name, thumbUrl: cw.images[0]?.url ?? null }));
