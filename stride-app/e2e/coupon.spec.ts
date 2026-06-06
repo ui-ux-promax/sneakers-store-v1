@@ -53,7 +53,9 @@ test('истёкший купон EXPIRED → ошибка, без скидки'
   await page.getByPlaceholder('Промокод').fill('EXPIRED');
   await page.getByRole('button', { name: 'Применить' }).click();
 
-  await expect(page.getByRole('alert')).toContainText(/истёк/);
+  // Целимся по тексту ошибки, а не getByRole('alert') — последний матчит ещё и
+  // служебный Next.js route-announcer (<div role="alert" id="__next-route-announcer__">).
+  await expect(page.getByText(/Срок действия промокода истёк/)).toBeVisible();
   await expect(page.getByText('Скидка', { exact: true })).toHaveCount(0);
 });
 
@@ -65,5 +67,5 @@ test('несуществующий купон → ошибка', async ({ page }
   await page.getByPlaceholder('Промокод').fill('NOPE123');
   await page.getByRole('button', { name: 'Применить' }).click();
 
-  await expect(page.getByRole('alert')).toContainText(/недействителен/);
+  await expect(page.getByText(/Промокод недействителен/)).toBeVisible();
 });
