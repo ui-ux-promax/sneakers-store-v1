@@ -12,12 +12,15 @@ vi.mock('@/lib/prisma-client', () => ({
   },
 }));
 vi.mock('@/lib/yookassa', () => ({ cancelPayment: vi.fn() }));
+vi.mock('@/lib/review', () => ({ pruneReviewsAfterCancel: vi.fn() }));
 
 import { cancelOrder } from '@/app/actions/order';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma-client';
 import { cancelPayment } from '@/lib/yookassa';
+import { pruneReviewsAfterCancel } from '@/lib/review';
 const cancelPaymentMock = cancelPayment as unknown as ReturnType<typeof vi.fn>;
+const pruneMock = pruneReviewsAfterCancel as unknown as ReturnType<typeof vi.fn>;
 
 const authMock = auth as unknown as ReturnType<typeof vi.fn>;
 const findUnique = prisma.order.findUnique as unknown as ReturnType<typeof vi.fn>;
@@ -28,7 +31,10 @@ function pendingOrder() {
   return {
     id: 'o1', orderNumber: 1025, userId: 'u1', status: 'PENDING',
     payment: null,
-    items: [{ productVariantId: 'v1', quantity: 2 }, { productVariantId: 'v2', quantity: 1 }],
+    items: [
+      { productVariantId: 'v1', quantity: 2, productVariant: { colorway: { productId: 'p1' } } },
+      { productVariantId: 'v2', quantity: 1, productVariant: { colorway: { productId: 'p2' } } },
+    ],
   };
 }
 
@@ -48,14 +54,17 @@ describe('cancelOrder', () => {
     expect(orderUpdate).toHaveBeenCalledWith({ where: { id: 'o1' }, data: { status: 'CANCELLED' } });
     expect(variantUpdate).toHaveBeenCalledTimes(2);
     expect(variantUpdate).toHaveBeenCalledWith({ where: { id: 'v1' }, data: { stock: { increment: 2 } } });
+    // Осиротевшие отзывы по товарам отменённого заказа снимаются (дедуп по productId).
+    expect(pruneMock).toHaveBeenCalledWith('u1', ['p1', 'p2']);
   });
 
-  it('чужой заказ — отказ, сток не тронут', async () => {
+  it('чужой заказ — отказ, сток не тронут, отзывы не трогаются', async () => {
     findUnique.mockResolvedValue({ ...pendingOrder(), userId: 'other' });
     const r = await cancelOrder('o1');
     expect(r.ok).toBe(false);
     expect(orderUpdate).not.toHaveBeenCalled();
     expect(variantUpdate).not.toHaveBeenCalled();
+    expect(pruneMock).not.toHaveBeenCalled();
   });
 
   it('не PENDING — отказ', async () => {

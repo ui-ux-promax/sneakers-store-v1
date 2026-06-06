@@ -66,7 +66,11 @@ export default async function OrderPage({ params }: { params: Promise<{ number: 
       productsInOrder.push({ id: cw.productId, slug: cw.product.slug, name: cw.product.name });
     }
   }
-  const canLeaveReviews = order.status !== 'CANCELLED' && productsInOrder.length > 0;
+  // Отзыв доступен, только если этот заказ — реальная покупка: не отменён И (COD ИЛИ онлайн оплачен).
+  // Неоплаченный онлайн-заказ («Ожидает оплаты») формы не даёт.
+  const orderIsPurchase =
+    order.status !== 'CANCELLED' && (order.paymentMethod === 'cod' || order.payment?.status === 'succeeded');
+  const canLeaveReviews = orderIsPurchase && productsInOrder.length > 0;
   const reviewedProductIds = canLeaveReviews
     ? new Set(
         (
