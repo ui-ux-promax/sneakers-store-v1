@@ -9,6 +9,7 @@ import { cartCookieName } from '@/lib/cart-cookie';
 import { recalcCartTotalByToken } from '@/lib/cart';
 import { checkoutSchema } from '@/services/dto/order.dto';
 import { buildOrderSnapshot, calcShipping } from '@/lib/order';
+import { checkCoupon, calcCouponDiscount } from '@/lib/coupon';
 import { logger } from '@/lib/logger';
 import { createPayment, cancelPayment } from '@/lib/yookassa';
 
@@ -51,8 +52,20 @@ export async function placeOrder(raw: unknown): Promise<PlaceOrderResult> {
   }
 
   const snapshot = buildOrderSnapshot(cart);
+
+  // Купон — повторная валидация на сервере (источник истины; клиентскому couponCode не доверяем).
+  // До декремента стока → при отказе откатывать нечего.
+  let discountAmount = 0;
+  let couponCode: string | null = null;
+  if (form.couponCode && form.couponCode.trim()) {
+    const check = await checkCoupon(form.couponCode);
+    if (!check.ok) return { ok: false, error: check.error };
+    discountAmount = calcCouponDiscount(snapshot.itemsTotal, check.percent);
+    couponCode = check.code;
+  }
+
   const shippingAmount = calcShipping(snapshot.itemsTotal, form.shippingMethod);
-  const totalAmount = snapshot.itemsTotal + shippingAmount;
+  const totalAmount = snapshot.itemsTotal - discountAmount + shippingAmount;
 
   const decremented: { id: string; qty: number }[] = [];
   for (const it of snapshot.items) {
@@ -90,8 +103,10 @@ export async function placeOrder(raw: unknown): Promise<PlaceOrderResult> {
         addressLine: form.addressLine,
         addressComment: form.addressComment || null,
         itemsTotal: snapshot.itemsTotal,
+        discountAmount,
         shippingAmount,
         totalAmount,
+        couponCode,
         paymentMethod: form.paymentMethod,
       },
       select: { id: true, orderNumber: true },

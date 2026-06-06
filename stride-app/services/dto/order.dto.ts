@@ -9,5 +9,6 @@ export const checkoutSchema = z.object({
   addressLine: z.string().trim().min(1, 'Укажите адрес').max(200),
   addressComment: z.string().trim().max(300).optional(),
   paymentMethod: z.enum(['cod', 'online']),
+  couponCode: z.string().trim().max(40).optional(),
 });
 export type CheckoutValues = z.infer<typeof checkoutSchema>;

@@ -10,6 +10,7 @@ import { calcShipping } from '@/lib/order';
 import { FREE_SHIPPING_THRESHOLD } from '@/constants/config';
 import { checkoutSchema, type CheckoutValues } from '@/services/dto/order.dto';
 import { placeOrder } from '@/app/actions/order';
+import { validateCoupon } from '@/app/actions/coupon';
 import { AddressSuggest } from './address-suggest';
 import type { CartDetails } from '@/services/dto/cart.dto';
 
@@ -18,15 +19,31 @@ type Defaults = { contactName: string; contactPhone: string; contactEmail: strin
 export function CheckoutForm({ details, defaults }: { details: CartDetails; defaults: Defaults }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [coupon, setCoupon] = useState<{ code: string; percent: number; discount: number } | null>(null);
+  const [couponInput, setCouponInput] = useState('');
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponPending, setCouponPending] = useState(false);
   const methods = useForm<CheckoutValues>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: { ...defaults, shippingMethod: 'courier', paymentMethod: 'online', city: '', addressLine: '', addressComment: '' },
   });
-  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = methods;
+  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = methods;
 
   const shippingMethod = watch('shippingMethod');
   const shipping = calcShipping(details.totalAmount, shippingMethod);
-  const total = details.totalAmount + shipping;
+  const discount = coupon?.discount ?? 0;
+  const total = details.totalAmount - discount + shipping;
+
+  const applyCoupon = async () => {
+    setCouponError(null);
+    setCouponPending(true);
+    const res = await validateCoupon(couponInput);
+    setCouponPending(false);
+    if (!res.ok) { setCoupon(null); setValue('couponCode', ''); setCouponError(res.error); return; }
+    setCoupon({ code: res.code, percent: res.percent, discount: res.discount });
+    setValue('couponCode', res.code);
+  };
+  const removeCoupon = () => { setCoupon(null); setCouponInput(''); setValue('couponCode', ''); setCouponError(null); };
 
   const onSubmit = async (v: CheckoutValues) => {
     setError(null);
@@ -40,6 +57,7 @@ export function CheckoutForm({ details, defaults }: { details: CartDetails; defa
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(onSubmit)} className="grid lg:grid-cols-[1fr_360px] gap-6 lg:gap-8" noValidate>
+      <input type="hidden" {...register('couponCode')} />
       <div className="space-y-6">
         <section className="rounded-2xl border border-line bg-surface p-5 space-y-4">
           <h2 className="font-display font-bold text-xl">Контактные данные</h2>
@@ -102,6 +120,23 @@ export function CheckoutForm({ details, defaults }: { details: CartDetails; defa
       <aside>
         <div className="rounded-2xl border border-line bg-surface p-5 space-y-4 lg:sticky lg:top-24">
           <h2 className="font-display font-bold text-xl">Ваш заказ</h2>
+          {/* Промокод */}
+          <div className="space-y-2">
+            {!coupon ? (
+              <>
+                <div className="flex gap-2">
+                  <Input value={couponInput} onChange={(e) => setCouponInput(e.target.value)} placeholder="Промокод" />
+                  <Button type="button" variant="secondary" size="md" className="shrink-0" loading={couponPending} onClick={applyCoupon}>Применить</Button>
+                </div>
+                {couponError && <p className="text-danger text-xs" role="alert">{couponError}</p>}
+              </>
+            ) : (
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-success font-semibold">Промокод {coupon.code} ({coupon.percent}%)</span>
+                <button type="button" onClick={removeCoupon} className="text-ink-muted hover:text-ink" aria-label="Убрать промокод">×</button>
+              </div>
+            )}
+          </div>
           <ul className="space-y-3">
             {details.items.map((it) => (
               <li key={it.id} className="flex justify-between gap-3 text-sm">
@@ -112,6 +147,9 @@ export function CheckoutForm({ details, defaults }: { details: CartDetails; defa
           </ul>
           <div className="space-y-2 text-sm border-t border-line pt-4">
             <div className="flex justify-between"><span className="text-ink-muted">Товары</span><span className="font-semibold tnum">{formatPrice(details.totalAmount)}</span></div>
+            {discount > 0 && (
+              <div className="flex justify-between"><span className="text-ink-muted">Скидка</span><span className="font-semibold text-success tnum">−{formatPrice(discount)}</span></div>
+            )}
             <div className="flex justify-between"><span className="text-ink-muted">Доставка</span><span className="font-semibold tnum">{shipping === 0 ? 'Бесплатно' : formatPrice(shipping)}</span></div>
           </div>
           <div className="flex justify-between items-baseline border-t border-line pt-4">

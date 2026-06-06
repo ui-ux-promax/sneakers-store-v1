@@ -90,22 +90,33 @@ async function up() {
       }
     }
   }
+
+  const coupons = [
+    { code: 'STRIDE10', percent: 10, active: true, expiresAt: null },
+    { code: 'WELCOME15', percent: 15, active: true, expiresAt: null },
+    { code: 'EXPIRED', percent: 50, active: true, expiresAt: new Date('2020-01-01') }, // для e2e-негатива
+  ];
+  for (const c of coupons) {
+    await prisma.coupon.upsert({ where: { code: c.code }, update: c, create: c });
+  }
+  console.log(`Seeded ${coupons.length} coupons`);
 }
 
 async function main() {
   await down();
   await up();
-  const [categoryN, productN, colorwayN, imageN, variantN, soldOutN] = await Promise.all([
+  const [categoryN, productN, colorwayN, imageN, variantN, soldOutN, couponN] = await Promise.all([
     prisma.category.count(),
     prisma.product.count(),
     prisma.productColorway.count(),
     prisma.productImage.count(),
     prisma.productVariant.count(),
     prisma.productVariant.count({ where: { stock: 0 } }),
+    prisma.coupon.count(),
   ]);
   console.log(
     `Seed готов: categories=${categoryN} products=${productN} colorways=${colorwayN} ` +
-      `images=${imageN} variants=${variantN} (variants stock=0: ${soldOutN})`,
+      `images=${imageN} variants=${variantN} (variants stock=0: ${soldOutN}) coupons=${couponN}`,
   );
 }
 
