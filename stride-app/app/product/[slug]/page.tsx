@@ -58,7 +58,7 @@ export default async function ProductPage({ params, searchParams }: Params) {
     authorName: r.user.name?.trim() ? r.user.name : 'Покупатель',
   }));
   const avg = agg._avg.rating ?? 0;
-  const count = agg._count;
+  const count = agg._count; // _count: true → number (НЕ { _all }; подтверждено типами Prisma)
   const eligible = session?.user?.id ? await canReview(session.user.id, product.id) : false;
   const reviewState: 'eligible' | 'guest' | 'not-eligible' =
     !session?.user?.id ? 'guest' : eligible ? 'eligible' : 'not-eligible';
@@ -124,7 +124,7 @@ export default async function ProductPage({ params, searchParams }: Params) {
       )}
 
       <ReviewsSection
-        productId={product.id} slug={product.slug}
+        productId={product.id}
         avg={avg} count={count} reviews={reviews} state={reviewState}
       />
 

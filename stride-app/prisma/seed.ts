@@ -102,11 +102,14 @@ async function up() {
   console.log(`Seeded ${coupons.length} coupons`);
 
   // Demo-отзывы: seed не создаёт заказы, поэтому пишем напрямую (verified-гейт только на write-пути
-  // submitReview). Demo-юзеры неаутентифицируемы (passwordHash null). Идемпотентно через upsert.
+  // submitReview). Demo-юзеры неаутентифицируемы (passwordHash null) и НЕ должны линковаться через OAuth —
+  // домен @seed.invalid (RFC 2606) гарантированно недоставляем. Чистим перед пере-сидом для идемпотентности.
   const demoUsers = [
-    { email: 'review-demo-1@stride.local', name: 'Алексей' },
-    { email: 'review-demo-2@stride.local', name: 'Марина' },
+    { email: 'review-demo-1@seed.invalid', name: 'Алексей' },
+    { email: 'review-demo-2@seed.invalid', name: 'Марина' },
   ];
+  await prisma.review.deleteMany({ where: { user: { email: { in: demoUsers.map((u) => u.email) } } } });
+  await prisma.user.deleteMany({ where: { email: { in: demoUsers.map((u) => u.email) } } });
   const reviewUserIdByEmail = new Map<string, string>();
   for (const u of demoUsers) {
     const created = await prisma.user.upsert({
@@ -116,8 +119,8 @@ async function up() {
   }
 
   const demoReviews = [
-    { slug: 'stride-velocity-trail', email: 'review-demo-1@stride.local', rating: 5, body: 'Отличная амортизация, беру второй раз.' },
-    { slug: 'stride-velocity-trail', email: 'review-demo-2@stride.local', rating: 4, body: 'Хорошие, но размер чуть великоват.' },
+    { slug: 'stride-velocity-trail', email: 'review-demo-1@seed.invalid', rating: 5, body: 'Отличная амортизация, беру второй раз.' },
+    { slug: 'stride-velocity-trail', email: 'review-demo-2@seed.invalid', rating: 4, body: 'Хорошие, но размер чуть великоват.' },
   ];
   for (const r of demoReviews) {
     const product = await prisma.product.findUnique({ where: { slug: r.slug }, select: { id: true } });

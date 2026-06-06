@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui';
 import { submitReview } from '@/app/actions/review';
 
-export function ReviewForm({ productId, slug }: { productId: string; slug: string }) {
+export function ReviewForm({ productId }: { productId: string }) {
   const router = useRouter();
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
@@ -18,7 +18,7 @@ export function ReviewForm({ productId, slug }: { productId: string; slug: strin
     setError(null);
     if (rating < 1) { setError('Поставьте оценку'); return; }
     setPending(true);
-    const res = await submitReview({ productId, slug, rating, body });
+    const res = await submitReview({ productId, rating, body });
     setPending(false);
     if (!res.ok) { setError(res.error); return; }
     setRating(0); setBody('');

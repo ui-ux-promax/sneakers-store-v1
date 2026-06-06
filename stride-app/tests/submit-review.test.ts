@@ -2,8 +2,11 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 vi.mock('@/auth', () => ({ auth: vi.fn() }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
-vi.mock('@/lib/review', () => ({ canReview: vi.fn() }));
-vi.mock('@/lib/prisma-client', () => ({ prisma: { review: { create: vi.fn() } } }));
+vi.mock('@/lib/review', () => ({
+  canReview: vi.fn(),
+  isValidRating: (r: number) => Number.isInteger(r) && r >= 1 && r <= 5,
+}));
+vi.mock('@/lib/prisma-client', () => ({ prisma: { review: { create: vi.fn() }, product: { findUnique: vi.fn() } } }));
 
 import { submitReview } from '@/app/actions/review';
 import { auth } from '@/auth';
@@ -13,14 +16,16 @@ import { prisma } from '@/lib/prisma-client';
 const authMock = auth as unknown as ReturnType<typeof vi.fn>;
 const canReviewMock = canReview as unknown as ReturnType<typeof vi.fn>;
 const reviewCreate = prisma.review.create as unknown as ReturnType<typeof vi.fn>;
+const productFindUnique = prisma.product.findUnique as unknown as ReturnType<typeof vi.fn>;
 
-const valid = { productId: 'p1', slug: 'velocity-trail', rating: 5, body: 'Отличные' };
+const valid = { productId: 'p1', rating: 5, body: 'Отличные' };
 
 beforeEach(() => {
   vi.clearAllMocks();
   authMock.mockResolvedValue({ user: { id: 'u1' } });
   canReviewMock.mockResolvedValue(true);
   reviewCreate.mockResolvedValue({ id: 'r1' });
+  productFindUnique.mockResolvedValue({ slug: 'velocity-trail' });
 });
 
 describe('submitReview', () => {
