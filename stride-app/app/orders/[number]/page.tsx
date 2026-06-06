@@ -62,6 +62,9 @@ export default async function OrderPage({ params }: { params: Promise<{ number: 
 
       <div className="rounded-2xl border border-line bg-surface p-5 space-y-2 text-sm">
         <div className="flex justify-between"><span className="text-ink-muted">Товары</span><span className="tnum">{formatPrice(order.itemsTotal)}</span></div>
+        {order.discountAmount > 0 && (
+          <div className="flex justify-between"><span>Скидка{order.couponCode ? ` (${order.couponCode})` : ''}</span><span className="text-success">−{formatPrice(order.discountAmount)}</span></div>
+        )}
         <div className="flex justify-between"><span className="text-ink-muted">Доставка</span><span className="tnum">{order.shippingAmount === 0 ? 'Бесплатно' : formatPrice(order.shippingAmount)}</span></div>
         <div className="flex justify-between border-t border-line pt-2 text-base"><span className="font-semibold">Итого</span><span className="font-display font-bold tnum">{formatPrice(order.totalAmount)}</span></div>
       </div>
