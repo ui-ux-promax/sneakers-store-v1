@@ -17,7 +17,14 @@ export default {
       credentials: { email: {}, password: {} },
       // Тяжёлую логику (prisma/argon2) держим в отдельном Node-модуле и тянем dynamic import'ом —
       // чтобы она не попадала в edge-бандл middleware (см. next.config.mjs edge-alias).
-      authorize: async (creds) => {
+      // Rate-limit ДО authorizeCredentials (argon2) — защита от argon2-DoS. Гейт в этом слое
+      // (а не внутри auth-credentials) оставляет constant-time dummy-hash нетронутым.
+      authorize: async (creds, request) => {
+        const { checkLoginRateLimit, extractClientIp } = await import('@/lib/rate-limit');
+        const { normalizeEmail } = await import('@/lib/auth-identity');
+        const email = normalizeEmail(String(creds?.email ?? '')) ?? '';
+        const ip = extractClientIp({ headers: request.headers });
+        if (!(await checkLoginRateLimit(`${ip}:${email}`)).success) return null;
         const { authorizeCredentials } = await import('@/lib/auth-credentials');
         return authorizeCredentials(creds);
       },
