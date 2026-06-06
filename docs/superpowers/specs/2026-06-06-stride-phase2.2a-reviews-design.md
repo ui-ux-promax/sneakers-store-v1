@@ -1,6 +1,6 @@
 # STRIDE — Фаза 2.2a (Reviews + рейтинги): дизайн
 
-> **Статус:** на ревью.
+> **Статус:** реализовано (P2.2a). Правка после адверс-ревью: `slug` НЕ принимается от клиента — `submitReview` re-derive'ит его из `productId` на сервере для `revalidatePath` (не доверяем клиентскому slug → нет cache-bust произвольных страниц). `isValidRating` вызывается как defense-in-depth после zod.
 > **Дата:** 2026-06-06. **Ветка:** `feat/phase2.2a-reviews` (от `main`).
 > **Предшественник:** P2.1 (ядро конверсии) в проде. Neon-транспорт = WebSocket (`$transaction` доступен). Research-карта: `docs/superpowers/research/2026-06-02-phase2-candidates.md` (раздел P2.2).
 > **Прототип UI:** нет (отзывов в прототипах нет; верстаем в стиле дизайн-системы Фазы 1).
