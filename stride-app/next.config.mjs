@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  serverExternalPackages: ['@node-rs/argon2', '@prisma/client', '@prisma/adapter-neon', '@neondatabase/serverless'],
+  serverExternalPackages: ['@node-rs/argon2', '@prisma/client', '@prisma/adapter-neon', '@neondatabase/serverless', 'ws'],
   poweredByHeader: false,
   webpack(config, { nextRuntime }) {
     // Edge middleware bundles auth.config.ts which lazy-imports argon2/prisma.
@@ -15,6 +15,7 @@ const nextConfig = {
         '@prisma/client': false,
         '@prisma/adapter-neon': false,
         '@neondatabase/serverless': false,
+        ws: false,
       };
     }
     return config;
