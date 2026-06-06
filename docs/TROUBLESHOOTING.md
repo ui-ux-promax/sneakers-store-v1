@@ -319,3 +319,25 @@
 - **Коммиты:** `73716b1` (ws), `8d70bdd` (PrismaNeon transport), `0ce9284` (ws вне edge); оценка/план —
   `docs/superpowers/research/2026-06-06-neon-http-vs-websocket-assessment.md`,
   `docs/superpowers/plans/2026-06-06-stride-neon-websocket-migration.md`.
+
+---
+
+## P13. e2e: `getByRole('alert')` ловит служебный Next.js route-announcer (strict mode violation)
+
+- **Когда:** 2026-06-06, Фаза 2.1c (первый CI-прогон e2e купонов).
+- **Симптом:** 2 негативных теста купона (`coupon.spec.ts`: EXPIRED, мусорный код) падали:
+  `Error: strict mode violation: getByRole('alert') resolved to 2 elements`. Первый — наш
+  `<p role="alert">Промокод недействителен</p>`, второй — `<div role="alert" aria-live="assertive"
+  id="__next-route-announcer__">` (пустой). Scenario 1 (применение STRIDE10 + заказ) ПРОШЁЛ — баг был
+  только в ассертах, не в приложении (29 passed, 2 failed).
+- **Причина:** Next.js App Router всегда рендерит скрытый live-region `#__next-route-announcer__` с
+  `role="alert"` (озвучивает смену маршрута скринридерам). Любой `getByRole('alert')` матчит его +
+  наш алерт → в strict mode (дефолт Playwright) это ошибка «2 elements».
+- **Решение:** целиться по тексту/специфичному локатору, а не по роли `alert`:
+  `await expect(page.getByText(/Срок действия промокода истёк/)).toBeVisible()` вместо
+  `expect(page.getByRole('alert')).toContainText(...)`. Route-announcer пустой → по тексту не матчится.
+  Коммит `a2715e3`.
+- **На будущее:** в e2e НЕ использовать `getByRole('alert')` напрямую — он всегда неоднозначен в Next App
+  Router. Брать ошибку по её тексту (`getByText`) или скопировать локатор (`p[role=alert]` /
+  `getByRole('alert').filter({ hasText: ... })`). Локально это не ловится (e2e гоняем только в CI, P4) —
+  проявилось лишь на CI-прогоне.
