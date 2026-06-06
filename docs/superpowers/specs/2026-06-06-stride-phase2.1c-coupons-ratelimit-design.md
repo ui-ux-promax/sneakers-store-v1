@@ -1,6 +1,6 @@
 # STRIDE — Фаза 2.1c (Промокоды + rate-limit входа): дизайн
 
-> **Статус:** на ревью.
+> **Статус:** реализовано (P2.1c).
 > **Дата:** 2026-06-06. **Ветка:** `feat/phase2.1c-coupons` (от `main`).
 > **Предшественник:** P2.1b (ЮKassa + DaData) — в проде, `main` (HEAD `5079d1c`). Research-карта: `docs/superpowers/research/2026-06-02-phase2-candidates.md`.
 > **Прототип UI:** `ui-designe and prototypes/prototypes-app/checkout.html` / `cart.html` (промо-инпут в блоке «Итого»).
