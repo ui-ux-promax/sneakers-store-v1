@@ -32,6 +32,15 @@ describe('calcCouponDiscount', () => {
   it('не превышает сумму товаров (clamp при 100%)', () => {
     expect(calcCouponDiscount(5000, 100)).toBe(5000);
   });
+  it('отрицательный процент → 0 (не overcharge)', () => {
+    expect(calcCouponDiscount(10000, -50)).toBe(0);
+  });
+  it('процент 0 → 0', () => {
+    expect(calcCouponDiscount(10000, 0)).toBe(0);
+  });
+  it('процент > 100 → не больше суммы товаров', () => {
+    expect(calcCouponDiscount(5000, 200)).toBe(5000);
+  });
 });
 
 describe('checkCoupon', () => {
@@ -50,6 +59,12 @@ describe('checkCoupon', () => {
   it('несуществующий → отказ', async () => {
     findUnique.mockResolvedValue(null);
     expect((await checkCoupon('nope')).ok).toBe(false);
+  });
+  it('процент вне 1..100 → отказ (fail-closed)', async () => {
+    findUnique.mockResolvedValue({ code: 'BAD', percent: 0, active: true, expiresAt: null });
+    expect((await checkCoupon('bad')).ok).toBe(false);
+    findUnique.mockResolvedValue({ code: 'BAD', percent: 150, active: true, expiresAt: null });
+    expect((await checkCoupon('bad')).ok).toBe(false);
   });
   it('пустой код → отказ без запроса к БД', async () => {
     expect((await checkCoupon('   ')).ok).toBe(false);
