@@ -10,6 +10,11 @@ import { Breadcrumbs } from '@/components/shared/product/breadcrumbs';
 import { ProductGallery } from '@/components/shared/product/product-gallery';
 import { PurchasePanel } from '@/components/shared/product/purchase-panel';
 import { SpecsTable } from '@/components/shared/product/specs-table';
+import { auth } from '@/auth';
+import { canReview } from '@/lib/review';
+import { RatingStars } from '@/components/shared/product/rating-stars';
+import { ReviewsSection } from '@/components/shared/product/reviews-section';
+import type { ReviewItem } from '@/components/shared/product/review-list';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +43,26 @@ export default async function ProductPage({ params, searchParams }: Params) {
   });
   const related = relatedRaw.map((p) => buildProductCardData(p, now, { newWindowDays: NEW_PRODUCT_WINDOW_DAYS, lowStock: LOW_STOCK_THRESHOLD }));
 
+  const [agg, reviewRows, session] = await Promise.all([
+    prisma.review.aggregate({ where: { productId: product.id }, _avg: { rating: true }, _count: true }),
+    prisma.review.findMany({
+      where: { productId: product.id },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: { id: true, rating: true, body: true, createdAt: true, user: { select: { name: true } } },
+    }),
+    auth(),
+  ]);
+  const reviews: ReviewItem[] = reviewRows.map((r) => ({
+    id: r.id, rating: r.rating, body: r.body, createdAt: r.createdAt,
+    authorName: r.user.name?.trim() ? r.user.name : 'Покупатель',
+  }));
+  const avg = agg._avg.rating ?? 0;
+  const count = agg._count;
+  const eligible = session?.user?.id ? await canReview(session.user.id, product.id) : false;
+  const reviewState: 'eligible' | 'guest' | 'not-eligible' =
+    !session?.user?.id ? 'guest' : eligible ? 'eligible' : 'not-eligible';
+
   const galleryImages = active.images.map((im) => ({ url: im.url, alt: im.alt ?? product.name }));
   const panelColorways = product.colorways.map((cw) => ({ slug: cw.slug, name: cw.name, thumbUrl: cw.images[0]?.url ?? null }));
   const panelVariants = active.variants.map((v) => ({
@@ -61,6 +86,9 @@ export default async function ProductPage({ params, searchParams }: Params) {
         <div>
           <p className="text-[11px] text-ink-muted uppercase tracking-wide">{product.category.name} · {product.brand}</p>
           <h1 className="font-display font-bold text-[28px] sm:text-[34px] leading-tight mt-1">{product.name}</h1>
+          {count > 0 && (
+            <a href="#reviews" className="mt-2 inline-flex"><RatingStars value={avg} count={count} /></a>
+          )}
           <div className="mt-5">
             <PurchasePanel
               key={active.slug}
@@ -95,10 +123,16 @@ export default async function ProductPage({ params, searchParams }: Params) {
         </section>
       )}
 
+      <ReviewsSection
+        productId={product.id} slug={product.slug}
+        avg={avg} count={count} reviews={reviews} state={reviewState}
+      />
+
       {/* JSON-LD */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         '@context': 'https://schema.org', '@type': 'Product', name: product.name,
         image: galleryImages.map((g) => g.url), description: product.description ?? undefined, brand: product.brand,
+        ...(count > 0 ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: avg.toFixed(1), reviewCount: count } } : {}),
         offers: { '@type': 'AggregateOffer', priceCurrency: 'RUB', availability: active.variants.some((v) => v.stock > 0) ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock', lowPrice: Math.min(...active.variants.map((v) => v.price)) },
       }) }} />
     </div>
