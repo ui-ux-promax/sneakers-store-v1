@@ -290,5 +290,4 @@ model WishlistItem {
   createdAt  DateTime @default(now())
 
   @@unique([wishlistId, productId])
-  @@index([wishlistId])
 }
