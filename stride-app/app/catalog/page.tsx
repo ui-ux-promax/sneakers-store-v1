@@ -1,5 +1,9 @@
 import { Suspense } from 'react';
+import { cookies } from 'next/headers';
+import { auth } from '@/auth';
 import { findProducts } from '@/lib/find-products';
+import { getWishlistProductIds } from '@/lib/wishlist';
+import { wishlistCookieName } from '@/lib/wishlist-cookie';
 import { ProductCard } from '@/components/shared/product-card';
 import { FilterSidebar } from '@/components/shared/catalog/filter-sidebar';
 import { SortSelect } from '@/components/shared/catalog/sort-select';
@@ -14,6 +18,8 @@ export const metadata = { title: 'Каталог' };
 export default async function CatalogPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;
   const { products, total, page, totalPages, facets } = await findProducts(sp);
+  const [session, store] = await Promise.all([auth(), cookies()]);
+  const wishlistedIds = await getWishlistProductIds(session, store.get(wishlistCookieName)?.value);
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 sm:px-6 pt-8">
@@ -31,7 +37,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
             <EmptyCatalog />
           ) : (
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {products.map((p) => <ProductCard key={p.slug} data={p} />)}
+              {products.map((p) => <ProductCard key={p.slug} data={p} wishlisted={wishlistedIds.has(p.id)} />)}
             </div>
           )}
           <Suspense><Pagination page={page} totalPages={totalPages} /></Suspense>
