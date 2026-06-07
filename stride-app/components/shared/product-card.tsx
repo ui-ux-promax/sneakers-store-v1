@@ -3,13 +3,15 @@ import Image from 'next/image';
 import { Plus } from 'lucide-react';
 import { Badge } from '@/components/ui';
 import { PriceTag } from './price-tag';
+import { WishlistHeart } from '@/components/shared/wishlist/wishlist-heart';
 import type { ProductCardData } from '@/lib/product-summary';
 
-export function ProductCard({ data }: { data: ProductCardData }) {
+export function ProductCard({ data, wishlisted = false }: { data: ProductCardData; wishlisted?: boolean }) {
   const href = `/product/${data.slug}`;
   return (
     <article className="group rounded-2xl bg-surface border border-line overflow-hidden">
       <div className="relative aspect-square bg-surface-soft overflow-hidden">
+        <WishlistHeart productId={data.id} initialActive={wishlisted} variant="card" />
         {data.badges[0] && (
           <span className="absolute top-3 left-3 z-10">
             <Badge tone={data.badges[0].tone}>{data.badges[0].label}</Badge>
