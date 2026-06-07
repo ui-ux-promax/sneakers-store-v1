@@ -12,6 +12,7 @@ import { buildOrderSnapshot, calcShipping } from '@/lib/order';
 import { checkCoupon, calcCouponDiscount } from '@/lib/coupon';
 import { logger } from '@/lib/logger';
 import { createPayment, cancelPayment } from '@/lib/yookassa';
+import { pruneReviewsAfterCancel } from '@/lib/review';
 
 export type PlaceOrderResult = { ok: true; orderNumber: number; paymentUrl?: string } | { ok: false; error: string };
 
@@ -180,7 +181,13 @@ export async function cancelOrder(orderId: string): Promise<CancelOrderResult> {
   if (!session?.user?.id) return { ok: false, error: 'Не авторизован' };
   const userId = session.user.id;
 
-  const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true, payment: true } });
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      items: { include: { productVariant: { select: { colorway: { select: { productId: true } } } } } },
+      payment: true,
+    },
+  });
   if (!order || order.userId !== userId || order.status !== 'PENDING') {
     return { ok: false, error: 'Этот заказ нельзя отменить' };
   }
@@ -211,6 +218,12 @@ export async function cancelOrder(orderId: string): Promise<CancelOrderResult> {
       logger.error('cancel_stock_restore_failed', e, { orderId, variantId: item.productVariantId });
     }
   }
+
+  // Отмена аннулирует «покупку»: снять осиротевшие отзывы по товарам этого заказа
+  // (если по товару не осталось другого квалифицирующего заказа). PDP — force-dynamic,
+  // перечитает список при следующем рендере, так что отдельная ревалидация не нужна.
+  const productIds = [...new Set(order.items.map((i) => i.productVariant.colorway.productId))];
+  await pruneReviewsAfterCancel(userId, productIds);
 
   revalidatePath('/profile');
   revalidatePath(`/orders/${order.orderNumber}`);

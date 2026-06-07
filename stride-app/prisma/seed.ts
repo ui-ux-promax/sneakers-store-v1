@@ -100,12 +100,45 @@ async function up() {
     await prisma.coupon.upsert({ where: { code: c.code }, update: c, create: c });
   }
   console.log(`Seeded ${coupons.length} coupons`);
+
+  // Demo-отзывы: seed не создаёт заказы, поэтому пишем напрямую (verified-гейт только на write-пути
+  // submitReview). Demo-юзеры неаутентифицируемы (passwordHash null) и НЕ должны линковаться через OAuth —
+  // домен @seed.invalid (RFC 2606) гарантированно недоставляем. Чистим перед пере-сидом для идемпотентности.
+  const demoUsers = [
+    { email: 'review-demo-1@seed.invalid', name: 'Алексей' },
+    { email: 'review-demo-2@seed.invalid', name: 'Марина' },
+  ];
+  await prisma.review.deleteMany({ where: { user: { email: { in: demoUsers.map((u) => u.email) } } } });
+  await prisma.user.deleteMany({ where: { email: { in: demoUsers.map((u) => u.email) } } });
+  const reviewUserIdByEmail = new Map<string, string>();
+  for (const u of demoUsers) {
+    const created = await prisma.user.upsert({
+      where: { email: u.email }, update: { name: u.name }, create: { email: u.email, name: u.name },
+    });
+    reviewUserIdByEmail.set(u.email, created.id);
+  }
+
+  const demoReviews = [
+    { slug: 'stride-velocity-trail', email: 'review-demo-1@seed.invalid', rating: 5, body: 'Отличная амортизация, беру второй раз.' },
+    { slug: 'stride-velocity-trail', email: 'review-demo-2@seed.invalid', rating: 4, body: 'Хорошие, но размер чуть великоват.' },
+  ];
+  for (const r of demoReviews) {
+    const product = await prisma.product.findUnique({ where: { slug: r.slug }, select: { id: true } });
+    const reviewUserId = reviewUserIdByEmail.get(r.email);
+    if (!product || !reviewUserId) continue;
+    await prisma.review.upsert({
+      where: { productId_userId: { productId: product.id, userId: reviewUserId } },
+      update: { rating: r.rating, body: r.body },
+      create: { productId: product.id, userId: reviewUserId, rating: r.rating, body: r.body },
+    });
+  }
+  console.log(`Seeded ${demoReviews.length} reviews`);
 }
 
 async function main() {
   await down();
   await up();
-  const [categoryN, productN, colorwayN, imageN, variantN, soldOutN, couponN] = await Promise.all([
+  const [categoryN, productN, colorwayN, imageN, variantN, soldOutN, couponN, reviewN] = await Promise.all([
     prisma.category.count(),
     prisma.product.count(),
     prisma.productColorway.count(),
@@ -113,10 +146,11 @@ async function main() {
     prisma.productVariant.count(),
     prisma.productVariant.count({ where: { stock: 0 } }),
     prisma.coupon.count(),
+    prisma.review.count(),
   ]);
   console.log(
     `Seed готов: categories=${categoryN} products=${productN} colorways=${colorwayN} ` +
-      `images=${imageN} variants=${variantN} (variants stock=0: ${soldOutN}) coupons=${couponN}`,
+      `images=${imageN} variants=${variantN} (variants stock=0: ${soldOutN}) coupons=${couponN} reviews=${reviewN}`,
   );
 }
 
