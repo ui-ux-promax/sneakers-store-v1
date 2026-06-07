@@ -20,6 +20,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const store = await cookies();
         const guestToken = store.get(cartCookieName)?.value;
         await safeMergeGuestCart(guestToken, user.id);
+
+        const { wishlistCookieName } = await import('@/lib/wishlist-cookie');
+        const { safeMergeGuestWishlist } = await import('@/lib/wishlist-merge');
+        const guestWishlistToken = store.get(wishlistCookieName)?.value;
+        await safeMergeGuestWishlist(guestWishlistToken, user.id);
       } catch (err) {
         const { logger } = await import('@/lib/logger');
         logger.error('signin_event_failed', err);
