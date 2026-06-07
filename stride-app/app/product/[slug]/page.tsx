@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma-client';
 import { getProductBySlug } from '@/lib/get-product';
 import { productCardInclude, buildProductCardData } from '@/lib/product-summary';
@@ -12,6 +13,9 @@ import { PurchasePanel } from '@/components/shared/product/purchase-panel';
 import { SpecsTable } from '@/components/shared/product/specs-table';
 import { auth } from '@/auth';
 import { getReviewEligibility } from '@/lib/review';
+import { getWishlistProductIds } from '@/lib/wishlist';
+import { wishlistCookieName } from '@/lib/wishlist-cookie';
+import { WishlistHeart } from '@/components/shared/wishlist/wishlist-heart';
 import { RatingStars } from '@/components/shared/product/rating-stars';
 import { ReviewsSection } from '@/components/shared/product/reviews-section';
 import type { ReviewItem } from '@/components/shared/product/review-list';
@@ -62,6 +66,9 @@ export default async function ProductPage({ params, searchParams }: Params) {
   const reviewState: 'eligible' | 'guest' | 'not-purchased' | 'already-reviewed' =
     session?.user?.id ? await getReviewEligibility(session.user.id, product.id) : 'guest';
 
+  const wlStore = await cookies();
+  const wishlistedIds = await getWishlistProductIds(session, wlStore.get(wishlistCookieName)?.value);
+
   const galleryImages = active.images.map((im) => ({ url: im.url, alt: im.alt ?? product.name }));
   const panelColorways = product.colorways.map((cw) => ({ slug: cw.slug, name: cw.name, thumbUrl: cw.images[0]?.url ?? null }));
   const panelVariants = active.variants.map((v) => ({
@@ -100,6 +107,9 @@ export default async function ProductPage({ params, searchParams }: Params) {
               fitNote={product.fitNote}
             />
           </div>
+          <div className="mt-3">
+            <WishlistHeart productId={product.id} initialActive={wishlistedIds.has(product.id)} variant="pdp" />
+          </div>
         </div>
       </div>
 
@@ -117,7 +127,7 @@ export default async function ProductPage({ params, searchParams }: Params) {
         <section className="mt-16">
           <h2 className="font-display font-bold text-2xl mb-5">С этим смотрят</h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            {related.map((p) => <ProductCard key={p.slug} data={p} />)}
+            {related.map((p) => <ProductCard key={p.slug} data={p} wishlisted={wishlistedIds.has(p.id)} />)}
           </div>
         </section>
       )}
