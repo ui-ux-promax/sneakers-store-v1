@@ -2,18 +2,22 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 vi.mock('@/lib/prisma-client', () => ({
   prisma: {
-    wishlist: { findFirst: vi.fn(), create: vi.fn() },
-    wishlistItem: { findMany: vi.fn(), count: vi.fn() },
+    wishlist: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+    wishlistItem: { findMany: vi.fn(), count: vi.fn(), upsert: vi.fn() },
   },
 }));
 
 import { resolveOwnerWishlist, getWishlistProductIds, getWishlistCount } from '@/lib/wishlist';
+import { mergeGuestWishlist } from '@/lib/wishlist-merge';
 import { prisma } from '@/lib/prisma-client';
 
 const wlFindFirst = prisma.wishlist.findFirst as unknown as ReturnType<typeof vi.fn>;
 const wlCreate = prisma.wishlist.create as unknown as ReturnType<typeof vi.fn>;
+const wlUpdate = prisma.wishlist.update as unknown as ReturnType<typeof vi.fn>;
+const wlDelete = prisma.wishlist.delete as unknown as ReturnType<typeof vi.fn>;
 const itemFindMany = prisma.wishlistItem.findMany as unknown as ReturnType<typeof vi.fn>;
 const itemCount = prisma.wishlistItem.count as unknown as ReturnType<typeof vi.fn>;
+const itemUpsert = prisma.wishlistItem.upsert as unknown as ReturnType<typeof vi.fn>;
 
 beforeEach(() => vi.clearAllMocks());
 
@@ -76,5 +80,45 @@ describe('getWishlistCount', () => {
     itemCount.mockResolvedValue(3);
     expect(await getWishlistCount({ user: { id: 'u1' } } as never, 't')).toBe(3);
     expect(itemCount).toHaveBeenCalledWith({ where: { wishlistId: 'w1' } });
+  });
+});
+
+describe('mergeGuestWishlist', () => {
+  it('нет гостевого token → ничего', async () => {
+    await mergeGuestWishlist(undefined, 'u1');
+    expect(wlFindFirst).not.toHaveBeenCalled();
+  });
+  it('нет гостевой записи → ничего', async () => {
+    wlFindFirst.mockResolvedValueOnce(null);
+    await mergeGuestWishlist('tok', 'u1');
+    expect(itemUpsert).not.toHaveBeenCalled();
+  });
+  it('у юзера нет wishlist → привязать гостевой к userId', async () => {
+    wlFindFirst
+      .mockResolvedValueOnce({ id: 'g1', token: 'tok', userId: null })
+      .mockResolvedValueOnce(null);
+    await mergeGuestWishlist('tok', 'u1');
+    expect(wlUpdate).toHaveBeenCalledWith({ where: { id: 'g1' }, data: { userId: 'u1' } });
+    expect(itemUpsert).not.toHaveBeenCalled();
+  });
+  it('у юзера есть wishlist → перенести items upsert + удалить гостевой', async () => {
+    wlFindFirst
+      .mockResolvedValueOnce({ id: 'g1', token: 'tok', userId: null })
+      .mockResolvedValueOnce({ id: 'w1', token: 'ut', userId: 'u1' });
+    itemFindMany.mockResolvedValueOnce([{ productId: 'p1' }, { productId: 'p2' }]);
+    await mergeGuestWishlist('tok', 'u1');
+    expect(itemUpsert).toHaveBeenCalledTimes(2);
+    expect(itemUpsert).toHaveBeenCalledWith({
+      where: { wishlistId_productId: { wishlistId: 'w1', productId: 'p1' } },
+      create: { wishlistId: 'w1', productId: 'p1' },
+      update: {},
+    });
+    expect(wlDelete).toHaveBeenCalledWith({ where: { id: 'g1' } });
+  });
+  it('гостевой wishlist уже принадлежит userId → no-op привязки', async () => {
+    wlFindFirst.mockResolvedValueOnce({ id: 'g1', token: 'tok', userId: 'u1' });
+    await mergeGuestWishlist('tok', 'u1');
+    expect(wlUpdate).not.toHaveBeenCalled();
+    expect(itemUpsert).not.toHaveBeenCalled();
   });
 });
