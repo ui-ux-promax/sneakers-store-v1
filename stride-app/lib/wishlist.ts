@@ -34,7 +34,7 @@ export async function getWishlistProductIds(
   const owner = await resolveOwnerWishlist(session, token, { create: false });
   if (!owner) return new Set();
   const rows = await prisma.wishlistItem.findMany({
-    where: { wishlistId: owner.id },
+    where: { wishlistId: owner.id, product: { active: true } },
     select: { productId: true },
   });
   return new Set(rows.map((r) => r.productId));
@@ -46,7 +46,7 @@ export async function getWishlistCount(
 ): Promise<number> {
   const owner = await resolveOwnerWishlist(session, token, { create: false });
   if (!owner) return 0;
-  return prisma.wishlistItem.count({ where: { wishlistId: owner.id } });
+  return prisma.wishlistItem.count({ where: { wishlistId: owner.id, product: { active: true } } });
 }
 
 export async function getWishlistItems(

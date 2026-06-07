@@ -56,6 +56,13 @@ describe('toggleWishlist', () => {
     const r = await toggleWishlist({ productId: 'p1' });
     expect(r).toEqual({ ok: true, active: true });
   });
+  it('P2003 на create (несуществующий товар) → ok:false', async () => {
+    const { Prisma } = await import('@prisma/client');
+    itemFindUnique.mockResolvedValue(null);
+    itemCreate.mockRejectedValue(new Prisma.PrismaClientKnownRequestError('fk', { code: 'P2003', clientVersion: 'x' }));
+    const r = await toggleWishlist({ productId: 'nope' });
+    expect(r.ok).toBe(false);
+  });
   it('невалидный productId (zod) → ok:false, без записи', async () => {
     const r = await toggleWishlist({ productId: '' });
     expect(r.ok).toBe(false);

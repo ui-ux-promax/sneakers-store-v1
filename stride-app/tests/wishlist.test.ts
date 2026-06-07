@@ -79,7 +79,7 @@ describe('getWishlistCount', () => {
     wlFindFirst.mockResolvedValue({ id: 'w1', userId: 'u1', token: 't' });
     itemCount.mockResolvedValue(3);
     expect(await getWishlistCount({ user: { id: 'u1' } } as never, 't')).toBe(3);
-    expect(itemCount).toHaveBeenCalledWith({ where: { wishlistId: 'w1' } });
+    expect(itemCount).toHaveBeenCalledWith({ where: { wishlistId: 'w1', product: { active: true } } });
   });
 });
 
