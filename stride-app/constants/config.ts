@@ -9,6 +9,8 @@ export const CATALOG_PAGE_SIZE = 12;
 
 export const CART_COOKIE_NAME = 'cartToken';
 export const CART_COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 дней
+export const WISHLIST_COOKIE_NAME = 'wishlistToken';
+export const WISHLIST_COOKIE_MAX_AGE = 60 * 60 * 24 * 180; // 180 дней
 
 // EU-сетка с полуразмерами (строки — для UI; в БД sizeEu Decimal(3,1)).
 export const EU_SIZE_GRID = [
