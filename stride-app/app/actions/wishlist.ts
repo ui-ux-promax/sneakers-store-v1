@@ -1,6 +1,6 @@
 'use server';
 
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';

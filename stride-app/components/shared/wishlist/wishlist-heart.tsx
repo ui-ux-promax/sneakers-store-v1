@@ -24,14 +24,19 @@ export function WishlistHeart({ productId, initialActive, variant = 'card' }: Pr
     setActive(next); // оптимистично
     setError(null);
     startTransition(async () => {
-      const res = await toggleWishlist({ productId });
-      if (!res.ok) {
-        setActive(!next); // откат
+      try {
+        const res = await toggleWishlist({ productId });
+        if (!res.ok) {
+          setActive(!next); // откат
+          setError('Не удалось обновить избранное');
+          return;
+        }
+        setActive(res.active);
+        router.refresh(); // обновить счётчик/список
+      } catch {
+        setActive(!next); // откат при сбое экшена (сеть/сервер)
         setError('Не удалось обновить избранное');
-        return;
       }
-      setActive(res.active);
-      router.refresh(); // обновить счётчик/список
     });
   };
 
