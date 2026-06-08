@@ -3,6 +3,7 @@ import { MainNav } from './main-nav';
 import { MobileNav } from './mobile-nav';
 import { HeaderSearch } from './header-search';
 import { CartBadge } from './cart-badge';
+import { WishlistBadge } from './wishlist/wishlist-badge';
 import { AuthNav } from './auth/auth-nav';
 
 export function SiteHeader() {
@@ -19,6 +20,7 @@ export function SiteHeader() {
           <div className="flex-1" />
           <HeaderSearch />
           <AuthNav />
+          <WishlistBadge />
           <CartBadge />
         </div>
       </div>

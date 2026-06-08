@@ -15,6 +15,7 @@ export const productCardInclude = {
 export type ProductForCard = Prisma.ProductGetPayload<{ include: typeof productCardInclude }>;
 
 export interface ProductCardData {
+  id: string;
   slug: string;
   name: string;
   brand: string;
@@ -49,6 +50,7 @@ export function buildProductCardData(
   );
 
   return {
+    id: product.id,
     slug: product.slug,
     name: product.name,
     brand: product.brand,

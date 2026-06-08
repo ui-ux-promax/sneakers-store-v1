@@ -8,7 +8,7 @@ export default async function globalSetup() {
   const ctx = await request.newContext({ baseURL: 'http://localhost:3000' });
 
   // 1) READ-маршруты (компиляция dev + пробуждение compute)
-  for (const u of ['/api/cart', '/', '/catalog', '/catalog?category=running', '/product/stride-velocity-trail']) {
+  for (const u of ['/api/cart', '/', '/catalog', '/catalog?category=running', '/product/stride-velocity-trail', '/wishlist']) {
     for (let attempt = 1; attempt <= 8; attempt++) {
       try {
         const res = await ctx.get(u, { timeout: 60_000 });

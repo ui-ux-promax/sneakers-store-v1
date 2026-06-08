@@ -35,3 +35,6 @@ Thumbs.db
 
 # claude local overrides (project settings.json остаётся в репозитории)
 .claude/settings.local.json
+
+# superpowers brainstorm visual companion
+.superpowers/
