@@ -6,8 +6,15 @@ import { wishlistCookieName } from '@/lib/wishlist-cookie';
 import { getWishlistCount } from '@/lib/wishlist';
 
 export async function WishlistBadge() {
-  const [session, store] = await Promise.all([auth(), cookies()]);
-  const count = await getWishlistCount(session, store.get(wishlistCookieName)?.value);
+  // Бейдж в общем хедере рендерится на КАЖДОЙ странице — его сбой (БД/сессия) не должен
+  // ронять SSR всей страницы. Любая ошибка → деградируем до count=0 (ссылка остаётся).
+  let count = 0;
+  try {
+    const [session, store] = await Promise.all([auth(), cookies()]);
+    count = await getWishlistCount(session, store.get(wishlistCookieName)?.value);
+  } catch {
+    count = 0;
+  }
   return (
     <Link
       href="/wishlist"

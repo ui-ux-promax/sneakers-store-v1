@@ -14,22 +14,39 @@ async function register(page: Page) {
   await expect(page.getByRole('button', { name: 'Выйти' })).toBeVisible();
 }
 
+// Лайкнуть первый товар и ДОЖДАТЬСЯ серверного подтверждения (POST server-action),
+// прежде чем уходить со страницы. Оптимистичный ♡ флипается мгновенно — нельзя
+// навигировать сразу, иначе навигация прервёт in-flight экшен (cookie/запись не успеют).
+async function likeFirstProduct(page: Page) {
+  const actionDone = page.waitForResponse(
+    (r) => r.request().method() === 'POST',
+    { timeout: 30_000 },
+  );
+  await page.getByRole('button', { name: 'В избранное' }).first().click();
+  await actionDone;
+  await expect(page.getByRole('button', { name: 'Убрать из избранного' }).first()).toBeVisible();
+}
+
 test('гость лайкает товар → виден в /wishlist; убрать → пустое состояние', async ({ page }) => {
   await page.goto('/catalog');
-  await page.getByRole('button', { name: 'В избранное' }).first().click();
-  await expect(page.getByRole('button', { name: 'Убрать из избранного' }).first()).toBeVisible();
+  await likeFirstProduct(page);
 
   await page.goto('/wishlist');
   await expect(page.locator('article').first()).toBeVisible();
 
+  // Убрать с /wishlist — тоже дождаться серверного подтверждения перед проверкой пустого состояния.
+  const removeDone = page.waitForResponse(
+    (r) => r.request().method() === 'POST',
+    { timeout: 30_000 },
+  );
   await page.getByRole('button', { name: 'Убрать из избранного' }).first().click();
+  await removeDone;
   await expect(page.getByText('В избранном пока пусто')).toBeVisible();
 });
 
 test('merge: гость лайкнул → регистрация → товар в /wishlist', async ({ page }) => {
   await page.goto('/catalog');
-  await page.getByRole('button', { name: 'В избранное' }).first().click();
-  await expect(page.getByRole('button', { name: 'Убрать из избранного' }).first()).toBeVisible();
+  await likeFirstProduct(page);
 
   await register(page);
 
