@@ -1,4 +1,7 @@
-import { discountPercent } from '@/lib/product-badges';
+// Относительный импорт (не '@/'): этот модуль грузит ts-node при сиде (prisma/seed.ts),
+// а он не регистрирует path-алиасы tsconfig — '@/...' не резолвится. Относительный путь
+// работает и в ts-node, и в Next/Vitest/tsc.
+import { discountPercent } from './product-badges';
 
 // Чистые хелперы денормализации сортировочных ключей Product (без Prisma-рантайма).
 
