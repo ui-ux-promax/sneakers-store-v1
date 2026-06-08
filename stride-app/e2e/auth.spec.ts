@@ -19,19 +19,6 @@ async function register(page: Page, email: string) {
 const expectSignedIn = (page: Page) =>
   expect(page.getByRole('button', { name: 'Выйти' })).toBeVisible();
 
-// ВРЕМЕННАЯ ДИАГНОСТИКА (убрать после фикса CI): при падении печатает реальное
-// состояние страницы в stdout CI — что на /profile (форма логина / профиль / ошибка).
-test.afterEach(async ({ page }, testInfo) => {
-  if (testInfo.status === testInfo.expectedStatus) return;
-  const url = page.url();
-  const loginBtn = await page.getByRole('button', { name: 'Войти', exact: true }).count().catch(() => -1);
-  const profileH = await page.getByRole('heading', { name: 'Профиль' }).count().catch(() => -1);
-  const logoutBtn = await page.getByRole('button', { name: 'Выйти' }).count().catch(() => -1);
-  const bodyText = await page.evaluate(() => document.body?.innerText?.slice(0, 300)).catch(() => '<no body>');
-  // eslint-disable-next-line no-console
-  console.log(`\n[DIAG "${testInfo.title}"] status=${testInfo.status} url=${url}\n[DIAG] loginBtn=${loginBtn} profileHeading=${profileH} logoutBtn=${logoutBtn}\n[DIAG] body="${(bodyText ?? '').replace(/\s+/g, ' ')}"`);
-});
-
 test('регистрация → автологин → профиль с данными; после выхода /profile под защитой', async ({ page }) => {
   const email = uniqueEmail();
   await register(page, email);
