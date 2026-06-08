@@ -67,11 +67,17 @@ describe('buildProductWhere', () => {
 });
 
 describe('buildOrderBy', () => {
-  it('маппит сортировки', () => {
-    expect(buildOrderBy('new')).toEqual([{ createdAt: 'desc' }, { sortOrder: 'asc' }]);
-    expect(buildOrderBy('popular')).toEqual([{ isBestseller: 'desc' }, { sortOrder: 'asc' }]);
-    expect(buildOrderBy('price-asc')).toBeDefined();
-    expect(buildOrderBy('price-desc')).toBeDefined();
-    expect(buildOrderBy('discount')).toBeDefined();
+  it('маппит сортировки на денорм-колонки с id-tiebreak', () => {
+    expect(buildOrderBy('new')).toEqual([{ createdAt: 'desc' }, { id: 'asc' }]);
+    expect(buildOrderBy('popular')).toEqual([{ salesCount: 'desc' }, { isBestseller: 'desc' }, { id: 'asc' }]);
+    expect(buildOrderBy('price-asc')).toEqual([{ minPrice: 'asc' }, { id: 'asc' }]);
+    expect(buildOrderBy('price-desc')).toEqual([{ minPrice: 'desc' }, { id: 'asc' }]);
+    expect(buildOrderBy('discount')).toEqual([{ discountPct: 'desc' }, { id: 'asc' }]);
+  });
+  it('каждая сортировка заканчивается id-tiebreak', () => {
+    for (const s of ['new', 'popular', 'price-asc', 'price-desc', 'discount'] as const) {
+      const ob = buildOrderBy(s);
+      expect(ob[ob.length - 1]).toEqual({ id: 'asc' });
+    }
   });
 });

@@ -41,6 +41,13 @@ model Product {
   isBestseller Boolean  @default(false)
   active       Boolean  @default(true)
   sortOrder    Int      @default(0)
+  // Денормализованные ключи сортировки каталога (DB-уровень orderBy/skip/take).
+  // minPrice/discountPct — снимок дефолтной расцветки (самый дешёвый активный вариант);
+  // их ОБЯЗАН пересчитывать любой будущий путь записи цены/isDefault/active варианта
+  // (admin Phase 3). Сегодня единственный такой путь — сид. salesCount движется как сток.
+  salesCount   Int      @default(0)
+  minPrice     Int      @default(0)
+  discountPct  Int      @default(0)
   createdAt    DateTime @default(now())
   colorways    ProductColorway[]
   reviews      Review[]
@@ -50,6 +57,8 @@ model Product {
   @@index([brand])
   @@index([gender])
   @@index([active])
+  @@index([salesCount])
+  @@index([minPrice])
 }
 
 model ProductColorway {

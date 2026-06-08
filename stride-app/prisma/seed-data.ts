@@ -147,4 +147,118 @@ export const products: SeedProduct[] = [
       },
     ],
   },
+  // P2.2d: расширение каталога за PAGE_SIZE(12) — чтобы пагинация/сортировка были наблюдаемы.
+  // Разброс цен 6990..21990 + скидки → видимые price-asc/price-desc/discount/popular.
+  {
+    name: 'STRIDE Aero Runner', slug: 'stride-aero-runner', brand: 'Asics', gender: 'MEN',
+    description: 'Лёгкие темповые кроссовки с энергичным откликом для быстрых тренировок.',
+    fitNote: 'Размер в размер.',
+    specs: { 'Назначение': 'Бег', 'Верх': 'Инженерная сетка', 'Подошва': 'PEBA-пена', 'Сезон': 'Лето', 'Страна': 'Вьетнам', 'Артикул': '102270201' },
+    isBestseller: true, sortOrder: 6, categorySlug: 'running',
+    colorways: [
+      {
+        name: 'Ice Blue', slug: 'ice-blue', swatchHex: '#bcd9e8', isDefault: true, sortOrder: 1,
+        images: [{ url: '/products/nike-air-max-270.jpeg', alt: 'STRIDE Aero Runner Ice Blue', sortOrder: 0 }],
+        variants: mk('SAR-ICE', 16990, null, RUN),
+      },
+    ],
+  },
+  {
+    name: 'STRIDE Urban Low', slug: 'stride-urban-low', brand: 'Reebok', gender: 'UNISEX',
+    description: 'Минималистичные городские кеды с чистым силуэтом и мягкой стелькой.',
+    fitNote: 'Размер в размер.',
+    specs: { 'Назначение': 'Город', 'Верх': 'Кожа, текстиль', 'Подошва': 'Резина', 'Сезон': 'Всесезон', 'Страна': 'Индонезия', 'Артикул': '102180701' },
+    isBestseller: false, sortOrder: 7, categorySlug: 'lifestyle',
+    colorways: [
+      {
+        name: 'Sand', slug: 'sand', swatchHex: '#d8c7a8', isDefault: true, sortOrder: 1,
+        images: [{ url: '/products/adidas-ultraboost.jpeg', alt: 'STRIDE Urban Low Sand', sortOrder: 0 }],
+        variants: mk('SUL-SND', 7490, 9990, LIFE),
+      },
+    ],
+  },
+  {
+    name: 'STRIDE Peak Trail', slug: 'stride-peak-trail', brand: 'Salomon', gender: 'MEN',
+    description: 'Защищённые трейловые кроссовки для горного бега и пересечённой местности.',
+    fitNote: 'Маломерят на полразмера.',
+    specs: { 'Назначение': 'Трейл', 'Верх': 'Сетка, TPU-каркас', 'Подошва': 'Контагрип', 'Сезон': 'Демисезон', 'Страна': 'Вьетнам', 'Артикул': '102270222' },
+    isBestseller: false, sortOrder: 8, categorySlug: 'running',
+    colorways: [
+      {
+        name: 'Magma', slug: 'magma', swatchHex: '#b5462f', isDefault: true, sortOrder: 1,
+        images: [{ url: '/products/puma-rs-x.jpeg', alt: 'STRIDE Peak Trail Magma', sortOrder: 0 }],
+        variants: mk('SPT-MGM', 18990, null, RUN),
+      },
+    ],
+  },
+  {
+    name: 'STRIDE Retro 88', slug: 'stride-retro-88', brand: 'Saucony', gender: 'UNISEX',
+    description: 'Ретро-силуэт девяностых с замшевыми оверлеями и винтажной палитрой.',
+    fitNote: 'Размер в размер.',
+    specs: { 'Назначение': 'Город', 'Верх': 'Замша, сетка', 'Подошва': 'EVA', 'Сезон': 'Демисезон', 'Страна': 'Китай', 'Артикул': '102180733' },
+    isBestseller: false, sortOrder: 9, categorySlug: 'lifestyle',
+    colorways: [
+      {
+        name: 'Grey Teal', slug: 'grey-teal', swatchHex: '#8aa3a0', isDefault: true, sortOrder: 1,
+        images: [{ url: '/products/converse-chuck-70.jpeg', alt: 'STRIDE Retro 88 Grey Teal', sortOrder: 0 }],
+        variants: mk('SR88-GRT', 9990, 12990, LIFE),
+      },
+    ],
+  },
+  {
+    name: 'STRIDE Lux Platform', slug: 'stride-lux-platform', brand: 'New Balance', gender: 'WOMEN',
+    description: 'Премиальная платформа с замшевым верхом и увеличенной высотой подошвы.',
+    fitNote: 'Маломерят на полразмера.',
+    specs: { 'Назначение': 'Город', 'Верх': 'Замша', 'Подошва': 'EVA', 'Сезон': 'Демисезон', 'Страна': 'Индонезия', 'Артикул': '102180744' },
+    isBestseller: true, sortOrder: 10, categorySlug: 'platform',
+    colorways: [
+      {
+        name: 'Mauve', slug: 'mauve', swatchHex: '#b89aa8', isDefault: true, sortOrder: 1,
+        images: [{ url: '/products/new-balance-550.jpeg', alt: 'STRIDE Lux Platform Mauve', sortOrder: 0 }],
+        variants: mk('SLP-MVE', 17490, null, PLAT),
+      },
+    ],
+  },
+  {
+    name: 'STRIDE Daily Mesh', slug: 'stride-daily-mesh', brand: 'Nike', gender: 'UNISEX',
+    description: 'Доступные повседневные кроссовки с дышащим сетчатым верхом.',
+    fitNote: 'Размер в размер.',
+    specs: { 'Назначение': 'Город, бег', 'Верх': 'Сетка', 'Подошва': 'EVA', 'Сезон': 'Лето', 'Страна': 'Вьетнам', 'Артикул': '102270255' },
+    isBestseller: true, sortOrder: 11, categorySlug: 'running',
+    colorways: [
+      {
+        name: 'Carbon', slug: 'carbon', swatchHex: '#3a3a3a', isDefault: true, sortOrder: 1,
+        images: [{ url: '/products/nike-air-max-270.jpeg', alt: 'STRIDE Daily Mesh Carbon', sortOrder: 0 }],
+        variants: mk('SDM-CRB', 6990, null, RUN),
+      },
+    ],
+  },
+  {
+    name: 'STRIDE Canvas Hi', slug: 'stride-canvas-hi', brand: 'Vans', gender: 'UNISEX',
+    description: 'Высокие парусиновые кеды с вулканизированной подошвой и классическим профилем.',
+    fitNote: 'Маломерят на полный размер — бери на размер больше.',
+    specs: { 'Назначение': 'Город', 'Верх': 'Парусина', 'Подошва': 'Вулканизированная резина', 'Сезон': 'Всесезон', 'Страна': 'Китай', 'Артикул': '102180766' },
+    isBestseller: false, sortOrder: 12, categorySlug: 'lifestyle',
+    colorways: [
+      {
+        name: 'Burgundy', slug: 'burgundy', swatchHex: '#6e2433', isDefault: true, sortOrder: 1,
+        images: [{ url: '/products/converse-chuck-70.jpeg', alt: 'STRIDE Canvas Hi Burgundy', sortOrder: 0 }],
+        variants: mk('SCHI-BRG', 8490, 11990, LIFE),
+      },
+    ],
+  },
+  {
+    name: 'STRIDE Storm GTX', slug: 'stride-storm-gtx', brand: 'Adidas', gender: 'MEN',
+    description: 'Флагманские всепогодные кроссовки с водозащитной мембраной и максимальной защитой.',
+    fitNote: 'Размер в размер.',
+    specs: { 'Назначение': 'Трейл, город', 'Верх': 'Мембрана GTX-типа', 'Подошва': 'Continental-резина', 'Сезон': 'Зима', 'Страна': 'Вьетнам', 'Артикул': '102270288' },
+    isBestseller: false, sortOrder: 13, categorySlug: 'running',
+    colorways: [
+      {
+        name: 'Storm Black', slug: 'storm-black', swatchHex: '#202326', isDefault: true, sortOrder: 1,
+        images: [{ url: '/products/puma-rs-x.jpeg', alt: 'STRIDE Storm GTX Black', sortOrder: 0 }],
+        variants: mk('SSG-BLK', 21990, null, RUN),
+      },
+    ],
+  },
 ];

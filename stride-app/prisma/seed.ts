@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma-client';
 import { categories, products } from './seed-data';
+import { productDenormFromColorways } from '../lib/product-aggregates';
 
 // Neon HTTP-адаптер НЕ поддерживает транзакции. Поэтому НЕ используем createMany /
 // вложенные create / $transaction. Каждая запись — одиночный upsert
@@ -89,6 +90,15 @@ async function up() {
         });
       }
     }
+
+    // Денормализованные ключи сортировки каталога (минимальная цена/скидка дефолтной расцветки).
+    // Сид — единственный путь записи цены, поэтому считаем здесь. salesCount не трогаем
+    // (default 0; движется заказами; TRUNCATE при пере-сиде сбрасывает в 0).
+    const denorm = productDenormFromColorways(item.colorways);
+    await prisma.product.update({
+      where: { id: product.id },
+      data: { minPrice: denorm.minPrice, discountPct: denorm.discountPct },
+    });
   }
 
   const coupons = [

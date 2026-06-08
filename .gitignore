@@ -38,3 +38,6 @@ Thumbs.db
 
 # superpowers brainstorm visual companion
 .superpowers/
+
+# Playwright MCP scratch snapshots
+.playwright-mcp/
