@@ -17,7 +17,8 @@ function secret(): string {
 }
 
 function sign(payloadB64: string): string {
-  return createHmac('sha256', secret()).update(payloadB64).digest('base64url');
+  // Префикс домена подписи отделяет pending-cookie от ticket/unsubscribe (общий AUTH_SECRET).
+  return createHmac('sha256', secret()).update(`pending:${payloadB64}`).digest('base64url');
 }
 
 export function signPending(email: string, exp = Date.now() + PENDING_VERIFICATION_MAX_AGE * 1000): string {

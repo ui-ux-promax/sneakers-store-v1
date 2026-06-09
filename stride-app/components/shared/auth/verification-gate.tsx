@@ -37,6 +37,7 @@ export function VerificationGate({ email }: { email: string }) {
   }, [cooldown]);
 
   const submit = async (value: string) => {
+    if (submitting) return;
     setSubmitting(true);
     setError(null);
     const res = await verifyEmailCode({ code: value });
