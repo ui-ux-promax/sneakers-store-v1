@@ -4,6 +4,7 @@ import './globals.css';
 import { PromoTopBar } from '@/components/shared/promo-top-bar';
 import { SiteHeader } from '@/components/shared/site-header';
 import { SiteFooter } from '@/components/shared/site-footer';
+import { VerificationGateHost } from '@/components/shared/auth/verification-gate-host';
 
 const manrope = Manrope({ subsets: ['latin', 'cyrillic'], variable: '--font-manrope', weight: ['400', '500', '600', '700'], display: 'swap' });
 const unbounded = Unbounded({ subsets: ['latin'], variable: '--font-unbounded', weight: ['600', '700'], display: 'swap' });
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SiteHeader />
         <main>{children}</main>
         <SiteFooter />
+        <VerificationGateHost />
       </body>
     </html>
   );

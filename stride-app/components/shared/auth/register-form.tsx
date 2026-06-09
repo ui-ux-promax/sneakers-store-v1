@@ -27,8 +27,7 @@ export function RegisterForm() {
       setError(res.error);
       return;
     }
-    // Контракт #8: action не редиректит сам — сессия уже установлена, перенаправляем здесь.
-    router.push('/');
+    // P2.2c: pending-cookie уже стоит (registerUser), refresh → RootLayout отрендерит модалку верификации.
     router.refresh();
   };
 

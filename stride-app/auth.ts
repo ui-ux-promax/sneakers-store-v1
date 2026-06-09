@@ -8,7 +8,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: 'jwt' },
   ...authConfig,
   events: {
-    async signIn({ user }) {
+    async signIn({ user, account }) {
+      // OAuth (Google) даёт уже проверенную почту — проставляем emailVerified, если пусто.
+      // Без этого жёсткий gate (lib/auth-credentials) не пускал бы Google-юзеров.
+      if (account?.provider === 'google' && user?.id) {
+        try {
+          await prisma.user.updateMany({
+            where: { id: user.id, emailVerified: null },
+            data: { emailVerified: new Date() },
+          });
+        } catch (err) {
+          const { logger } = await import('@/lib/logger');
+          logger.error('google_mark_verified_failed', err);
+        }
+      }
       if (!user?.id) return;
       // Слияние гостевой корзины — побочный эффект входа; оно НЕ должно ронять
       // аутентификацию. safeMergeGuestCart глотает сбои merge, а внешний try/catch
