@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma-client';
-import { buildProductWhere, parseCatalogParams, PAGE_SIZE, type RawSearchParams } from '@/lib/catalog-filters';
-import { productCardInclude, buildProductCardData, type ProductCardData, type ProductForCard } from '@/lib/product-summary';
-import { discountPercent } from '@/lib/product-badges';
+import { buildProductWhere, buildOrderBy, buildPagination, parseCatalogParams, PAGE_SIZE, type RawSearchParams } from '@/lib/catalog-filters';
+import { productCardInclude, buildProductCardData, type ProductCardData } from '@/lib/product-summary';
 import { NEW_PRODUCT_WINDOW_DAYS, LOW_STOCK_THRESHOLD, GENDER_OPTIONS } from '@/constants/config';
 
 export interface Facet { value: string; label: string; count: number; }
@@ -18,38 +17,19 @@ export interface CatalogResult {
   };
 }
 
-function sortCards(items: { data: ProductCardData; raw: ProductForCard }[], sort: string) {
-  const by = [...items];
-  switch (sort) {
-    case 'popular':
-      by.sort((a, b) => Number(b.raw.isBestseller) - Number(a.raw.isBestseller) || a.raw.sortOrder - b.raw.sortOrder);
-      break;
-    case 'price-asc':
-      by.sort((a, b) => a.data.minPrice - b.data.minPrice);
-      break;
-    case 'price-desc':
-      by.sort((a, b) => b.data.minPrice - a.data.minPrice);
-      break;
-    case 'discount':
-      by.sort((a, b) => (discountPercent(b.data.minPrice, b.data.minCompareAtPrice) ?? 0) - (discountPercent(a.data.minPrice, a.data.minCompareAtPrice) ?? 0));
-      break;
-    case 'new':
-    default:
-      by.sort((a, b) => b.raw.createdAt.getTime() - a.raw.createdAt.getTime());
-  }
-  return by;
-}
-
-// Фаза 1: каталог небольшой — грузим все совпадения, сортируем/пагинируем в памяти (корректно
-// для сортировки по цене/скидке между страницами). Для крупного каталога вынести в DB-уровень.
+// Сортировка/пагинация на уровне БД: orderBy по денормализованным колонкам (см. buildOrderBy)
+// + skip/take + count. minPrice/discountPct/createdAt/salesCount — колонки Product, поэтому
+// порядок и срез страницы делает Postgres, а не память (тянем только PAGE_SIZE карточек).
 export async function findProducts(sp: RawSearchParams): Promise<CatalogResult> {
   const params = parseCatalogParams(sp);
   const where = buildProductWhere(params);
   const now = new Date();
   const cfg = { newWindowDays: NEW_PRODUCT_WINDOW_DAYS, lowStock: LOW_STOCK_THRESHOLD };
 
-  const [raw, categories, catCounts, brandCounts, genderCounts, colorRows] = await Promise.all([
-    prisma.product.findMany({ where, include: productCardInclude }),
+  // total + фасеты не зависят от страницы — считаем параллельно, ПОТОМ клампим page и тянем срез
+  // (skip от валидной страницы → нет промаха в пустую выборку при page вне диапазона).
+  const [total, categories, catCounts, brandCounts, genderCounts, colorRows] = await Promise.all([
+    prisma.product.count({ where }),
     prisma.category.findMany({ orderBy: { sortOrder: 'asc' } }),
     prisma.product.groupBy({ by: ['categoryId'], where, _count: { _all: true } }),
     prisma.product.groupBy({ by: ['brand'], where, _count: { _all: true } }),
@@ -57,12 +37,15 @@ export async function findProducts(sp: RawSearchParams): Promise<CatalogResult> 
     prisma.productColorway.findMany({ where: { product: { active: true } }, distinct: ['slug'], select: { slug: true, name: true, swatchHex: true }, orderBy: { sortOrder: 'asc' } }),
   ]);
 
-  const cards = sortCards(raw.map((p) => ({ data: buildProductCardData(p, now, cfg), raw: p })), params.sort);
-  const total = cards.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const page = Math.min(params.page, totalPages);
-  const start = (page - 1) * PAGE_SIZE;
-  const products = cards.slice(start, start + PAGE_SIZE).map((c) => c.data);
+  const raw = await prisma.product.findMany({
+    where,
+    include: productCardInclude,
+    orderBy: buildOrderBy(params.sort),
+    ...buildPagination(page),
+  });
+  const products = raw.map((p) => buildProductCardData(p, now, cfg));
 
   const catCountMap = new Map(catCounts.map((c) => [c.categoryId, c._count._all]));
   const genderCountMap = new Map(genderCounts.map((g) => [g.gender, g._count._all]));

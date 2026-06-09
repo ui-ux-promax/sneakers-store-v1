@@ -9,6 +9,7 @@ vi.mock('@/lib/prisma-client', () => ({
   prisma: {
     order: { findUnique: vi.fn(), update: vi.fn() },
     productVariant: { update: vi.fn() },
+    product: { update: vi.fn() },
   },
 }));
 vi.mock('@/lib/yookassa', () => ({ cancelPayment: vi.fn() }));
@@ -26,6 +27,7 @@ const authMock = auth as unknown as ReturnType<typeof vi.fn>;
 const findUnique = prisma.order.findUnique as unknown as ReturnType<typeof vi.fn>;
 const orderUpdate = prisma.order.update as unknown as ReturnType<typeof vi.fn>;
 const variantUpdate = prisma.productVariant.update as unknown as ReturnType<typeof vi.fn>;
+const productUpdate = prisma.product.update as unknown as ReturnType<typeof vi.fn>;
 
 function pendingOrder() {
   return {
@@ -43,6 +45,7 @@ beforeEach(() => {
   authMock.mockResolvedValue({ user: { id: 'u1' } });
   variantUpdate.mockResolvedValue({});
   orderUpdate.mockResolvedValue({});
+  productUpdate.mockResolvedValue({});
   cancelPaymentMock.mockResolvedValue(undefined);
 });
 
@@ -51,9 +54,13 @@ describe('cancelOrder', () => {
     findUnique.mockResolvedValue(pendingOrder());
     const r = await cancelOrder('o1');
     expect(r).toEqual({ ok: true });
-    expect(orderUpdate).toHaveBeenCalledWith({ where: { id: 'o1' }, data: { status: 'CANCELLED' } });
+    // Атомарный гейт: переход разрешён только для своего PENDING-заказа (идемпотентность побочек).
+    expect(orderUpdate).toHaveBeenCalledWith({ where: { id: 'o1', userId: 'u1', status: 'PENDING' }, data: { status: 'CANCELLED' } });
     expect(variantUpdate).toHaveBeenCalledTimes(2);
     expect(variantUpdate).toHaveBeenCalledWith({ where: { id: 'v1' }, data: { stock: { increment: 2 } } });
+    // salesCount откатывается по товарам (популярность ↓ симметрично возврату стока).
+    expect(productUpdate).toHaveBeenCalledWith({ where: { id: 'p1' }, data: { salesCount: { increment: -2 } } });
+    expect(productUpdate).toHaveBeenCalledWith({ where: { id: 'p2' }, data: { salesCount: { increment: -1 } } });
     // Осиротевшие отзывы по товарам отменённого заказа снимаются (дедуп по productId).
     expect(pruneMock).toHaveBeenCalledWith('u1', ['p1', 'p2']);
   });

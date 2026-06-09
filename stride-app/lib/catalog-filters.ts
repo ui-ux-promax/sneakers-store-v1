@@ -83,21 +83,22 @@ export function buildProductWhere(p: CatalogParams): Prisma.ProductWhereInput {
   return where;
 }
 
+// Сортировка на уровне БД по денормализованным колонкам Product (minPrice/discountPct/salesCount).
+// Финальный tiebreak `{ id: 'asc' }` в КАЖДОЙ ветке → строгий тотальный порядок → стабильная
+// пагинация (товары с равным ключом не «прыгают» между страницами).
 export function buildOrderBy(sort: SortValue): Prisma.ProductOrderByWithRelationInput[] {
   switch (sort) {
     case 'popular':
-      return [{ isBestseller: 'desc' }, { sortOrder: 'asc' }];
+      return [{ salesCount: 'desc' }, { isBestseller: 'desc' }, { id: 'asc' }];
     case 'price-asc':
-      // Цена живёт в вариантах; для сортировки по цене на уровне Product используем sortOrder как прокси
-      // + точную сортировку делаем в find-products по агрегированной minPrice (см. Задача 15).
-      return [{ sortOrder: 'asc' }, { createdAt: 'desc' }];
+      return [{ minPrice: 'asc' }, { id: 'asc' }];
     case 'price-desc':
-      return [{ sortOrder: 'asc' }, { createdAt: 'desc' }];
+      return [{ minPrice: 'desc' }, { id: 'asc' }];
     case 'discount':
-      return [{ sortOrder: 'asc' }, { createdAt: 'desc' }];
+      return [{ discountPct: 'desc' }, { id: 'asc' }];
     case 'new':
     default:
-      return [{ createdAt: 'desc' }, { sortOrder: 'asc' }];
+      return [{ createdAt: 'desc' }, { id: 'asc' }];
   }
 }
 

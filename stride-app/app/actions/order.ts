@@ -1,6 +1,7 @@
 'use server';
 
 import { auth } from '@/auth';
+import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { cookies, headers } from 'next/headers';
 import { prisma } from '@/lib/prisma-client';
@@ -13,6 +14,7 @@ import { checkCoupon, calcCouponDiscount } from '@/lib/coupon';
 import { logger } from '@/lib/logger';
 import { createPayment, cancelPayment } from '@/lib/yookassa';
 import { pruneReviewsAfterCancel } from '@/lib/review';
+import { adjustSalesCount } from '@/lib/sales-count';
 
 export type PlaceOrderResult = { ok: true; orderNumber: number; paymentUrl?: string } | { ok: false; error: string };
 
@@ -164,6 +166,13 @@ export async function placeOrder(raw: unknown): Promise<PlaceOrderResult> {
     }
   }
 
+  // Популярность: +продажи по товарам заказа (как списанный сток). После всех точек отката —
+  // если дошли сюда, заказ создан и сток списан, инкремент симметричен. Best-effort внутри.
+  await adjustSalesCount(
+    cart.items.map((i) => ({ productId: i.productVariant.colorway.product.id, quantity: i.quantity })),
+    1,
+  );
+
   try {
     await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
     await recalcCartTotalByToken(token);
@@ -192,13 +201,21 @@ export async function cancelOrder(orderId: string): Promise<CancelOrderResult> {
     return { ok: false, error: 'Этот заказ нельзя отменить' };
   }
 
-  // Пре-гард уже проверил PENDING. Одиночный update (без updateMany/$executeRaw —
-  // те транзакционны на Neon HTTP, P9). Гонка возможна только если админ меняет
-  // статус между pre-guard и update — admin-фазы ещё нет, риск приемлем.
-  await prisma.order.update({
-    where: { id: orderId },
-    data: { status: 'CANCELLED' },
-  });
+  // Атомарный переход PENDING→CANCELLED (одиночный UPDATE ... WHERE id AND userId AND status):
+  // гарантирует, что побочные эффекты (возврат стока, откат salesCount, отмена платежа)
+  // применятся РОВНО ОДИН РАЗ даже в гонке с вебхуком ЮKassa, который мог отменить платёж
+  // между findUnique и этим update. P2025 = заказ уже не PENDING → ничего не откатываем.
+  try {
+    await prisma.order.update({
+      where: { id: orderId, userId, status: 'PENDING' },
+      data: { status: 'CANCELLED' },
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') {
+      return { ok: false, error: 'Этот заказ нельзя отменить' };
+    }
+    throw e;
+  }
 
   if (order.payment && order.payment.status === 'pending') {
     try {
@@ -218,6 +235,12 @@ export async function cancelOrder(orderId: string): Promise<CancelOrderResult> {
       logger.error('cancel_stock_restore_failed', e, { orderId, variantId: item.productVariantId });
     }
   }
+
+  // Популярность: −продажи по товарам отменённого заказа (симметрично возврату стока).
+  await adjustSalesCount(
+    order.items.map((i) => ({ productId: i.productVariant.colorway.productId, quantity: i.quantity })),
+    -1,
+  );
 
   // Отмена аннулирует «покупку»: снять осиротевшие отзывы по товарам этого заказа
   // (если по товару не осталось другого квалифицирующего заказа). PDP — force-dynamic,
