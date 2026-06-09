@@ -1,7 +1,7 @@
-# STRIDE — Фаза 2.3 (Email-верификация + Newsletter на Resend): дизайн
+# STRIDE — Фаза 2.2c (Email-верификация + Newsletter на Resend): дизайн
 
 > **Статус:** дизайн (брейнсторминг завершён, ожидает план).
-> **Дата:** 2026-06-09. **Ветка (план):** `feat/phase2.3-email-resend` (от `main`).
+> **Дата:** 2026-06-09. **Ветка (план):** `feat/phase2.2c-email-resend` (от `main`).
 > Артефакт брейнсторминга (superpowers:brainstorming). Прототипа не было — дизайн с нуля.
 > Сервис рассылки: **Resend** (https://resend.com/docs/send-with-nextjs), домен уже верифицирован.
 
