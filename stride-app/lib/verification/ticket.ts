@@ -1,4 +1,7 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+// Импорт без префикса `node:` — чтобы edge-бандл auth.config.ts мог заглушить его
+// через resolve.alias { crypto: false } (next.config.mjs). authorize verified-ticket
+// исполняется только в Node-рантайме, поэтому реальный crypto доступен на исполнении.
+import { createHmac, timingSafeEqual } from 'crypto';
 import { VERIFICATION_TICKET_TTL_MS } from '@/constants/config';
 
 interface TicketPayload {
