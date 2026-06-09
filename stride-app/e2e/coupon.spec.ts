@@ -1,19 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-
-// Купоны заводит seed (STRIDE10=10%, EXPIRED=истёкший). Зеркалит хелперы checkout.spec.ts.
-const uniqueEmail = () => `u${Date.now()}-${Math.floor(Math.random() * 1e6)}@e2e.test`;
-const PASSWORD = 'Passw0rd!1';
-
-async function registerAndLogin(page: Page) {
-  await page.goto('/register');
-  await page.getByLabel('Имя').fill('E2E User');
-  await page.getByLabel('Email').fill(uniqueEmail());
-  await page.getByLabel('Пароль', { exact: true }).fill(PASSWORD);
-  await page.getByLabel('Повторите пароль', { exact: true }).fill(PASSWORD);
-  await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Зарегистрироваться' }).click();
-  await expect(page.getByRole('button', { name: 'Выйти' })).toBeVisible();
-}
+import { registerAndVerify } from './helpers';
 
 async function addSeedProductToCart(page: Page) {
   await page.goto('/product/stride-velocity-trail');
@@ -23,7 +9,7 @@ async function addSeedProductToCart(page: Page) {
 }
 
 test('купон STRIDE10 даёт скидку 10% и сохраняется в заказе', async ({ page }) => {
-  await registerAndLogin(page);
+  await registerAndVerify(page);
   await addSeedProductToCart(page);
 
   await page.goto('/checkout');
@@ -46,7 +32,7 @@ test('купон STRIDE10 даёт скидку 10% и сохраняется в
 });
 
 test('истёкший купон EXPIRED → ошибка, без скидки', async ({ page }) => {
-  await registerAndLogin(page);
+  await registerAndVerify(page);
   await addSeedProductToCart(page);
 
   await page.goto('/checkout');
@@ -60,7 +46,7 @@ test('истёкший купон EXPIRED → ошибка, без скидки'
 });
 
 test('несуществующий купон → ошибка', async ({ page }) => {
-  await registerAndLogin(page);
+  await registerAndVerify(page);
   await addSeedProductToCart(page);
 
   await page.goto('/checkout');

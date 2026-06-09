@@ -21,5 +21,8 @@ export default defineConfig({
     url: 'http://localhost:3000',
     reuseExistingServer: false,
     timeout: 180_000,
+    // E2E-фикс код верификации: generateCode вернёт его вместо случайного (только не-prod),
+    // чтобы хелпер registerAndVerify прошёл gate-модалку. Прод этой ветки не касается.
+    env: { E2E_TEST_CODE: '424242' },
   },
 });
