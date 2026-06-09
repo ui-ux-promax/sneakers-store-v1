@@ -121,4 +121,11 @@ describe('mergeGuestWishlist', () => {
     expect(wlUpdate).not.toHaveBeenCalled();
     expect(itemUpsert).not.toHaveBeenCalled();
   });
+  it('анти-кража: токен принадлежит ДРУГОМУ userId → no-op (чужое избранное не перепривязываем)', async () => {
+    wlFindFirst.mockResolvedValueOnce({ id: 'g1', token: 'tok', userId: 'other' });
+    await mergeGuestWishlist('tok', 'u1');
+    expect(wlUpdate).not.toHaveBeenCalled();
+    expect(itemUpsert).not.toHaveBeenCalled();
+    expect(wlDelete).not.toHaveBeenCalled();
+  });
 });

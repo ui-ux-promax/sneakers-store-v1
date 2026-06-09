@@ -15,6 +15,10 @@ export async function mergeGuestWishlist(guestToken: string | undefined, userId:
   // Гостевой уже принадлежит этому пользователю — нечего сливать.
   if (guest.userId === userId) return;
 
+  // Анти-кража (#leak): токен принадлежит ДРУГОМУ пользователю (вход со стащенной/
+  // несброшенной cookie) — не перепривязываем чужое избранное к текущему юзеру.
+  if (guest.userId) return;
+
   const userWishlist = await prisma.wishlist.findFirst({ where: { userId } });
 
   // У пользователя нет своего wishlist → просто привязываем гостевой.

@@ -3,7 +3,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 vi.mock('@/auth', () => ({ auth: vi.fn() }));
 vi.mock('next/headers', () => ({ cookies: vi.fn() }));
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() } }));
-vi.mock('@/lib/cart', () => ({ recalcCartTotalByToken: vi.fn(async () => null) }));
+vi.mock('@/lib/cart', () => ({
+  recalcCartTotalByToken: vi.fn(async () => null),
+  resolveOwnerCart: vi.fn(async () => ({ id: 'c1', token: 't' })),
+}));
 vi.mock('@/lib/prisma-client', () => ({
   prisma: {
     cart: { findFirst: vi.fn() },
