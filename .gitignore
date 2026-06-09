@@ -41,3 +41,8 @@ Thumbs.db
 
 # Playwright MCP scratch snapshots
 .playwright-mcp/
+
+# Generated seed SQL artifact (gen-seed-sql.ts output)
+seed-preview.sql
+# Stray screenshots in repo root
+*.png
