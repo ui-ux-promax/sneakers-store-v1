@@ -29,6 +29,25 @@ export default {
         return authorizeCredentials(creds);
       },
     }),
+    // Автологин ПОСЛЕ верификации кода — без пароля. confirmCode выдал одноразовый
+    // подписанный тикет (lib/verification/ticket), здесь он валидируется. Пускаем
+    // только пользователя с уже выставленным emailVerified (двойная страховка).
+    Credentials({
+      id: 'verified-ticket',
+      credentials: { ticket: {} },
+      authorize: async (creds) => {
+        const { verifyTicket } = await import('@/lib/verification/ticket');
+        const parsed = verifyTicket(String(creds?.ticket ?? ''));
+        if (!parsed) return null;
+        const { prisma } = await import('@/lib/prisma-client');
+        const user = await prisma.user.findUnique({
+          where: { id: parsed.userId },
+          select: { id: true, email: true, role: true, emailVerified: true, name: true },
+        });
+        if (!user || !user.emailVerified) return null;
+        return { id: user.id, email: user.email, role: user.role, name: user.name };
+      },
+    }),
   ],
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
