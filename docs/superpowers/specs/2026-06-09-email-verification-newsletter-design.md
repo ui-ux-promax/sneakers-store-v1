@@ -98,7 +98,10 @@ model Subscriber {
   `null`, как `lib/rate-limit.ts` при отсутствии Upstash). `isEmailConfigured(): boolean`.
 - **`lib/email/send-email.ts`** — единая обёртка `sendEmail(opts): Promise<SendResult>`,
   где `SendResult = { ok: true; id } | { ok: false; error }`:
-  - `from` из `EMAIL_FROM`, опц. `replyTo` из `EMAIL_REPLY_TO`.
+  - **Два отправителя** (передаётся вызывающим, дефолт — транзакционный):
+    транзакционные письма (код верификации, welcome после верификации) → `EMAIL_FROM_TRANSACTIONAL`
+    (`Stride <no-reply@cloudd3r.eu.cc>`); newsletter (welcome подписки) → `EMAIL_FROM_NEWSLETTER`
+    (`Stride <hello@cloudd3r.eu.cc>`). Опц. `replyTo` из `EMAIL_REPLY_TO`.
   - зовёт `resend.emails.send({ from, to, subject, react })`, разбирает `{ data, error }`
     (SDK **не бросает** — проверяем `error`).
   - `!isEmailConfigured()` → warn + `{ ok:false }` (в dev без ключа приложение не падает;
@@ -247,13 +250,16 @@ Unit (локально, без БД — по [[never-run-db-against-neon-locally
 
 ## 13. Конфигурация (env — от пользователя)
 
-| Переменная | Назначение |
+| Переменная | Значение |
 |---|---|
-| `RESEND_API_KEY` | ключ Resend (права Sending + Audiences) |
-| `EMAIL_FROM` | `"Stride <no-reply@домен>"` |
-| `EMAIL_REPLY_TO` | опц., напр. `hello@домен` |
-| `RESEND_AUDIENCE_ID` | id Resend Audience для newsletter |
+| `RESEND_API_KEY` | `re_...` — ключ Resend, **Full access** (нужны и Sending, и Contacts/Audiences) |
+| `EMAIL_FROM_TRANSACTIONAL` | `Stride <no-reply@cloudd3r.eu.cc>` (код верификации, welcome) |
+| `EMAIL_FROM_NEWSLETTER` | `Stride <hello@cloudd3r.eu.cc>` (newsletter) |
+| `EMAIL_REPLY_TO` | опц., `hello@cloudd3r.eu.cc` |
+| `RESEND_AUDIENCE_ID` | UUID аудитории General (Resend → Audience → ⋯ → Copy ID) |
 | `AUTH_SECRET` | уже есть — им подписываются cookie `pending_verification` и `verified-ticket` |
+
+Домен `cloudd3r.eu.cc` уже верифицирован в Resend.
 
 Секреты — в `.env.local` (dev) и Vercel env (preview/prod), не в репозитории.
 Деплой-нюансы монорепо — [[vercel-deploy-setup]].
