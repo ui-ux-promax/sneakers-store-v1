@@ -8,9 +8,7 @@ import { normalizeEmail } from '@/lib/auth-identity';
 import { registerSchema } from '@/services/dto/auth.dto';
 import { checkAuthRateLimit, extractClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
-import { signIn } from '@/auth';
-
-export type RegisterResult = { ok: true } | { ok: false; error: string };
+export type RegisterResult = { ok: true; needsVerification: true } | { ok: false; error: string };
 
 export async function registerUser(raw: unknown): Promise<RegisterResult> {
   const parsed = registerSchema.safeParse(raw);
@@ -44,13 +42,15 @@ export async function registerUser(raw: unknown): Promise<RegisterResult> {
     return { ok: false, error: 'Не удалось завершить регистрацию. Попробуйте позже' };
   }
 
-  // redirect:false — устанавливаем сессию и ВОЗВРАЩАЕМ управление (не бросаем NEXT_REDIRECT),
-  // чтобы контракт RegisterResult был честным; редирект делает форма по {ok:true} (#8).
-  // Автологин best-effort: его сбой не отменяет успешную регистрацию — юзер войдёт через /login.
+  // P2.2c: НЕ логиним. Ставим pending-cookie и шлём код — гейт (RootLayout) поднимет модалку.
+  // Отправка best-effort: её сбой не отменяет регистрацию (юзер нажмёт «отправить снова»).
+  const { issueCode } = await import('@/lib/verification/service');
+  const { setPending } = await import('@/lib/verification/pending-cookie');
+  await setPending(email);
   try {
-    await signIn('credentials', { email, password: parsed.data.password, redirect: false });
+    await issueCode(email);
   } catch (err) {
-    logger.error('auto_signin_after_register_failed', err);
+    logger.error('issue_code_after_register_failed', err);
   }
-  return { ok: true };
+  return { ok: true, needsVerification: true };
 }

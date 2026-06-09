@@ -25,10 +25,15 @@ export async function authorizeCredentials(creds: unknown): Promise<AuthorizedUs
   const password = String(c?.password ?? '');
   if (!email || !password) return null;
 
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findUnique({ where: { email }, select: { id: true, email: true, name: true, role: true, passwordHash: true, emailVerified: true } });
   // Всегда тратим один argon2-verify (реальный хэш или dummy) до решения — constant-time.
   const ok = await verifyPassword(password, user?.passwordHash ?? DUMMY_PASSWORD_HASH);
   if (!user?.passwordHash || !ok) return null;
+
+  // Жёсткий gate (P2.2c): неверифицированная почта не пускается. Логин-форма ловит null
+  // и поднимает модалку верификации. Google-вход проставляет emailVerified автоматически
+  // (auth.ts events), поэтому OAuth этим guard не задет.
+  if (!user.emailVerified) return null;
 
   return { id: user.id, email: user.email, name: user.name, role: user.role as Role };
 }
