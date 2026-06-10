@@ -7,5 +7,5 @@ import { VerificationGate } from './verification-gate';
 export async function VerificationGateHost() {
   const [session, pending] = await Promise.all([auth(), readPending()]);
   if (session?.user || !pending) return null;
-  return <VerificationGate email={pending.email} />;
+  return <VerificationGate email={pending.email} callbackUrl={pending.callbackUrl} />;
 }

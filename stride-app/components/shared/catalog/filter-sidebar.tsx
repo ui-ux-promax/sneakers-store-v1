@@ -18,7 +18,7 @@ export function FilterSidebar({ facets }: { facets: CatalogResult['facets'] }) {
         <CheckboxFacet title="Бренд" paramKey="brand" options={facets.brands} />
         <CheckboxFacet title="Пол" paramKey="gender" options={facets.genders} />
         <SizeFilter />
-        <PriceFilter />
+        <PriceFilter min={facets.price.min} max={facets.price.max} />
         <ColorFilter colors={facets.colors} />
         <InStockToggle />
       </div>

@@ -9,6 +9,7 @@ import { issueTicket } from '@/lib/verification/ticket';
 import { verifyCodeSchema } from '@/services/dto/auth.dto';
 import { checkVerifyRateLimit, checkResendRateLimit, extractClientIp } from '@/lib/rate-limit';
 import { normalizeEmail } from '@/lib/auth-identity';
+import { safeCallbackUrl } from '@/lib/safe-redirect';
 import { logger } from '@/lib/logger';
 
 export type VerifyResult =
@@ -58,20 +59,23 @@ export async function resendVerificationCode(): Promise<{ ok: boolean; error?: s
 }
 
 // Вызывается login-формой/регистрацией, когда нужно поднять гейт: ставит pending-cookie + шлёт код.
-export async function startVerification(email: string): Promise<{ ok: boolean }> {
-  await setPending(email);
+export async function startVerification(email: string, callbackUrl?: string): Promise<{ ok: boolean }> {
+  const safeCb = safeCallbackUrl(callbackUrl);
+  await (safeCb === '/' ? setPending(email) : setPending(email, safeCb));
   await issueCode(email);
   return { ok: true };
 }
 
 // Login-форма зовёт при отказе входа: если почта существует и не верифицирована — поднять гейт
 // (без раскрытия существования email вызывающему — наружу только gated:boolean).
-export async function ensureVerificationGate(email: string): Promise<{ gated: boolean }> {
+// callbackUrl (#4) кладём в cookie, чтобы гейт увёл туда после верификации.
+export async function ensureVerificationGate(email: string, callbackUrl?: string): Promise<{ gated: boolean }> {
   const norm = normalizeEmail(email);
   if (!norm) return { gated: false };
   const user = await prisma.user.findUnique({ where: { email: norm }, select: { emailVerified: true } });
   if (user && !user.emailVerified) {
-    await setPending(norm);
+    const safeCb = safeCallbackUrl(callbackUrl);
+    await (safeCb === '/' ? setPending(norm) : setPending(norm, safeCb));
     await issueCode(norm);
     return { gated: true };
   }

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui';
 import { OtpInput } from './otp-input';
 import { verifyEmailCode, resendVerificationCode } from '@/app/actions/verification';
+import { safeCallbackUrl } from '@/lib/safe-redirect';
 import { VERIFICATION_RESEND_COOLDOWN_MS } from '@/constants/config';
 
 const MESSAGES: Record<string, string> = {
@@ -23,7 +24,7 @@ function maskEmail(email: string): string {
   return `${email[0]}***@${email.slice(at + 1)}`;
 }
 
-export function VerificationGate({ email }: { email: string }) {
+export function VerificationGate({ email, callbackUrl }: { email: string; callbackUrl?: string }) {
   const router = useRouter();
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +43,14 @@ export function VerificationGate({ email }: { email: string }) {
     setError(null);
     const res = await verifyEmailCode({ code: value });
     setSubmitting(false);
-    if (res.ok) { router.refresh(); return; }
+    if (res.ok) {
+      // Сессия заминчена сервером — уводим на callbackUrl (#4); refresh подтянет серверное
+      // состояние (хедер/корзина), replace выполнит сам переход. Санитайз — defence-in-depth.
+      const target = safeCallbackUrl(callbackUrl);
+      router.refresh();
+      router.replace(target);
+      return;
+    }
     setError(MESSAGES[res.reason] ?? 'Не удалось подтвердить.');
     setCode('');
   };

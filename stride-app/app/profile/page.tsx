@@ -16,7 +16,15 @@ export default async function ProfilePage() {
   const orders = await prisma.order.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: 'desc' },
-    select: { orderNumber: true, status: true, createdAt: true, totalAmount: true, _count: { select: { items: true } }, payment: { select: { status: true } } },
+    select: {
+      orderNumber: true,
+      status: true,
+      createdAt: true,
+      totalAmount: true,
+      _count: { select: { items: true } },
+      items: { select: { imageUrl: true, productName: true }, take: 4 },
+      payment: { select: { status: true } },
+    },
   });
   const orderRows: OrderRow[] = orders.map((o) => ({
     orderNumber: o.orderNumber,
@@ -24,11 +32,12 @@ export default async function ProfilePage() {
     createdAt: o.createdAt.toISOString(),
     totalAmount: o.totalAmount,
     itemCount: o._count.items,
+    thumbs: o.items.map((it) => ({ imageUrl: it.imageUrl, productName: it.productName })),
     paymentStatus: o.payment?.status ?? null,
   }));
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
+    <main className="mx-auto max-w-5xl px-4 py-10">
       <h1 className="font-display font-bold text-2xl mb-6">Профиль</h1>
       <ProfileView
         email={user.email}

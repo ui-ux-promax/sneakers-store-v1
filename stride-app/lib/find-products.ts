@@ -14,6 +14,7 @@ export interface CatalogResult {
     brands: Facet[];
     genders: Facet[];
     colors: { slug: string; name: string; swatchHex: string | null }[];
+    price: { min: number; max: number };
   };
 }
 
@@ -28,13 +29,16 @@ export async function findProducts(sp: RawSearchParams): Promise<CatalogResult> 
 
   // total + фасеты не зависят от страницы — считаем параллельно, ПОТОМ клампим page и тянем срез
   // (skip от валидной страницы → нет промаха в пустую выборку при page вне диапазона).
-  const [total, categories, catCounts, brandCounts, genderCounts, colorRows] = await Promise.all([
+  const [total, categories, catCounts, brandCounts, genderCounts, colorRows, priceAgg] = await Promise.all([
     prisma.product.count({ where }),
     prisma.category.findMany({ orderBy: { sortOrder: 'asc' } }),
     prisma.product.groupBy({ by: ['categoryId'], where, _count: { _all: true } }),
     prisma.product.groupBy({ by: ['brand'], where, _count: { _all: true } }),
     prisma.product.groupBy({ by: ['gender'], where, _count: { _all: true } }),
     prisma.productColorway.findMany({ where: { product: { active: true } }, distinct: ['slug'], select: { slug: true, name: true, swatchHex: true }, orderBy: { sortOrder: 'asc' } }),
+    // Границы цены для слайдера: весь активный каталог (mirror active-scoping расцветок выше),
+    // не сужаем текущими фильтрами — ручки всегда показывают полный диапазон БД.
+    prisma.productVariant.aggregate({ where: { active: true, colorway: { product: { active: true } } }, _min: { price: true }, _max: { price: true } }),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -50,6 +54,10 @@ export async function findProducts(sp: RawSearchParams): Promise<CatalogResult> 
   const catCountMap = new Map(catCounts.map((c) => [c.categoryId, c._count._all]));
   const genderCountMap = new Map(genderCounts.map((g) => [g.gender, g._count._all]));
 
+  // Пустой каталог → min/max null; отдаём 0..0, слайдер в этом случае не рендерится (min>=max).
+  const priceMin = priceAgg._min.price ?? 0;
+  const priceMax = priceAgg._max.price ?? 0;
+
   return {
     products,
     total,
@@ -60,6 +68,7 @@ export async function findProducts(sp: RawSearchParams): Promise<CatalogResult> 
       brands: brandCounts.map((b) => ({ value: b.brand, label: b.brand, count: b._count._all })).sort((a, b) => a.label.localeCompare(b.label)),
       genders: GENDER_OPTIONS.map((g) => ({ value: g.value, label: g.label, count: genderCountMap.get(g.value) ?? 0 })).filter((g) => g.count > 0),
       colors: colorRows,
+      price: { min: priceMin, max: priceMax },
     },
   };
 }

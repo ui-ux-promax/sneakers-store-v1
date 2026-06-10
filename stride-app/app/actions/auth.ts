@@ -13,7 +13,7 @@ export type RegisterResult =
   | { ok: true; needsVerification: true }
   | { ok: false; error: string; retryAfterSec?: number };
 
-export async function registerUser(raw: unknown): Promise<RegisterResult> {
+export async function registerUser(raw: unknown, callbackUrl?: string): Promise<RegisterResult> {
   const parsed = registerSchema.safeParse(raw);
   if (!parsed.success) return { ok: false, error: 'Проверьте поля формы' };
 
@@ -46,10 +46,14 @@ export async function registerUser(raw: unknown): Promise<RegisterResult> {
   }
 
   // P2.2c: НЕ логиним. Ставим pending-cookie и шлём код — гейт (RootLayout) поднимет модалку.
+  // callbackUrl (#4) кладём в cookie: гейт минтит сессию и уведёт туда после верификации.
   // Отправка best-effort: её сбой не отменяет регистрацию (юзер нажмёт «отправить снова»).
   const { issueCode } = await import('@/lib/verification/service');
   const { setPending } = await import('@/lib/verification/pending-cookie');
-  await setPending(email);
+  const { safeCallbackUrl } = await import('@/lib/safe-redirect');
+  const safeCb = safeCallbackUrl(callbackUrl);
+  // setPending(email) без второго аргумента, когда редирект — домой (single-arg форма).
+  await (safeCb === '/' ? setPending(email) : setPending(email, safeCb));
   try {
     await issueCode(email);
   } catch (err) {

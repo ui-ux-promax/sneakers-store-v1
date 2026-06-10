@@ -11,7 +11,7 @@ export function EngineeredFeature() {
   return (
     <section className="mx-auto max-w-[1240px] px-4 sm:px-6 pt-16 sm:pt-20">
       <div className="rounded-[28px] bg-footer text-white overflow-hidden grid md:grid-cols-2 items-center">
-        <div className="p-8 sm:p-12">
+        <div className="p-8 sm:p-12 min-w-0">
           <p className="label !text-primary">STRIDE Engineered</p>
           <h2 className="font-display font-bold text-[28px] sm:text-[40px] leading-tight mt-2">Сделаны, чтобы<br />пройти дистанцию</h2>
           <p className="text-white/60 mt-3 leading-relaxed">Литая промежуточная подошва с возвратом энергии, дышащий верх из переработанной сетки и протектор, который держит и на асфальте, и на грунте.</p>

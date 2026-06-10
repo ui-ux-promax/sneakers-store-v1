@@ -3,16 +3,19 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button, Input } from '@/components/ui';
 import { PasswordInput } from './password-input';
 import { registerFormSchema, type RegisterFormValues } from '@/services/dto/auth.dto';
 import { registerUser } from '@/app/actions/auth';
+import { safeCallbackUrl } from '@/lib/safe-redirect';
 import { useCountdown } from '@/hooks/use-countdown';
 
 export function RegisterForm() {
   const router = useRouter();
+  const params = useSearchParams();
+  const callbackUrl = safeCallbackUrl(params.get('callbackUrl'));
   const [error, setError] = useState<string | null>(null);
   const { seconds: retry, start: startRetry } = useCountdown();
   const {
@@ -24,7 +27,8 @@ export function RegisterForm() {
   const onSubmit = async (v: RegisterFormValues) => {
     setError(null);
     // На сервер уходят только поля registerSchema; confirmPassword/agree — клиентская валидация.
-    const res = await registerUser({ name: v.name, email: v.email, password: v.password });
+    // callbackUrl (#4) кладётся в pending-cookie: гейт уведёт туда после верификации.
+    const res = await registerUser({ name: v.name, email: v.email, password: v.password }, callbackUrl);
     if (!res.ok) {
       setError(res.error);
       if (res.retryAfterSec && res.retryAfterSec > 0) startRetry(res.retryAfterSec);

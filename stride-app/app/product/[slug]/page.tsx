@@ -6,6 +6,7 @@ import { getProductBySlug } from '@/lib/get-product';
 import { productCardInclude, buildProductCardData } from '@/lib/product-summary';
 import { normalizeSize } from '@/lib/format';
 import { NEW_PRODUCT_WINDOW_DAYS, LOW_STOCK_THRESHOLD } from '@/constants/config';
+import { isNewByDate } from '@/lib/product-badges';
 import { ProductCard } from '@/components/shared/product-card';
 import { Breadcrumbs } from '@/components/shared/product/breadcrumbs';
 import { ProductGallery } from '@/components/shared/product/product-gallery';
@@ -70,6 +71,11 @@ export default async function ProductPage({ params, searchParams }: Params) {
   const wishlistedIds = await getWishlistProductIds(session, wlStore.get(wishlistCookieName)?.value);
 
   const galleryImages = active.images.map((im) => ({ url: im.url, alt: im.alt ?? product.name }));
+  // «Новинка» поверх главного кадра — по createdAt товара (как в buildProductCardData).
+  // Скидку на PDP показывает только панель покупки (по выбранной вариации), чтобы не дублировать пилл.
+  // Распроданную расцветку не маркируем — паритет с computeBadges (soldOut гасит new/discount).
+  const soldOut = !active.variants.some((v) => v.active && v.stock > 0);
+  const galleryIsNew = !soldOut && isNewByDate(product.createdAt, now, NEW_PRODUCT_WINDOW_DAYS);
   const panelColorways = product.colorways.map((cw) => ({ slug: cw.slug, name: cw.name, thumbUrl: cw.images[0]?.url ?? null }));
   const panelVariants = active.variants.map((v) => ({
     id: v.id, sizeEu: normalizeSize(v.sizeEu as unknown as number), stock: v.stock, active: v.active,
@@ -88,7 +94,7 @@ export default async function ProductPage({ params, searchParams }: Params) {
 
       <div className="grid lg:grid-cols-[minmax(0,1fr)_440px] gap-6 lg:gap-10 mt-6">
         {/* key по расцветке: при смене ?color= галерея/панель пересоздаются (сброс выбранного размера) */}
-        <ProductGallery key={active.slug} images={galleryImages} productName={product.name} />
+        <ProductGallery key={active.slug} images={galleryImages} productName={product.name} isNew={galleryIsNew} />
         <div>
           <p className="text-[11px] text-ink-muted uppercase tracking-wide">{product.category.name} · {product.brand}</p>
           <h1 className="font-display font-bold text-[28px] sm:text-[34px] leading-tight mt-1">{product.name}</h1>

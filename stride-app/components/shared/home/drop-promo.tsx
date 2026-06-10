@@ -8,7 +8,7 @@ export function DropPromo() {
   return (
     <section id="drop" className="mx-auto max-w-[1240px] px-4 sm:px-6 pt-16 sm:pt-20">
       <div className="rounded-[28px] bg-accent text-accent-foreground overflow-hidden grid md:grid-cols-2 items-center">
-        <div className="p-8 sm:p-12">
+        <div className="p-8 sm:p-12 min-w-0">
           <span className="text-[11px] font-semibold uppercase tracking-wider">Дроп 04 · 02.06</span>
           <h2 className="font-display font-bold text-[28px] sm:text-[40px] leading-tight mt-2">Лимитка<br />уже близко</h2>
           <p className="opacity-90 mt-3 max-w-sm">200 пар STRIDE Velocity. Подпишись — напомним о старте.</p>

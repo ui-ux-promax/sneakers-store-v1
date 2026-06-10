@@ -9,6 +9,7 @@ import { getPaymentStatus } from '@/lib/yookassa';
 import { applyPaymentSucceeded, applyPaymentCanceled } from '@/lib/payment-sync';
 import { logger } from '@/lib/logger';
 import { Prisma } from '@prisma/client';
+import Image from 'next/image';
 import Link from 'next/link';
 import { ReviewForm } from '@/components/shared/product/review-form';
 
@@ -94,8 +95,14 @@ export default async function OrderPage({ params }: { params: Promise<{ number: 
 
       <ul className="divide-y divide-line rounded-2xl border border-line bg-surface">
         {order.items.map((it) => (
-          <li key={it.id} className="flex justify-between gap-3 p-4 text-sm">
-            <span>{it.productName} · {it.colorwayName} · {it.sizeEu} · {it.quantity} шт.</span>
+          <li key={it.id} className="flex items-center gap-3 p-4 text-sm">
+            <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-surface-soft shrink-0">
+              {it.imageUrl && <Image src={it.imageUrl} alt={it.productName} fill sizes="64px" className="object-cover" />}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-medium">{it.productName}</p>
+              <p className="text-ink-muted">{it.colorwayName} · {it.sizeEu} · {it.quantity} шт.</p>
+            </div>
             <span className="font-semibold tnum shrink-0">{formatPrice(it.lineTotal)}</span>
           </li>
         ))}
