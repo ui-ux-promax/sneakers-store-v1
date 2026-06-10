@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs';
 import { scrubPii } from './pii-scrub';
 import { getRequestId } from './request-context';
 
@@ -39,7 +40,15 @@ function makeLogger(baseFields: LogFields): Logger {
     debug: (m, f) => emit('debug', m, { ...baseFields, ...(f ?? {}) }),
     info: (m, f) => emit('info', m, { ...baseFields, ...(f ?? {}) }),
     warn: (m, f) => emit('warn', m, { ...baseFields, ...(f ?? {}) }),
-    error: (m, err, f) => emit('error', m, { ...baseFields, ...normalizeError(err), ...(f ?? {}) }),
+    error: (m, err, f) => {
+      emit('error', m, { ...baseFields, ...normalizeError(err), ...(f ?? {}) });
+      // Мост в Sentry (noop без DSN). PII скрабится перед передачей.
+      // normalizeError(err) в extra — чтобы не-Error payload не потерялся при new Error(m).
+      Sentry.captureException(err instanceof Error ? err : new Error(m), {
+        tags: { event: m },
+        extra: scrubPii({ ...baseFields, ...normalizeError(err), ...(f ?? {}) }),
+      });
+    },
     child: (bindings) => makeLogger({ ...baseFields, ...bindings }),
   };
 }

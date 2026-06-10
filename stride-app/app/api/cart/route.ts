@@ -7,6 +7,8 @@ import { cartCookieName, cartCookieOptions } from '@/lib/cart-cookie';
 import { createCartItemSchema } from '@/services/dto/cart.dto';
 import { runWithRequestContext } from '@/lib/request-context';
 import { logger } from '@/lib/logger';
+import { extractClientIp, checkCartRateLimit } from '@/lib/rate-limit';
+import { tooManyRequests } from '@/lib/rate-limit-response';
 
 export async function GET(req: NextRequest) {
   return runWithRequestContext(req, async () => {
@@ -32,6 +34,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   return runWithRequestContext(req, async () => {
     try {
+      const ip = extractClientIp(req);
+      const rl = await checkCartRateLimit(ip);
+      if (!rl.success) return tooManyRequests(rl, 'Слишком часто. Попробуйте позже');
       const session = await auth();
       const userId = session?.user?.id ?? null;
       const cookieToken = req.cookies.get(cartCookieName)?.value ?? randomUUID();
