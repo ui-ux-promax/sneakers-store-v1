@@ -29,7 +29,9 @@ test('регистрация → автологин → профиль с дан
   await expect(page.getByLabel('Email')).toHaveValue(email); // email — value disabled-инпута
 
   await page.getByRole('button', { name: 'Выйти' }).click();
-  await page.waitForURL('**/'); // signOut redirectTo: '/'
+  // Дождаться завершения логаута (AuthNav → гость), а не loose waitForURL('**/'):
+  // логаут с '/' не меняет URL, и goto ниже мог гонкой опередить выход. (#leak-redirect)
+  await expect(page.getByRole('button', { name: 'Выйти' })).toHaveCount(0);
   await page.goto('/profile');
   await expect(page).toHaveURL(/\/login/); // middleware защищает /profile
 });
@@ -44,7 +46,9 @@ test('вход существующего пользователя по email/п
   await register(page, email);
   await expectSignedIn(page);
   await page.getByRole('button', { name: 'Выйти' }).click();
-  await page.waitForURL('**/');
+  // Дождаться выхода до перехода на /login: залогиненного middleware редиректит /login→/profile,
+  // поэтому goto('/login') до завершения логаута попал бы на /profile (disabled #p-email). (#leak-redirect)
+  await expect(page.getByRole('button', { name: 'Выйти' })).toHaveCount(0);
 
   await page.goto('/login');
   await page.getByLabel('Email').fill(email);

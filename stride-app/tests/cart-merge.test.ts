@@ -199,6 +199,14 @@ describe('mergeGuestCart', () => {
     expect(fake.items('g')).toEqual([{ productVariantId: 'v1', quantity: 5 }]);
     expect(fake.getCart('g').userId).toBe('u1');
   });
+
+  it('анти-кража: токен принадлежит ДРУГОМУ userId → no-op (чужую корзину не перепривязываем)', async () => {
+    fake.seedCart({ id: 'g', token: 'tg', userId: 'other' });
+    fake.seedItem({ id: 'gi1', cartId: 'g', productVariantId: 'v1', quantity: 2 });
+    await mergeGuestCart('tg', 'u1');
+    expect(fake.getCart('g').userId).toBe('other'); // не перепривязана к u1
+    expect(recalc).not.toHaveBeenCalled();
+  });
 });
 
 describe('safeMergeGuestCart (изоляция сбоя от логина, #4/#9)', () => {

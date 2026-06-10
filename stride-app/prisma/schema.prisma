@@ -300,3 +300,31 @@ model WishlistItem {
 
   @@unique([wishlistId, productId])
 }
+
+// P2.2c email-фаза владеет этими моделями и их кодом (ветка feat/phase2.2c-email-resend).
+// Здесь — ТОЛЬКО схема: таблицы уже есть в общей Neon-БД (email-деплой их создал), и без
+// этих моделей `prisma db push` на деплое main-ветки пытался бы их дропнуть. Идентичны
+// определениям в email-ветке → при мерже обеих в main конфликта нет. Кода, использующего
+// их, в этой ветке нет — таблицы просто не трогаются.
+model EmailVerificationCode {
+  id         String    @id @default(cuid())
+  email      String
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([email])
+  @@index([expiresAt])
+}
+
+model Subscriber {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  source          String    @default("footer")
+  resendContactId String?
+  unsubscribedAt  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}

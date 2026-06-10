@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma-client';
-import { recalcCartTotalByToken } from '@/lib/cart';
+import { resolveOwnerCart, recalcCartTotalByToken } from '@/lib/cart';
 import { cartCookieName } from '@/lib/cart-cookie';
 import { updateQuantitySchema } from '@/services/dto/cart.dto';
 import { runWithRequestContext } from '@/lib/request-context';
@@ -12,15 +13,17 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   return runWithRequestContext(req, async () => {
     try {
       const { id } = await params;
+      const session = await auth();
       const token = req.cookies.get(cartCookieName)?.value;
-      if (!token) return NextResponse.json({ message: 'Корзина не найдена' }, { status: 401 });
+      const owner = await resolveOwnerCart(session?.user?.id ?? null, token, { create: false });
+      if (!owner) return NextResponse.json({ message: 'Корзина не найдена' }, { status: 401 });
 
       const parsed = updateQuantitySchema.safeParse(await req.json());
       if (!parsed.success) return NextResponse.json({ message: 'Некорректное количество' }, { status: 400 });
 
-      // Позиция должна принадлежать корзине этого токена.
+      // Позиция должна принадлежать корзине ВЛАДЕЛЬЦА (по cartId, не по cookie-токену).
       const item = await prisma.cartItem.findFirst({
-        where: { id, cart: { token } },
+        where: { id, cartId: owner.id },
         include: { productVariant: { select: { stock: true } } },
       });
       if (!item) return NextResponse.json({ message: 'Позиция не найдена' }, { status: 404 });
@@ -29,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       }
 
       await prisma.cartItem.update({ where: { id }, data: { quantity: parsed.data.quantity } });
-      const updated = await recalcCartTotalByToken(token);
+      const updated = await recalcCartTotalByToken(owner.token);
       return NextResponse.json(updated);
     } catch (error) {
       logger.error('cart_patch_failed', error);
@@ -42,14 +45,16 @@ export async function DELETE(req: NextRequest, { params }: Ctx) {
   return runWithRequestContext(req, async () => {
     try {
       const { id } = await params;
+      const session = await auth();
       const token = req.cookies.get(cartCookieName)?.value;
-      if (!token) return NextResponse.json({ message: 'Корзина не найдена' }, { status: 401 });
+      const owner = await resolveOwnerCart(session?.user?.id ?? null, token, { create: false });
+      if (!owner) return NextResponse.json({ message: 'Корзина не найдена' }, { status: 401 });
 
-      const item = await prisma.cartItem.findFirst({ where: { id, cart: { token } } });
+      const item = await prisma.cartItem.findFirst({ where: { id, cartId: owner.id } });
       if (!item) return NextResponse.json({ message: 'Позиция не найдена' }, { status: 404 });
 
       await prisma.cartItem.delete({ where: { id } });
-      const updated = await recalcCartTotalByToken(token);
+      const updated = await recalcCartTotalByToken(owner.token);
       return NextResponse.json(updated);
     } catch (error) {
       logger.error('cart_delete_failed', error);
