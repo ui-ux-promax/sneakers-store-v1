@@ -389,3 +389,201 @@
   состояния. Иначе `page.goto`/переход прервёт экшен. Побочно: `import { x } from 'crypto'` в server
   action — всегда `'node:crypto'` (как в `app/api/cart/route.ts`), bare-specifier хуже externalize'ится в
   dev-бандле.
+
+## P16. `node:crypto` UnhandledSchemeError в edge-бандле — verified-ticket провайдер через `auth.config.ts`
+
+- **Когда:** 2026-06-09, Фаза 2.2c (email-верификация), Vercel preview билд.
+- **Симптом:** билд падал `Command "prisma db push --skip-generate && next build" exited with 1`.
+  Лог: `Module build failed: UnhandledSchemeError: Reading from "node:crypto" is not handled by plugins
+  (Unhandled scheme).` Import trace: `node:crypto ← ./lib/verification/ticket.ts ← ./auth.config.ts`.
+  Юнит-тесты (212) и tsc — зелёные; падал только webpack-компайл edge-бандла.
+- **Причина:** `auth.config.ts` бандлится в **edge-middleware** (Edge Runtime). Новый Credentials-провайдер
+  `verified-ticket` динамически импортит `lib/verification/ticket.ts`, а тот — `import {createHmac} from
+  'node:crypto'`. В Edge Runtime `node:crypto` нет, и webpack для edge НЕ обрабатывает `node:`-схему →
+  UnhandledSchemeError. Даже dynamic import всё равно тянется в edge-граф (как argon2/prisma в существующих
+  провайдерах). `resolve.alias` НЕ перехватывает ни `node:crypto` (это URI-схема, не модуль), ни
+  `@/lib/...`-путь (tsconfig-paths резолвится раньше алиаса) — обе попытки заглушить через alias провалились.
+- **Решение:** сменить импорт в `ticket.ts` на bare `import {createHmac, timingSafeEqual} from 'crypto'`
+  (в Node работает идентично) + добавить в `next.config.mjs` edge-alias `crypto: false` (как argon2/prisma).
+  `authorize` provider'а исполняется ТОЛЬКО в Node-рантайме (auth.ts), в edge до него не доходит — заглушка
+  безопасна, модуль лишь компилируется пустым. Локально `next build` → EXIT 0. Коммит `16f60c9`.
+- **На будущее:** всё, что **достижимо из `auth.config.ts`** (через провайдеры/колбэки), компилируется в edge.
+  Node-only зависимости там — bare-specifier + `alias: false` в `if (nextRuntime==='edge')`. ⚠️ Это
+  ПРОТИВОРЕЧИТ совету P15 («всегда `node:crypto`») — то про обычные server actions/роуты (Node-бандл, externalize),
+  ЗДЕСЬ про edge-достижимый код, где bare `crypto` нужен именно чтобы alias смог его заглушить. Различай по
+  тому, тянется ли модуль из `auth.config.ts` (edge) или нет (`pending-cookie.ts`/`unsubscribe-token.ts` тоже
+  юзают node:crypto, но НЕ достижимы из edge → их трогать не надо).
+
+## P17. e2e массово падали после жёсткого email-gate — хелперы ждали мгновенный автологин
+
+- **Когда:** 2026-06-09, Фаза 2.2c, CI e2e (12 тестов).
+- **Симптом:** 12 e2e упали по таймауту 40с на `getByRole('button',{name:'Выйти'})`. В логе webServer —
+  спам `email_not_configured` (RESEND-ключа в CI нет). 26 гостевых тестов зелёные.
+- **Причина:** жёсткий gate сломал контракт регистрации: раньше register → автологин → «Выйти». Теперь
+  register → **неубираемая модалка верификации** (сессии нет). Все хелперы `register()/registerAndLogin()`
+  в 8 спеках ждали «Выйти» сразу → висли. Прочитать код из БД нельзя — он хранится только argon2-хэшем,
+  плейн есть лишь в письме (которого в CI нет).
+- **Решение:** детерминированный код в тест-режиме. `generateCode()` возвращает `process.env.E2E_TEST_CODE`,
+  если задан И `NODE_ENV!=='production'` И формат 6 цифр (в проде ветка недоступна). `playwright.config.ts`
+  webServer.env инжектит `E2E_TEST_CODE='424242'`. Общий хелпер `e2e/helpers.ts` `registerAndVerify()`:
+  регистрация → заполняет OTP-модалку фикс-кодом → ждёт «Выйти». 8 спеков переключены на него. Теперь e2e
+  ПРОХОДИТ весь реальный gate-флоу (модалка→confirmCode→verified-ticket→login), а не обходит. Коммит `cae6dca`.
+- **На будущее:** новый обязательный gate/шаг в auth-флоу = чинить ВСЕ e2e-хелперы, не один спек. OTP/секреты,
+  хранимые хэшем, в e2e не прочитать из БД — нужен детерминированный код за env-флагом (prod-guarded), а не
+  чтение. Флаг ставится только в playwright webServer.env → в прод/preview не течёт.
+
+## P18. Общая Neon-БД + `prisma db push` на каждом деплое — ветка от main дропает чужие таблицы
+
+- **Когда:** 2026-06-09…10, Фаза 2.2c и fix/auth-cart-leak, Vercel билд + CI `prisma:push`.
+- **Симптом:** билд падал на `prisma db push`: `⚠️ There might be data loss: You are about to drop the
+  EmailVerificationCode table, which is not empty (60 rows). Use the --accept-data-loss flag…` → exit 1.
+- **Причина:** Build Command проекта = `prisma db push --skip-generate && next build` — пушит схему на
+  КАЖДОМ деплое против ОДНОЙ общей prod-Neon-БД (`ep-hidden-butterfly`). Email-ветка ранее создала там
+  таблицы `EmailVerificationCode`/`Subscriber` (60 строк тест-кодов). Ветка `fix/auth-cart-leak` (от main,
+  схема БЕЗ этих моделей) на деплое видит «лишние» таблицы → push хочет дропнуть → отказ. Повторяется на
+  ЛЮБОЙ ветке от main, пока схема main не узнает про email-таблицы.
+- **Решение (быстрое):** добавить модели `EmailVerificationCode`+`Subscriber` в `schema.prisma` fix-ветки
+  (ТОЛЬКО схема, без кода) — push видит совпадение → не дропает. Additive, идентичны email-ветке → мерж без
+  конфликта (кроме тривиального комментного, см. P21). Коммит `35a3b7f`. ⚠️ `--accept-data-loss` в билд
+  добавлять НЕЛЬЗЯ — снесёт таблицы + риск потери реальных данных на других таблицах.
+- **На будущее:** `prisma db push` на каждом деплое против общей prod-БД — хрупко: фича-ветки с разной схемой
+  дерутся за одну БД. Варианты долгосрочно: (а) изолировать preview на свою Neon-ветку (Vercel-Neon
+  integration, но см. P19 про лимит веток); (б) убрать push из билда, отдельный шаг миграций. Пока правило:
+  схема main должна быть надмножеством всех незамерженных фича-веток, ИЛИ мержить владельца таблиц первым.
+
+## P19. Локальный `main` отстал на 51 коммит → ветка от неверной базы; и лимит веток Neon
+
+- **Когда:** 2026-06-09, старт fix/auth-cart-leak.
+- **Симптом (база ветки):** ветку резали «от main», но в дереве не было auth-стека (phase2.0+), моделей
+  `Wishlist/Review/Order`, файла `lib/auth-credentials.ts` — план под фичу ломался. `git fetch` показал
+  локальный `main` на **51 коммит позади** `origin/main` (PR9 со всем auth/2.1/2.2 не подтянут).
+- **Симптом (Neon, отдельно):** Vercel-деплои падали `Provisioning integrations failed → sneakers-db:
+  Create database branch for deployment: Branch limit reached. Upgrade your plan or delete unused branches.`
+  Удаление git-веток на GitHub НЕ помогало.
+- **Причина:** (1) работали от устаревшего локального `main`; (2) «branch limit» — это лимит **веток БД
+  Neon**, не git: Vercel-Neon integration создаёт Neon-ветку на каждый preview-деплой, на free-плане они
+  упёрлись в лимит (~10).
+- **Решение:** (1) `git fetch && git rebase origin/main` (3 doc-коммита переехали чисто) — база стала
+  верной, auth-стек на месте; (2) Neon Console → проект → Branches → удалить старые авто-созданные
+  preview-ветки (НЕ трогать production/main-ветку Neon с прод-данными) → Vercel Redeploy.
+- **На будущее:** перед `git checkout -b … main` всегда `git fetch` + сверять `git rev-list --count
+  main..origin/main`. «Branch limit reached» в Vercel-провижининге = ветки БД Neon, чистить в Neon Console,
+  не на GitHub. В Vercel→Integrations→Neon включить авто-удаление ветки БД при удалении деплоя.
+
+## P20. Redirect залогиненного с `/login` вскрыл гонку e2e `waitForURL('**/')` после логаута
+
+- **Когда:** 2026-06-10, fix/auth-cart-leak, CI e2e (1 тест).
+- **Симптом:** `auth.spec.ts` «вход существующего» падал: на `/login` локатор `getByLabel('Email').fill`
+  таймаутил, разрезолвившись в **disabled `#p-email`** — поле страницы `/profile`, не `/login`. Т.е.
+  `goto('/login')` отредиректило на `/profile`. Сестринский тест (логаут с `/profile`) проходил.
+- **Причина:** новый фикс бага 1 — middleware/`authorized` редиректит залогиненного с `/login`,`/register`
+  → `/profile`. Тест после клика «Выйти» делал `waitForURL('**/')` — но логаут с `/` редиректит `/`→`/`,
+  URL НЕ меняется → glob `**/` резолвится МГНОВЕННО, не дождавшись выхода → `goto('/login')` гонкой опережает
+  логаут, сессия ещё жива → редирект на `/profile`. На main гонка была безвредной (`/login` всегда
+  рендерился); redirect сделал её фатальной. Сестринский тест логаутится с `/profile` (URL меняется
+  `/profile`→`/`) → `waitForURL` ждёт корректно.
+- **Решение:** заменить `waitForURL('**/')` после «Выйти» на детерминированное ожидание гостевого состояния
+  хедера: `await expect(page.getByRole('button',{name:'Выйти'})).toHaveCount(0)`. Поведение редиректа верное —
+  чинили тест, не код. Коммит `f6957fe`.
+- **На будущее:** `waitForURL('**/')`/loose-glob ненадёжен, если навигация не меняет URL — резолвится сразу.
+  После server-action-логаута ждать наблюдаемое состояние (исчезновение «Выйти»/появление «Войти»), не URL.
+  Добавление redirect-правил в middleware способно вскрыть латентные гонки в тестах, полагавшихся на старое
+  «всё рендерится» поведение.
+
+## P21. Домен `cloudd3r.eu.cc` → Vercel (баг /unsubscribe 404) + тривиальный конфликт `schema.prisma` при мерже
+
+- **Когда:** 2026-06-10, деплой Фазы 2.2c.
+- **Симптом (домен):** ссылка отписки в письме вела на `https://cloudd3r.eu.cc/unsubscribe?token=…` →
+  «не удаётся получить доступ к сайту». Домен есть (верифицирован в Resend для ОТПРАВКИ), но сайт не отдаётся.
+- **Причина (домен):** домен на **Cloudflare** (NS joyce/remy.ns.cloudflare.com), есть MX (Email Routing)+SPF
+  для почты, но НЕТ web A/CNAME на apex → по домену ничего не открывается. Плюс роут `/unsubscribe` живёт
+  только на email-ветке, а домен отдаёт PRODUCTION (main) → даже с DNS будет 404, пока email-ветка не в main.
+- **Решение (домен):** Vercel → проект → **Domains** (переехало на уровень проекта, не в Settings) → Add
+  `cloudd3r.eu.cc` → Connect to environment = Production. Vercel выдал запись `A @ → 216.198.79.1`. В
+  Cloudflare: A `@` → `216.198.79.1`, **Proxy = DNS only (серое облако)** (оранжевый прокси → цикл SSL,
+  Vercel не выпустит сертификат). НЕ трогать MX/SPF/DKIM. Через мин — `Valid Configuration`. Затем мерж
+  email-ветки → production получает `/unsubscribe`. `NEXT_PUBLIC_SITE_URL=https://cloudd3r.eu.cc` (Production;
+  юзается в robots/sitemap-каноне, yookassa return_url-фолбэке, email-ссылках; `NEXT_PUBLIC_*` вшивается на
+  билде → нужен redeploy).
+- **Симптом (мерж):** PR email-ветки → main давал конфликт ТОЛЬКО в `prisma/schema.prisma`. `auth.config.ts`,
+  `e2e/auth.spec.ts` авто-смержились.
+- **Причина (мерж):** обе ветки добавили идентичные модели `EmailVerificationCode`/`Subscriber`; различие —
+  только комментарий перед ними (на main из P18, на email-ветке нет) → git брекетит коммент-регион, модели
+  (идентичны) вне маркеров.
+- **Решение (мерж):** удалить 3 строки-маркера (`<<<<<<<`, `=======`, `>>>>>>>`), оставить коммент один раз +
+  модели один раз. GitHub в conflict-editor показывает маркеры как строки с именами веток.
+- **На будущее:** кастомный домен для писем — направлять web-A/CNAME на хостинг ОТДЕЛЬНО от почтовых
+  MX/DKIM (сосуществуют), Cloudflare-прокси для Vercel = серое облако. Ссылки в письмах работают только если
+  роут есть на ветке, что отдаёт домен (production=main) — фича с роутом должна быть замержена.
+
+## P22. Утечка корзины/избранного между юзерами — несброшенная guest-cookie + merge крадёт чужой токен
+
+- **Когда:** 2026-06-10, ручная проверка прода. Баг **пред-существующий** (фазы 2.0 cart-merge / 2.2b
+  wishlist-merge), не от email-фазы; воспроизводился и на проде, и на preview.
+- **Симптом:** юзер A залогинился, добавил товар в избранное И корзину, разлогинился. Юзер B логинится на
+  том же браузере → видит избранное и корзину **юзера A** (чужие данные в своём аккаунте). Критично.
+- **Причина:** двойной дефект. (1) При логауте куки `cartToken`/`wishlistToken` НЕ чистились → браузер
+  держал токен корзины A. (2) `events.signIn` → `mergeGuestCart(A-токен, B)` / `mergeGuestWishlist`:
+  находил по токену корзину A (уже с `userId=A`) и, т.к. `guestCart.userId !== B`, **перепривязывал её к B**
+  (`update userId=B`) — кража. Корень глубже: корзина резолвилась ВЕЗДЕ только по cookie-токену
+  (`findFirst({where:{token}})`), поле `Cart.userId` для чтения не использовалось (в отличие от wishlist,
+  который уже резолвил по userId). Поэтому даже смена сессии не перескопивала корзину.
+- **Решение (3 слоя):** (1) `resolveOwnerCart(userId, token, {create})` в `lib/cart.ts` — зеркало
+  `resolveOwnerWishlist`: залогинен → корзина по `userId` (живёт с аккаунтом, не с cookie), гость → по token;
+  при create для юзера — СВЕЖИЙ token (cookie мог быть чужой → P2002/кража). Подключено во все точки чтения:
+  `api/cart` GET/POST, `api/cart/[id]`, `checkout`, `actions/order`, `actions/coupon`. (2) merge-guard в
+  `cart-merge.ts`+`wishlist-merge.ts`: `if (guest.userId && guest.userId !== userId) return` — не
+  перепривязывать токен, принадлежащий ДРУГОМУ юзеру. (3) logout-action (`auth-nav.tsx`) удаляет
+  `cartToken`/`wishlistToken` перед `signOut`. Коммит `0456329`. Тесты: `resolve-owner-cart.test.ts` +
+  анти-кража кейсы в cart-merge/wishlist.
+- **На будущее:** per-user данные (корзина/избранное/что угодно) резолвить по `userId` для залогиненных, не
+  по cookie-токену — иначе данные «следуют за кукой», а не за аккаунтом. Любой merge гостевого→юзер
+  guard'ить: НЕ трогать запись, уже принадлежащую другому `userId`. Гостевые токены чистить на логауте, иначе
+  следующий гость/юзер на браузере унаследует предыдущего. Несимметрия (wishlist по userId, cart по токену)
+  — источник класса багов; держать резолв-паттерн единым.
+
+## P23. Залогиненный мог открыть `/login` и `/register` — вход/регистрация поверх живой сессии
+
+- **Когда:** 2026-06-10, ручная проверка прода. Пред-существующий (фаза 2.0 auth), есть и на проде.
+- **Симптом:** залогиненный юзер открывал `/login` или `/register` → видел формы и мог войти/зарегаться
+  поверх активной сессии, в т.ч. под ДРУГИМ аккаунтом. Критично.
+- **Причина:** matcher middleware = `['/profile','/checkout','/orders']` — `/login` и `/register` НЕ
+  защищены, и `authorized`-колбэк не уводил залогиненного с auth-страниц.
+- **Решение:** в `authorized` (`auth.config.ts`): `if (isLoggedIn && (path==='/login'||path==='/register'))
+  return Response.redirect(new URL('/profile', nextUrl))`; пути добавлены в matcher (`middleware.ts`).
+  Коммит `0456329`. Побочно вскрыл гонку e2e — см. P20.
+- **На будущее:** auth-страницы (`/login`,`/register`,reset-password) — редиректить залогиненного прочь
+  (`/profile`); добавлять их в matcher middleware, иначе колбэк для них не вызовется. Любое новое
+  middleware-правило → прогнать e2e: способно вскрыть латентные гонки (P20).
+
+## P24. Параллельные push+PR прогоны e2e на общей CI-Neon-БД — гонка seed (P2003) + двойное списание стока
+
+- **Когда:** 2026-06-10, мерж Фазы 2.2c (email) в `feat/phase2.2c-email-resend` (содержит main+fix).
+- **Симптом (эволюция):** после жёсткого email-gate все register-флоу стабильно доходят до checkout →
+  полный спрос на сток. (1) Сначала ~7 e2e падали: кнопка размера `<button disabled>42</button>` —
+  сток 42 исчерпан, хотя `prisma db seed` сбрасывает 42→5 перед прогоном. (2) После concurrency-фикса и
+  подъёма стока — push-прогон падал на сиде: `P2003 Foreign key constraint violated
+  ProductVariant_colorwayId_fkey` (а PR-прогон зелёный). (3) После исправления группы concurrency —
+  коммит помечался ❌, хотя реальный e2e зелёный.
+- **Причина:** workflow `on: push['**'] + pull_request` → push и pull_request ОДНОГО коммита запускают
+  ДВА прогона. Оба бьют ОДНУ CI-Neon-ветку (фикс `POSTGRES_URL`-секрет). Параллельно: (а) два
+  `prisma db seed` гонятся — один TRUNCATE-ит `ProductColorway` пока другой upsert-ит `ProductVariant` →
+  FK P2003; (б) оба списывают сток размера 42 (seed=5, заказов/прогон ≈6: checkout 2 + coupon 1 + review 1
+  + yookassa 2) + Playwright `retry:2` множит списание на падёж → исчерпание. Первый concurrency-фикс
+  `group: e2e-${{ github.sha }}` НЕ сработал: `github.sha` РАЗНЫЙ для событий — push даёт SHA коммита,
+  pull_request даёт синтетический merge-SHA → разные группы → дедуп не сработал.
+- **Решение (трёхступенчатое, итог — последний шаг):**
+  1. сток 42: 5→12 (`seed-data.ts` RUN) — буфер на полный прогон + ретраи (на точное значение 42 ни один
+     тест не завязан; disabled-тест юзает 43=0). Коммит `133cf45`.
+  2. concurrency по HEAD-коммиту, одинаковому в обоих событиях:
+     `group: e2e-${{ github.event.pull_request.head.sha || github.sha }}` — убрал seed-гонку. Коммит
+     `d467553`. Но cancelled push-чек метил коммит ❌ (косметика, мешает branch-protection).
+  3. ИТОГ: `on.push.branches: [main]` — push-e2e только для main; фича-ветки покрывает pull_request-прогон
+     (один, без дубля, без cancelled-чека). concurrency оставлен страховкой от наложения повторных push.
+     Коммит `e015499`.
+- **На будущее:** при `on: push + pull_request` фича-ветки c PR получают ДВА прогона — для тестов,
+  пишущих в ОБЩУЮ БД (сток/seed/заказы), это гонка. Дефолт: `push.branches: [main]` + `pull_request`
+  (фича-ветки только через PR-прогон). `github.sha` НЕ совпадает между push и PR событиями — для общей
+  concurrency-группы брать `github.event.pull_request.head.sha || github.sha`. cancelled-прогон метит
+  коммит ❌ (не провал) — branch-protection настраивать на конкретный чек `e2e (pull_request)`, не «все».
+  Корень глубже — общая CI-Neon-ветка на все прогоны (P4/P18): изоляция БД на прогон убрала бы класс гонок.
