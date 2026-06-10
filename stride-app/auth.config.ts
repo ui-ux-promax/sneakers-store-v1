@@ -52,10 +52,18 @@ export default {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = Boolean(auth?.user);
+      const path = nextUrl.pathname;
+
+      // Залогиненному на /login и /register делать нечего — иначе можно «войти/зарегаться»
+      // поверх живой сессии (в т.ч. под другим аккаунтом). Уводим в профиль.
+      if (isLoggedIn && (path === '/login' || path === '/register')) {
+        return Response.redirect(new URL('/profile', nextUrl));
+      }
+
       const isProtected =
-        nextUrl.pathname.startsWith('/profile') ||
-        nextUrl.pathname.startsWith('/checkout') ||
-        nextUrl.pathname.startsWith('/orders');
+        path.startsWith('/profile') ||
+        path.startsWith('/checkout') ||
+        path.startsWith('/orders');
       if (isProtected) return isLoggedIn;
       return true;
     },

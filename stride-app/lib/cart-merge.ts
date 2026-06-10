@@ -21,6 +21,11 @@ export async function mergeGuestCart(guestToken: string | undefined, userId: str
   const guestCart = await prisma.cart.findFirst({ where: { token: guestToken } });
   if (!guestCart) return;
 
+  // Анти-кража (#leak): если cookie-токен уже принадлежит ДРУГОМУ пользователю
+  // (юзер B вошёл со стащенной/несброшенной cookie юзера A) — НЕ перепривязываем
+  // корзину A к B. Сливаем только свободный (гостевой) или уже-свой токен.
+  if (guestCart.userId && guestCart.userId !== userId) return;
+
   // Привязываем гостевую корзину к пользователю (идемпотентно: повтор для того же userId безвреден).
   if (guestCart.userId !== userId) {
     await prisma.cart.update({ where: { id: guestCart.id }, data: { userId } });

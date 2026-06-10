@@ -31,6 +31,14 @@ export async function AuthNav() {
       <form
         action={async () => {
           'use server';
+          // Чистим гостевые токены корзины/избранного: иначе следующий гость/юзер на этом
+          // браузере увидит корзину/избранное предыдущего по несброшенной cookie (#leak).
+          const { cookies } = await import('next/headers');
+          const { cartCookieName } = await import('@/lib/cart-cookie');
+          const { wishlistCookieName } = await import('@/lib/wishlist-cookie');
+          const store = await cookies();
+          store.delete(cartCookieName);
+          store.delete(wishlistCookieName);
           await signOut({ redirectTo: '/' });
         }}
       >

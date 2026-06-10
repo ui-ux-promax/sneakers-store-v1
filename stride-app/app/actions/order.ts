@@ -7,7 +7,7 @@ import { cookies, headers } from 'next/headers';
 import { prisma } from '@/lib/prisma-client';
 import { cartInclude } from '@/lib/cart-details';
 import { cartCookieName } from '@/lib/cart-cookie';
-import { recalcCartTotalByToken } from '@/lib/cart';
+import { recalcCartTotalByToken, resolveOwnerCart } from '@/lib/cart';
 import { checkoutSchema } from '@/services/dto/order.dto';
 import { buildOrderSnapshot, calcShipping } from '@/lib/order';
 import { checkCoupon, calcCouponDiscount } from '@/lib/coupon';
@@ -39,9 +39,10 @@ export async function placeOrder(raw: unknown): Promise<PlaceOrderResult> {
 
   const store = await cookies();
   const token = store.get(cartCookieName)?.value;
-  if (!token) return { ok: false, error: 'Корзина пуста' };
-
-  const cart = await prisma.cart.findFirst({ where: { token }, include: cartInclude });
+  // Корзина залогиненного резолвится по userId (не по cookie) — заказ всегда из своей корзины.
+  const owner = await resolveOwnerCart(userId, token, { create: false });
+  if (!owner) return { ok: false, error: 'Корзина пуста' };
+  const cart = await prisma.cart.findFirst({ where: { id: owner.id }, include: cartInclude });
   if (!cart || cart.items.length === 0) return { ok: false, error: 'Корзина пуста' };
 
   const inactive = cart.items.find(
@@ -175,7 +176,7 @@ export async function placeOrder(raw: unknown): Promise<PlaceOrderResult> {
 
   try {
     await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
-    await recalcCartTotalByToken(token);
+    await recalcCartTotalByToken(cart.token);
   } catch (e) {
     logger.error('order_cart_cleanup_failed', e, { orderNumber });
   }
