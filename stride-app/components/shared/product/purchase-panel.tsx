@@ -2,10 +2,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
+import axios from 'axios';
 import { Button } from '@/components/ui';
 import { useCartStore } from '@/store';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { useCountdown } from '@/hooks/use-countdown';
 
 export interface PanelColorway { slug: string; name: string; thumbUrl: string | null; }
 export interface PanelVariant { id: string; sizeEu: string; stock: number; active: boolean; price: number; compareAtPrice: number | null; }
@@ -25,6 +27,7 @@ export function PurchasePanel({ productName, colorways, activeColorwaySlug, acti
   const addCartItem = useCartStore((s) => s.addCartItem);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
+  const { seconds: cooldown, start: startCooldown } = useCountdown();
 
   const selected = variants.find((v) => v.id === sizeId) ?? null;
   const available = variants.filter((v) => v.active && v.stock > 0);
@@ -34,11 +37,20 @@ export function PurchasePanel({ productName, colorways, activeColorwaySlug, acti
   const soldOut = available.length === 0;
 
   const onAdd = async () => {
-    if (!selected) return;
+    if (!selected || cooldown > 0) return;
     setAdding(true);
-    try { await addCartItem({ productVariantId: selected.id }); setAdded(true); setTimeout(() => setAdded(false), 1500); }
-    catch { /* стор выставит error */ }
-    finally { setAdding(false); }
+    try {
+      await addCartItem({ productVariantId: selected.id });
+      setAdded(true);
+      setTimeout(() => setAdded(false), 1500);
+    } catch (e) {
+      if (axios.isAxiosError(e) && e.response?.status === 429) {
+        startCooldown(Number(e.response.data?.retryAfterSec) || 0);
+      }
+      /* прочие ошибки — стор выставит error */
+    } finally {
+      setAdding(false);
+    }
   };
 
   return (
@@ -86,9 +98,12 @@ export function PurchasePanel({ productName, colorways, activeColorwaySlug, acti
       </div>
 
       {/* Add to cart */}
-      <Button variant="primary" size="lg" className="w-full" disabled={!selected || soldOut} loading={adding} onClick={onAdd}>
-        {added ? 'Добавлено ✓' : !selected ? 'Выберите размер' : `В корзину · ${formatPrice(shownPrice)}`}
+      <Button variant="primary" size="lg" className="w-full" disabled={!selected || soldOut || cooldown > 0} loading={adding} onClick={onAdd}>
+        {added ? 'Добавлено ✓' : cooldown > 0 ? `Подождите ${cooldown} сек` : !selected ? 'Выберите размер' : `В корзину · ${formatPrice(shownPrice)}`}
       </Button>
+      {cooldown > 0 && (
+        <p className="text-danger text-xs" role="alert">Слишком часто. Попробуйте через {cooldown} сек</p>
+      )}
     </div>
   );
 }
