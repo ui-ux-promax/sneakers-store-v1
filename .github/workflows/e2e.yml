@@ -7,6 +7,13 @@ on:
     branches: ['**']
   pull_request:
 
+# push и pull_request одного коммита создают ДВА прогона. Они бьют общую CI-Neon-ветку
+# (фикс POSTGRES_URL) и параллельно списывают сток размера 42 → исчерпание у обоих (P10/budget).
+# Группируем по SHA → второй прогон отменяет первый, заказы не складываются. PR/push не множатся.
+concurrency:
+  group: e2e-${{ github.sha }}
+  cancel-in-progress: true
+
 # Монорепо: приложение лежит в stride-app/
 defaults:
   run:
