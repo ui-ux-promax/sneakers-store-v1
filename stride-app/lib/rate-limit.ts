@@ -2,13 +2,13 @@
 // dynamic-import'ит checkLoginRateLimit отсюда; logger → request-context использует eval('require')
 // для node:async_hooks, что запрещено в Edge Runtime (build падает). Поэтому здесь логов нет.
 
+import { AUTH_RATE_LIMIT, CART_RATE_LIMIT } from '@/constants/config';
+
 export interface RateLimitResult {
   success: boolean;
   remaining: number;
   reset: number;
 }
-
-const NOOP_RESULT: RateLimitResult = { success: true, remaining: -1, reset: 0 };
 
 function getEnv(primary: string, fallback: string): string | undefined {
   return process.env[primary] || process.env[fallback] || undefined;
@@ -25,20 +25,6 @@ export function extractClientIp(req: { headers: Headers }): string {
     if (first) return first;
   }
   return req.headers.get('x-real-ip') ?? 'unknown';
-}
-
-// Фаза 1: rate-limit заглушён (fail-open). Если Upstash не сконфигурирован — всегда success.
-// Полноценные лимитеры (@upstash/ratelimit sliding window, prefix 'stride-app:*') добавляются в Фазе 2.
-export async function checkCartRateLimit(_ip: string): Promise<RateLimitResult> {
-  return NOOP_RESULT;
-}
-
-// Лимитер для auth-операций (регистрация/логин) — строже корзины. Точка подключения:
-// при сконфигурированном Upstash здесь включится реальный sliding-window. Пока fail-open (NOOP),
-// поэтому основная защита от argon2-DoS — дешёвая проверка дубликата ДО хэша в registerUser
-// (см. docs/TROUBLESHOOTING.md). Без Upstash полноценного троттлинга нет — это осознанно.
-export async function checkAuthRateLimit(_ip: string): Promise<RateLimitResult> {
-  return NOOP_RESULT;
 }
 
 // ---------------------------------------------------------------------------
@@ -71,6 +57,7 @@ export async function checkLoginRateLimit(key: string): Promise<RateLimitResult>
 
 // ---------------------------------------------------------------------------
 // P2.2c limiters: verify-code (per email+IP), resend-code (per email), newsletter (per IP).
+// P2.3 limiters: auth/register (per IP, anti-argon2-DoS), cart add-to-cart (per IP).
 // Same lazy + fail-open pattern as login limiter.
 // ---------------------------------------------------------------------------
 type Limiter = { limit(key: string): Promise<{ success: boolean; remaining: number; reset: number }> } | null | false;
@@ -108,5 +95,23 @@ export async function checkNewsletterRateLimit(key: string): Promise<RateLimitRe
   const l = await makeLimiter(newsletterSlot, 5, '10 m', 'stride-app:newsletter');
   if (!l) return { success: true, remaining: -1, reset: 0 };
   const r = await l.limit(key);
+  return { success: r.success, remaining: r.remaining, reset: r.reset };
+}
+
+// Fail-open: если Upstash не сконфигурирован — всегда success (sliding window, 60 req/min per IP).
+const cartSlot = { v: null as Limiter };
+export async function checkCartRateLimit(ip: string): Promise<RateLimitResult> {
+  const l = await makeLimiter(cartSlot, CART_RATE_LIMIT.points, CART_RATE_LIMIT.window, 'stride-app:cart');
+  if (!l) return { success: true, remaining: -1, reset: 0 };
+  const r = await l.limit(ip);
+  return { success: r.success, remaining: r.remaining, reset: r.reset };
+}
+
+// Fail-open: если Upstash не сконфигурирован — всегда success (sliding window, 5 req/10 min per IP).
+const authSlot = { v: null as Limiter };
+export async function checkAuthRateLimit(ip: string): Promise<RateLimitResult> {
+  const l = await makeLimiter(authSlot, AUTH_RATE_LIMIT.points, AUTH_RATE_LIMIT.window, 'stride-app:auth');
+  if (!l) return { success: true, remaining: -1, reset: 0 };
+  const r = await l.limit(ip);
   return { success: r.success, remaining: r.remaining, reset: r.reset };
 }

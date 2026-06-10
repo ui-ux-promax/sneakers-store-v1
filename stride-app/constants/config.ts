@@ -63,3 +63,8 @@ export const VERIFICATION_TICKET_TTL_MS = 60 * 1000;   // 60 сек жизни �
 
 export const NEWSLETTER_SOURCES = ['footer', 'register', 'checkout'] as const;
 export type NewsletterSource = (typeof NEWSLETTER_SOURCES)[number];
+
+// --- P2.3 Rate-limit (Upstash sliding-window) ---
+// window — шаблон `${number} ${'s'|'m'|'h'}`, совместимый с makeLimiter (lib/rate-limit.ts).
+export const AUTH_RATE_LIMIT = { points: 5, window: '10 m' } as const;  // регистрация на IP (анти-argon2-DoS)
+export const CART_RATE_LIMIT = { points: 60, window: '1 m' } as const;  // add-to-cart на IP (щедро; режет абуз)
