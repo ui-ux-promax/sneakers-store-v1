@@ -1,19 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-
-// Хелперы зеркалят checkout.spec.ts. Заказ делает товар «купленным» → открывает право на отзыв.
-const uniqueEmail = () => `u${Date.now()}-${Math.floor(Math.random() * 1e6)}@e2e.test`;
-const PASSWORD = 'Passw0rd!1';
-
-async function registerAndLogin(page: Page) {
-  await page.goto('/register');
-  await page.getByLabel('Имя').fill('E2E User');
-  await page.getByLabel('Email').fill(uniqueEmail());
-  await page.getByLabel('Пароль', { exact: true }).fill(PASSWORD);
-  await page.getByLabel('Повторите пароль', { exact: true }).fill(PASSWORD);
-  await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Зарегистрироваться' }).click();
-  await expect(page.getByRole('button', { name: 'Выйти' })).toBeVisible();
-}
+import { registerAndVerify } from './helpers';
 
 async function buyVelocityTrail(page: Page) {
   await page.goto('/product/stride-velocity-trail');
@@ -29,7 +15,7 @@ async function buyVelocityTrail(page: Page) {
 }
 
 test('купивший оставляет отзыв со страницы заказа → виден на PDP, повтор недоступен', async ({ page }) => {
-  await registerAndLogin(page);
+  await registerAndVerify(page);
   await buyVelocityTrail(page); // заканчивается на /orders/N (COD, не-CANCELLED) — один заказ, без доп. стока
 
   // п.3: форма отзыва прямо на странице заказа (тот же ReviewForm, что и на PDP).

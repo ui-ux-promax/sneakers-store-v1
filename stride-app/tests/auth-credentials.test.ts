@@ -36,7 +36,7 @@ describe('authorizeCredentials (constant-time, #11)', () => {
   });
 
   it('верный пароль — возвращает пользователя (с нормализованным email)', async () => {
-    findUnique.mockResolvedValue({ id: 'u1', email: 'a@b.com', name: 'A', role: 'CUSTOMER', passwordHash: '$argon2id$real' });
+    findUnique.mockResolvedValue({ id: 'u1', email: 'a@b.com', name: 'A', role: 'CUSTOMER', passwordHash: '$argon2id$real', emailVerified: new Date() });
     vp.mockResolvedValue(true);
     const r = await authorizeCredentials({ email: 'A@b.com', password: 'secretpass' });
     expect(r).toEqual({ id: 'u1', email: 'a@b.com', name: 'A', role: 'CUSTOMER' });
@@ -46,6 +46,13 @@ describe('authorizeCredentials (constant-time, #11)', () => {
     findUnique.mockResolvedValue({ id: 'u1', email: 'a@b.com', name: 'A', role: 'CUSTOMER', passwordHash: '$argon2id$real' });
     vp.mockResolvedValue(false);
     const r = await authorizeCredentials({ email: 'a@b.com', password: 'wrong' });
+    expect(r).toBeNull();
+  });
+
+  it('верный пароль, но emailVerified=null — null (gate P2.2c)', async () => {
+    findUnique.mockResolvedValue({ id: 'u1', email: 'a@b.com', name: 'A', role: 'CUSTOMER', passwordHash: '$argon2id$real', emailVerified: null });
+    vp.mockResolvedValue(true);
+    const r = await authorizeCredentials({ email: 'a@b.com', password: 'secretpass' });
     expect(r).toBeNull();
   });
 });

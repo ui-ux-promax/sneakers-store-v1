@@ -1,18 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
+import { registerAndVerify, uniqueEmail, E2E_PASSWORD } from './helpers';
 
-// Уникальный email на каждый прогон — регистрация пишет реального пользователя в БД.
-const uniqueEmail = () => `u${Date.now()}-${Math.floor(Math.random() * 1e6)}@e2e.test`;
-const PASSWORD = 'Passw0rd!1';
-
-// Полная форма регистрации: имя, email, пароль + подтверждение + согласие (registerFormSchema).
 async function register(page: Page, email: string) {
-  await page.goto('/register');
-  await page.getByLabel('Имя').fill('E2E User');
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Пароль', { exact: true }).fill(PASSWORD);
-  await page.getByLabel('Повторите пароль', { exact: true }).fill(PASSWORD);
-  await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Зарегистрироваться' }).click();
+  await registerAndVerify(page, email);
 }
 
 // После успешного входа/регистрации в хедере появляется кнопка выхода (server-side AuthNav).
@@ -52,7 +42,7 @@ test('вход существующего пользователя по email/п
 
   await page.goto('/login');
   await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Пароль', { exact: true }).fill(PASSWORD);
+  await page.getByLabel('Пароль', { exact: true }).fill(E2E_PASSWORD);
   await page.getByRole('button', { name: 'Войти', exact: true }).click();
   await expectSignedIn(page);
 

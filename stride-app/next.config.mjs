@@ -4,10 +4,10 @@ const nextConfig = {
   serverExternalPackages: ['@node-rs/argon2', '@prisma/client', '@prisma/adapter-neon', '@neondatabase/serverless', 'ws', '@upstash/ratelimit', '@upstash/redis'],
   poweredByHeader: false,
   webpack(config, { nextRuntime }) {
-    // Edge middleware bundles auth.config.ts which lazy-imports argon2/prisma.
-    // Those are Node-only; stub them out so the edge bundle compiles cleanly.
-    // The `authorize` callback inside Credentials runs only in the Node runtime (auth.ts),
-    // never in the edge middleware (which only uses the `authorized` callback).
+    // Edge middleware bundles auth.config.ts which lazy-imports argon2/prisma and the
+    // verified-ticket authorize (lib/verification/ticket → node:crypto). Все они Node-only;
+    // глушим их в edge-бандле. authorize-колбэки Credentials исполняются только в Node-рантайме
+    // (auth.ts), никогда в edge-middleware (там работает только колбэк `authorized`).
     if (nextRuntime === 'edge') {
       config.resolve.alias = {
         ...config.resolve.alias,
@@ -18,6 +18,9 @@ const nextConfig = {
         ws: false,
         '@upstash/ratelimit': false,
         '@upstash/redis': false,
+        // ticket.ts (verified-ticket authorize) импортит crypto — в Edge его нет.
+        // authorize крутится только в Node (auth.ts), edge до него не доходит → глушим.
+        crypto: false,
       };
     }
     return config;

@@ -32,3 +32,9 @@ export const profileSchema = z.object({
   birthdate: z.string().trim().optional(),
 });
 export type ProfileValues = z.infer<typeof profileSchema>;
+
+// 6-значный код верификации почты (только цифры).
+export const verifyCodeSchema = z.object({
+  code: z.string().regex(/^\d{6}$/, 'Код состоит из 6 цифр'),
+});
+export type VerifyCodeValues = z.infer<typeof verifyCodeSchema>;

@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
+import { ensureVerificationGate } from '@/app/actions/verification';
 import { Button, Input } from '@/components/ui';
 import { PasswordInput } from './password-input';
 import { loginSchema, type LoginValues } from '@/services/dto/auth.dto';
@@ -31,6 +32,9 @@ export function LoginForm() {
     setError(null);
     const res = await signIn('credentials', { ...v, redirect: false });
     if (res?.error) {
+      // Возможно, почта не верифицирована — поднимем гейт (без раскрытия существования email).
+      const gate = await ensureVerificationGate(v.email);
+      if (gate.gated) { router.refresh(); return; }
       setError('Неверный email или пароль');
       return;
     }

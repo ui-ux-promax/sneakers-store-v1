@@ -3,9 +3,17 @@ name: e2e
 # Playwright e2e на ubuntu-latest — раннер близко к Neon, поэтому HTTP round-trip'ы
 # к БД быстрые и тесты стабильны (на локальной Windows флак из-за сетевой дистанции).
 on:
+  # push e2e — ТОЛЬКО main: фича-ветки покрывает pull_request-прогон. Иначе push+PR одного
+  # коммита дают ДВА прогона на общей CI-Neon-ветке (фикс POSTGRES_URL): параллельные
+  # `prisma db seed` гонятся (truncate↔upsert → P2003 FK) + двойное списание стока 42 (P10).
   push:
-    branches: ['**']
+    branches: [main]
   pull_request:
+
+# Доп. страховка от наложения прогонов одной ветки (повторный push до завершения предыдущего).
+concurrency:
+  group: e2e-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: true
 
 # Монорепо: приложение лежит в stride-app/
 defaults:

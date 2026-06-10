@@ -68,3 +68,45 @@ export async function checkLoginRateLimit(key: string): Promise<RateLimitResult>
   const r = await l.limit(key);
   return { success: r.success, remaining: r.remaining, reset: r.reset };
 }
+
+// ---------------------------------------------------------------------------
+// P2.2c limiters: verify-code (per email+IP), resend-code (per email), newsletter (per IP).
+// Same lazy + fail-open pattern as login limiter.
+// ---------------------------------------------------------------------------
+type Limiter = { limit(key: string): Promise<{ success: boolean; remaining: number; reset: number }> } | null | false;
+
+async function makeLimiter(slot: { v: Limiter }, points: number, window: `${number} ${'s' | 'm' | 'h'}`, prefix: string): Promise<Limiter> {
+  if (slot.v !== null) return slot.v;
+  if (!isRateLimitConfigured()) { slot.v = false; return slot.v; }
+  const url = getEnv('KV_REST_API_URL', 'UPSTASH_REDIS_REST_URL')!;
+  const token = getEnv('KV_REST_API_TOKEN', 'UPSTASH_REDIS_REST_TOKEN')!;
+  const { Ratelimit } = await import('@upstash/ratelimit');
+  const { Redis } = await import('@upstash/redis');
+  slot.v = new Ratelimit({ redis: new Redis({ url, token }), limiter: Ratelimit.slidingWindow(points, window), prefix });
+  return slot.v;
+}
+
+const verifySlot = { v: null as Limiter };
+const resendSlot = { v: null as Limiter };
+const newsletterSlot = { v: null as Limiter };
+
+export async function checkVerifyRateLimit(key: string): Promise<RateLimitResult> {
+  const l = await makeLimiter(verifySlot, 10, '10 m', 'stride-app:verify');
+  if (!l) return { success: true, remaining: -1, reset: 0 };
+  const r = await l.limit(key);
+  return { success: r.success, remaining: r.remaining, reset: r.reset };
+}
+
+export async function checkResendRateLimit(key: string): Promise<RateLimitResult> {
+  const l = await makeLimiter(resendSlot, 5, '1 h', 'stride-app:resend');
+  if (!l) return { success: true, remaining: -1, reset: 0 };
+  const r = await l.limit(key);
+  return { success: r.success, remaining: r.remaining, reset: r.reset };
+}
+
+export async function checkNewsletterRateLimit(key: string): Promise<RateLimitResult> {
+  const l = await makeLimiter(newsletterSlot, 5, '10 m', 'stride-app:newsletter');
+  if (!l) return { success: true, remaining: -1, reset: 0 };
+  const r = await l.limit(key);
+  return { success: r.success, remaining: r.remaining, reset: r.reset };
+}

@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { registerAndVerify } from './helpers';
 
 for (const path of ['/', '/catalog', '/product/stride-velocity-trail', '/cart', '/wishlist', '/login', '/register', '/legal/privacy']) {
   test(`a11y: нет серьёзных нарушений на ${path}`, async ({ page }) => {
@@ -12,23 +13,8 @@ for (const path of ['/', '/catalog', '/product/stride-velocity-trail', '/cart', 
   });
 }
 
-// /checkout под защитой + требует непустую корзину: регистрируемся и кладём сид-товар,
-// иначе страница редиректит на /login (гость) или /cart (пустая корзина). Помощники зеркалят
-// e2e/auth.spec.ts: чекбокс согласия не связан label'ом → берём по role.
-async function registerAndLogin(page: Page) {
-  const email = `u${Date.now()}-${Math.floor(Math.random() * 1e6)}@e2e.test`;
-  await page.goto('/register');
-  await page.getByLabel('Имя').fill('E2E User');
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Пароль', { exact: true }).fill('Passw0rd!1');
-  await page.getByLabel('Повторите пароль', { exact: true }).fill('Passw0rd!1');
-  await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Зарегистрироваться' }).click();
-  await expect(page.getByRole('button', { name: 'Выйти' })).toBeVisible();
-}
-
 test('a11y: нет серьёзных нарушений на /checkout', async ({ page }) => {
-  await registerAndLogin(page);
+  await registerAndVerify(page);
   await page.goto('/product/stride-velocity-trail');
   await page.getByRole('button', { name: '42', exact: true }).click();
   await page.getByRole('button', { name: /В корзину/ }).click();

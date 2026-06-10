@@ -1,18 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-
-const uniqueEmail = () => `u${Date.now()}-${Math.floor(Math.random() * 1e6)}@e2e.test`;
-const PASSWORD = 'Passw0rd!1';
-
-async function registerAndLogin(page: Page) {
-  await page.goto('/register');
-  await page.getByLabel('Имя').fill('E2E User');
-  await page.getByLabel('Email').fill(uniqueEmail());
-  await page.getByLabel('Пароль', { exact: true }).fill(PASSWORD);
-  await page.getByLabel('Повторите пароль', { exact: true }).fill(PASSWORD);
-  await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Зарегистрироваться' }).click();
-  await expect(page.getByRole('button', { name: 'Выйти' })).toBeVisible();
-}
+import { registerAndVerify } from './helpers';
 
 async function addSeedProductToCart(page: Page) {
   await page.goto('/product/stride-velocity-trail');
@@ -27,7 +14,7 @@ async function fillCheckout(page: Page) {
 }
 
 test('COD-заказ по-прежнему работает (регрессия)', async ({ page }) => {
-  await registerAndLogin(page);
+  await registerAndVerify(page);
   await addSeedProductToCart(page);
   await page.goto('/checkout');
   await fillCheckout(page);
@@ -39,7 +26,7 @@ test('COD-заказ по-прежнему работает (регрессия)
 
 const hasYooKassa = !!process.env.YOOKASSA_SHOP_ID && !!process.env.YOOKASSA_SECRET_KEY;
 (hasYooKassa ? test : test.skip)('онлайн-оплата ведёт на внешний редирект ЮKassa', async ({ page }) => {
-  await registerAndLogin(page);
+  await registerAndVerify(page);
   await addSeedProductToCart(page);
   await page.goto('/checkout');
   await fillCheckout(page);

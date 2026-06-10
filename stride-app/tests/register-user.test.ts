@@ -10,12 +10,19 @@ vi.mock('@/lib/rate-limit', () => ({
 }));
 vi.mock('next/headers', () => ({ headers: vi.fn(async () => new Headers()) }));
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() } }));
+vi.mock('@/lib/verification/service', () => ({ issueCode: vi.fn(async () => {}) }));
+vi.mock('@/lib/verification/pending-cookie', () => ({ setPending: vi.fn(async () => {}) }));
 
 import { registerUser } from '@/app/actions/auth';
 import { signIn } from '@/auth';
 import { hashPassword } from '@/lib/password';
 import { prisma } from '@/lib/prisma-client';
 import { checkAuthRateLimit } from '@/lib/rate-limit';
+import { issueCode } from '@/lib/verification/service';
+import { setPending } from '@/lib/verification/pending-cookie';
+
+const issue = issueCode as unknown as ReturnType<typeof vi.fn>;
+const setPend = setPending as unknown as ReturnType<typeof vi.fn>;
 
 const signInMock = signIn as unknown as ReturnType<typeof vi.fn>;
 const hashMock = hashPassword as unknown as ReturnType<typeof vi.fn>;
@@ -56,12 +63,13 @@ describe('registerUser', () => {
     expect(findUnique).not.toHaveBeenCalled();
   });
 
-  it('успешная регистрация — создаёт юзера, логинит redirect:false, возвращает {ok:true} (#8)', async () => {
+  it('успешная регистрация — создаёт юзера, шлёт код, ставит pending cookie, НЕ логинит', async () => {
     const r = await registerUser(valid);
-    expect(r).toEqual({ ok: true });
-    expect(hashMock).toHaveBeenCalledOnce();
+    expect(r).toEqual({ ok: true, needsVerification: true });
     expect(create).toHaveBeenCalledWith({ data: { email: 'new@example.com', passwordHash: '$argon2id$hash', name: 'Neo' } });
-    expect(signInMock).toHaveBeenCalledWith('credentials', expect.objectContaining({ redirect: false }));
+    expect(issue).toHaveBeenCalledWith('new@example.com');
+    expect(setPend).toHaveBeenCalledWith('new@example.com');
+    expect(signInMock).not.toHaveBeenCalled();
   });
 
   it('гонка: P2002 на create — ошибка дубликата', async () => {
@@ -70,9 +78,9 @@ describe('registerUser', () => {
     expect(r).toEqual({ ok: false, error: 'Такой email уже зарегистрирован' });
   });
 
-  it('сбой автологина не отменяет регистрацию — {ok:true} best-effort (#8)', async () => {
-    signInMock.mockRejectedValue(new Error('signin down'));
+  it('сбой отправки кода не отменяет регистрацию — {ok:true, needsVerification} best-effort', async () => {
+    issue.mockRejectedValue(new Error('resend down'));
     const r = await registerUser(valid);
-    expect(r).toEqual({ ok: true });
+    expect(r).toMatchObject({ ok: true, needsVerification: true });
   });
 });

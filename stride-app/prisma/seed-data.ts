@@ -55,7 +55,10 @@ const mk = (skuBase: string, price: number, compareAtPrice: number | null, rows:
   }));
 
 const RUN: Row[] = [
-  { eu: '40', stock: 4 }, { eu: '41', stock: 3 }, { eu: '42', stock: 5 },
+  // 42 — единственный размер, который покупают e2e (checkout/coupon/review/yookassa ≈ 6 заказов/прогон).
+  // Держим запас (12) на полный прогон + Playwright retry:2, иначе сток исчерпывается и кнопка
+  // размера становится disabled (P10/budget). 43=0 нужен тесту «недоступный размер».
+  { eu: '40', stock: 4 }, { eu: '41', stock: 3 }, { eu: '42', stock: 12 },
   { eu: '42.5', stock: 2 }, { eu: '43', stock: 0 }, { eu: '44', stock: 6 }, { eu: '45', stock: 1 },
 ];
 const LIFE: Row[] = [

@@ -306,6 +306,7 @@ model WishlistItem {
 // этих моделей `prisma db push` на деплое main-ветки пытался бы их дропнуть. Идентичны
 // определениям в email-ветке → при мерже обеих в main конфликта нет. Кода, использующего
 // их, в этой ветке нет — таблицы просто не трогаются.
+
 model EmailVerificationCode {
   id         String    @id @default(cuid())
   email      String

@@ -49,3 +49,17 @@ export const GENDER_OPTIONS = [
   { value: 'UNISEX', label: 'Унисекс' },
   { value: 'KIDS', label: 'Детские' },
 ] as const;
+
+// --- P2.2c Email-верификация + Newsletter ---
+
+// Cookie, помечающая «есть незавершённая верификация» (подписана HMAC по AUTH_SECRET).
+export const PENDING_VERIFICATION_COOKIE = 'pending_verification';
+export const PENDING_VERIFICATION_MAX_AGE = 60 * 30; // 30 мин — окно «дойти до ввода кода»
+
+export const VERIFICATION_CODE_TTL_MS = 10 * 60 * 1000; // 10 мин жизни самого кода
+export const VERIFICATION_MAX_ATTEMPTS = 5;             // неверных попыток на код до инвалидации
+export const VERIFICATION_RESEND_COOLDOWN_MS = 60 * 1000; // 60 сек между ресендами
+export const VERIFICATION_TICKET_TTL_MS = 60 * 1000;   // 60 сек жизни тикета автологина
+
+export const NEWSLETTER_SOURCES = ['footer', 'register', 'checkout'] as const;
+export type NewsletterSource = (typeof NEWSLETTER_SOURCES)[number];
