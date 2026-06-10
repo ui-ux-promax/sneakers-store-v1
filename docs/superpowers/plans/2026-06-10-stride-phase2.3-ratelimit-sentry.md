@@ -739,3 +739,53 @@ CI должен: собрать (`next build` с `withSentryConfig`), прогн
 2. **Inline** — задачи в этой сессии чекпоинтами (superpowers:executing-plans).
 
 Какой подход?
+
+---
+
+## Ручная проверка на preview (после деплоя ветки)
+
+> Гоняется на **preview-деплое** ветки (не локально — Neon-латентность + локальный build/e2e заблокированы [[never-run-db-against-neon-locally]]).
+> Перед проверкой убедись, что выполнены **пред-условия**:
+> 1. **preview build зелёный** (`next build` с `withSentryConfig` собрался, edge-бандл не упал);
+> 2. в Vercel (preview) заданы env: `KV_REST_API_URL`, `KV_REST_API_TOKEN` (Upstash), `NEXT_PUBLIC_SENTRY_DSN`,
+>    `SENTRY_DSN` (+ опц. `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` для source maps);
+> 3. **Upstash Redis** заведён (Vercel Marketplace → Upstash) и привязан к проекту; **Sentry**-проект создан, DSN валиден.
+>
+> ⚠️ **Без Upstash-env лимиты fail-open** (не срабатывают) — для проверки групп A/B env обязателен. **Без DSN Sentry выключен** — для группы D нужен DSN.
+> Для спам-проверок удобно с одного браузера/IP; `+`-алиасы email (`ты+1@gmail.com`) = новые «пользователи» для регистрации.
+
+### A. Rate-limit регистрации (`checkAuthRateLimit`, 5/10м на IP)
+1. [ ] До лимита: `/register` новым email → обычный флоу (поднимается gate-модалка верификации из P2.2c).
+2. [ ] Сделай **>5 сабмитов `/register` за 10 мин** с одного IP → форма показывает **«Слишком много попыток. Попробуйте через N сек»**, кнопка «Зарегистрироваться» **disabled**, **таймер N тикает** к 0.
+3. [ ] Когда N дойдёт до 0 → кнопка снова активна, сабмит проходит. (Окно sliding — отпускает постепенно.)
+4. [ ] Отказ происходит **до** создания юзера/отправки кода (argon2 не считается) — повторные спам-попытки не плодят письма.
+
+### B. Rate-limit add-to-cart (`checkCartRateLimit` + `POST /api/cart`, 60/1м на IP)
+1. [ ] До лимита: на PDP выбери размер → «В корзину» → товар добавляется как обычно.
+2. [ ] **Быстрый спам add-to-cart (>60/мин)** → кнопка переключается на **«Подождите N сек»** (disabled), под ней текст **«Слишком часто. Попробуйте через N сек»**.
+3. [ ] В DevTools → Network: ответ `POST /api/cart` = **429**, есть заголовок **`Retry-After: <сек>`**, тело `{message, retryAfterSec}`.
+4. [ ] По истечении N кнопка снова рабочая, добавление проходит.
+
+### C. Fail-open без Upstash
+1. [ ] На окружении **без** `KV_REST_API_*` (напр. предыдущий preview или временно убрать env) → спам регистрации/корзины **НЕ блокируется**, оба флоу работают штатно (отсутствие redis не ломает приложение).
+
+### D. Sentry — захват ошибок (errors-only)
+1. [ ] **Серверная ошибка**: временно вставь `throw new Error('p23-sentry-test')` в каком-нибудь server-роуте/RSC (или используй `/sentry-example-page`, если сгенерён) → в **Sentry dashboard появляется issue** (через `onRequestError`). Убери throw после проверки.
+2. [ ] **Клиентская ошибка** (необработанная в рендере) → показывается **`app/global-error.tsx`**: заголовок «Что-то пошло не так» + кнопка **«Попробовать снова»** (нажатие = `reset()` перерисовывает), issue в Sentry (`captureException`).
+3. [ ] **Проглоченная ошибка**: спровоцируй сбой, который логируется (напр. `cart_get_failed` при недоступной БД) → в Sentry событие с **`tags.event = <message>`**; в `extra` поля присутствуют, но **email/phone/token замаскированы** (`scrubPii`).
+4. [ ] **Без DSN**: на окружении без `SENTRY_DSN` → ошибки только в `console`, в Sentry ничего (Sentry `enabled:false`, fail-open).
+
+### E. Регрессия
+1. [ ] `/login`, `/checkout`, `/orders`, переходы по сайту работают — **middleware/edge не сломан** обёрткой `withSentryConfig` (edge-бандл собрался без argon2/prisma/upstash/crypto).
+2. [ ] Корзина/вишлист, оформление заказа, верификация почты (P2.2c) — без регрессий.
+3. [ ] CI: `npm test` (**225 зелёных**) + e2e (`e2e.yml`) проходят; сток размера 42 не просел ([[e2e-size42-stock-budget]]).
+
+### На что смотреть при сбое
+- **Лимит не срабатывает даже при спаме** → Upstash env не задан/неверен (`isRateLimitConfigured()=false` → fail-open). Проверь `KV_REST_API_URL`/`KV_REST_API_TOKEN` (или fallback `UPSTASH_REDIS_REST_*`) в Vercel.
+- **429 без таймера на форме регистрации** → `registerUser` не вернул `retryAfterSec` ИЛИ форма не вызвала `startRetry`; проверь `RegisterResult` и `register-form.tsx`.
+- **add-to-cart 429 не показывает cooldown** → проверь ветку `axios.isAxiosError(e) && e.response?.status===429` в `purchase-panel.tsx` и что `store/cart.ts addCartItem` пробрасывает ошибку (`throw e`).
+- **В Sentry нет событий** → DSN не задан/неверен (`enabled:false`). Клиент берёт `NEXT_PUBLIC_SENTRY_DSN`, сервер/edge — `SENTRY_DSN`; проверь, что DSN совпадает с проектом Sentry.
+- **build падает на edge** (`UnhandledSchemeError` argon2/prisma/crypto) → `withSentryConfig` уронил `webpack` edge-алиасы; убедись, что весь `nextConfig` (с `webpack`-fn и `serverExternalPackages`) сохранён внутри обёртки.
+- **Стектрейсы в Sentry минифицированы** → нет `SENTRY_AUTH_TOKEN`/`SENTRY_ORG`/`SENTRY_PROJECT` (source-map upload = best-effort, билд не ломает) — добавь для читаемых трейсов.
+- **PII в событии Sentry** (реальный email/phone) → ключ не покрыт `scrubPii` ИЛИ `sendDefaultPii` включён; проверь `sendDefaultPii:false` во всех `sentry.*.config.ts`.
+- **Логаут/навигация сломаны после Sentry** → `instrumentation.ts register()` кидает в edge; убедись, что `sentry.edge.config.ts` edge-safe и `logger` не утёк в edge-граф ([[never-run-db-against-neon-locally]] — проверки только в CI/preview).
