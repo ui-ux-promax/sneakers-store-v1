@@ -8,10 +8,12 @@ on:
   pull_request:
 
 # push и pull_request одного коммита создают ДВА прогона. Они бьют общую CI-Neon-ветку
-# (фикс POSTGRES_URL) и параллельно списывают сток размера 42 → исчерпание у обоих (P10/budget).
-# Группируем по SHA → второй прогон отменяет первый, заказы не складываются. PR/push не множатся.
+# (фикс POSTGRES_URL): параллельные `prisma db seed` гонятся (truncate↔upsert → P2003 FK) и
+# параллельно списывают сток размера 42 → исчерпание (P10/budget). Группируем по HEAD-коммиту,
+# одинаковому в обоих событиях: pull_request.head.sha (для PR) vs github.sha (для push) — иначе
+# группы разные (PR-event даёт синтетический merge-SHA) и дедуп не срабатывает.
 concurrency:
-  group: e2e-${{ github.sha }}
+  group: e2e-${{ github.event.pull_request.head.sha || github.sha }}
   cancel-in-progress: true
 
 # Монорепо: приложение лежит в stride-app/
