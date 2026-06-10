@@ -56,9 +56,10 @@ describe('registerUser', () => {
   });
 
   it('превышен rate-limit — отказ ДО argon2 и до запроса в БД (#10)', async () => {
-    rateLimit.mockResolvedValue({ success: false, remaining: 0, reset: 0 });
+    rateLimit.mockResolvedValue({ success: false, remaining: 0, reset: Date.now() + 600_000 });
     const r = await registerUser(valid);
     expect(r.ok).toBe(false);
+    expect((r as { retryAfterSec?: number }).retryAfterSec).toBeGreaterThan(0);
     expect(hashMock).not.toHaveBeenCalled();
     expect(findUnique).not.toHaveBeenCalled();
   });
