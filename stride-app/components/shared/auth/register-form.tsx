@@ -9,10 +9,12 @@ import { Button, Input } from '@/components/ui';
 import { PasswordInput } from './password-input';
 import { registerFormSchema, type RegisterFormValues } from '@/services/dto/auth.dto';
 import { registerUser } from '@/app/actions/auth';
+import { useCountdown } from '@/hooks/use-countdown';
 
 export function RegisterForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const { seconds: retry, start: startRetry } = useCountdown();
   const {
     register,
     handleSubmit,
@@ -25,6 +27,7 @@ export function RegisterForm() {
     const res = await registerUser({ name: v.name, email: v.email, password: v.password });
     if (!res.ok) {
       setError(res.error);
+      if (res.retryAfterSec && res.retryAfterSec > 0) startRetry(res.retryAfterSec);
       return;
     }
     // P2.2c: pending-cookie уже стоит (registerUser), refresh → RootLayout отрендерит модалку верификации.
@@ -67,10 +70,15 @@ export function RegisterForm() {
         </label>
         {errors.agree && <p className="text-danger text-xs mt-1">{errors.agree.message}</p>}
       </div>
-      {error && <p className="text-danger text-sm" role="alert">{error}</p>}
-      <Button type="submit" variant="primary" size="lg" className="w-full" loading={isSubmitting}>
+      {error && (
+        <p className="text-danger text-sm" role="alert">
+          {error}{retry > 0 ? ` Попробуйте через ${retry} сек` : ''}
+        </p>
+      )}
+      <Button type="submit" variant="primary" size="lg" className="w-full" loading={isSubmitting} disabled={retry > 0}>
         Зарегистрироваться
       </Button>
     </form>
   );
 }
+
