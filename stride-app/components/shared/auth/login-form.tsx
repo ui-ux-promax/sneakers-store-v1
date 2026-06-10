@@ -41,8 +41,10 @@ export function LoginForm() {
       setError('Неверный email или пароль');
       return;
     }
-    router.push(callbackUrl);
-    router.refresh();
+    // Жёсткая навигация, а не router.push+refresh: refresh переспрашивал бы /login,
+    // а authorized() уводит залогиненного с /login → /profile (гость терял callbackUrl, #4).
+    // Полный переход на callbackUrl отдаёт и корректный хедер (сессия), и точку назначения.
+    window.location.assign(callbackUrl);
   };
 
   return (

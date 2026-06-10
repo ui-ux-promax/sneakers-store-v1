@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui';
 import { OtpInput } from './otp-input';
 import { verifyEmailCode, resendVerificationCode } from '@/app/actions/verification';
@@ -25,7 +24,6 @@ function maskEmail(email: string): string {
 }
 
 export function VerificationGate({ email, callbackUrl }: { email: string; callbackUrl?: string }) {
-  const router = useRouter();
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -44,11 +42,9 @@ export function VerificationGate({ email, callbackUrl }: { email: string; callba
     const res = await verifyEmailCode({ code: value });
     setSubmitting(false);
     if (res.ok) {
-      // Сессия заминчена сервером — уводим на callbackUrl (#4); refresh подтянет серверное
-      // состояние (хедер/корзина), replace выполнит сам переход. Санитайз — defence-in-depth.
-      const target = safeCallbackUrl(callbackUrl);
-      router.refresh();
-      router.replace(target);
+      // Сессия заминчена сервером — жёстко уводим на callbackUrl (#4). Полный переход
+      // (а не router.replace+refresh) даёт корректный хедер и не цепляет /login→/profile.
+      window.location.assign(safeCallbackUrl(callbackUrl));
       return;
     }
     setError(MESSAGES[res.reason] ?? 'Не удалось подтвердить.');

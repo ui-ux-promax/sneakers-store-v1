@@ -5,6 +5,9 @@ const config: Config = {
   content: [
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
+    // lib/ задаёт классы строкой (напр. badge-статусы в lib/order.ts) — без скана
+    // Tailwind выпилит .badge-* из @layer components как «неиспользуемые».
+    './lib/**/*.{js,ts}',
   ],
   theme: {
     extend: {

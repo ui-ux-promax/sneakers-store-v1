@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { Button } from '@/components/ui';
 import { formatPrice } from '@/lib/format';
 import { OrderStatusBadge } from '@/components/shared/orders/order-status-badge';
 import type { ORDER_STATUS_META } from '@/lib/order';
@@ -48,7 +49,7 @@ export function OrdersList({ orders }: { orders: OrderRow[] }) {
           )}
           <div className="flex items-center justify-between mt-3">
             <span className={o.status === 'CANCELLED' ? 'tnum line-through text-ink-muted' : 'font-semibold tnum'}>{formatPrice(o.totalAmount)}</span>
-            <Link href={`/orders/${o.orderNumber}`} className="text-sm text-ink-muted hover:text-ink">Подробнее</Link>
+            <Button asChild variant="secondary" size="sm"><Link href={`/orders/${o.orderNumber}`}>Подробнее</Link></Button>
           </div>
         </li>
       ))}
