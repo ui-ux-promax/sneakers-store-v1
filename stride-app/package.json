@@ -33,6 +33,7 @@
     "@radix-ui/react-label": "^2.1.1",
     "@radix-ui/react-slot": "^1.1.1",
     "@react-email/components": "^1.0.12",
+    "@sentry/nextjs": "^10.57.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
     "@webzaytsev/yookassa-ts-sdk": "^3.4.3",
