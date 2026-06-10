@@ -7,8 +7,11 @@ import { hashPassword } from '@/lib/password';
 import { normalizeEmail } from '@/lib/auth-identity';
 import { registerSchema } from '@/services/dto/auth.dto';
 import { checkAuthRateLimit, extractClientIp } from '@/lib/rate-limit';
+import { retryAfterSeconds } from '@/lib/rate-limit-response';
 import { logger } from '@/lib/logger';
-export type RegisterResult = { ok: true; needsVerification: true } | { ok: false; error: string };
+export type RegisterResult =
+  | { ok: true; needsVerification: true }
+  | { ok: false; error: string; retryAfterSec?: number };
 
 export async function registerUser(raw: unknown): Promise<RegisterResult> {
   const parsed = registerSchema.safeParse(raw);
@@ -21,7 +24,7 @@ export async function registerUser(raw: unknown): Promise<RegisterResult> {
     // Rate-limit ДО любой дорогой работы (argon2-хэш ~19 МБ/попытка) — анти-DoS (#10).
     const ip = extractClientIp({ headers: await headers() });
     const limit = await checkAuthRateLimit(ip);
-    if (!limit.success) return { ok: false, error: 'Слишком много попыток. Попробуйте позже' };
+    if (!limit.success) return { ok: false, error: 'Слишком много попыток. Попробуйте позже', retryAfterSec: retryAfterSeconds(limit.reset) };
 
     // Дешёвая проверка дубликата ДО argon2: спам существующих email не оплачивает хэш (#10).
     // P2002-catch ниже всё равно нужен — закрывает гонку двух одновременных регистраций.
