@@ -43,9 +43,10 @@ function makeLogger(baseFields: LogFields): Logger {
     error: (m, err, f) => {
       emit('error', m, { ...baseFields, ...normalizeError(err), ...(f ?? {}) });
       // Мост в Sentry (noop без DSN). PII скрабится перед передачей.
+      // normalizeError(err) в extra — чтобы не-Error payload не потерялся при new Error(m).
       Sentry.captureException(err instanceof Error ? err : new Error(m), {
         tags: { event: m },
-        extra: scrubPii({ ...baseFields, ...(f ?? {}) }),
+        extra: scrubPii({ ...baseFields, ...normalizeError(err), ...(f ?? {}) }),
       });
     },
     child: (bindings) => makeLogger({ ...baseFields, ...bindings }),
