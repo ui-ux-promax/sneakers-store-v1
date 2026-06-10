@@ -555,3 +555,35 @@
 - **На будущее:** auth-страницы (`/login`,`/register`,reset-password) — редиректить залогиненного прочь
   (`/profile`); добавлять их в matcher middleware, иначе колбэк для них не вызовется. Любое новое
   middleware-правило → прогнать e2e: способно вскрыть латентные гонки (P20).
+
+## P24. Параллельные push+PR прогоны e2e на общей CI-Neon-БД — гонка seed (P2003) + двойное списание стока
+
+- **Когда:** 2026-06-10, мерж Фазы 2.2c (email) в `feat/phase2.2c-email-resend` (содержит main+fix).
+- **Симптом (эволюция):** после жёсткого email-gate все register-флоу стабильно доходят до checkout →
+  полный спрос на сток. (1) Сначала ~7 e2e падали: кнопка размера `<button disabled>42</button>` —
+  сток 42 исчерпан, хотя `prisma db seed` сбрасывает 42→5 перед прогоном. (2) После concurrency-фикса и
+  подъёма стока — push-прогон падал на сиде: `P2003 Foreign key constraint violated
+  ProductVariant_colorwayId_fkey` (а PR-прогон зелёный). (3) После исправления группы concurrency —
+  коммит помечался ❌, хотя реальный e2e зелёный.
+- **Причина:** workflow `on: push['**'] + pull_request` → push и pull_request ОДНОГО коммита запускают
+  ДВА прогона. Оба бьют ОДНУ CI-Neon-ветку (фикс `POSTGRES_URL`-секрет). Параллельно: (а) два
+  `prisma db seed` гонятся — один TRUNCATE-ит `ProductColorway` пока другой upsert-ит `ProductVariant` →
+  FK P2003; (б) оба списывают сток размера 42 (seed=5, заказов/прогон ≈6: checkout 2 + coupon 1 + review 1
+  + yookassa 2) + Playwright `retry:2` множит списание на падёж → исчерпание. Первый concurrency-фикс
+  `group: e2e-${{ github.sha }}` НЕ сработал: `github.sha` РАЗНЫЙ для событий — push даёт SHA коммита,
+  pull_request даёт синтетический merge-SHA → разные группы → дедуп не сработал.
+- **Решение (трёхступенчатое, итог — последний шаг):**
+  1. сток 42: 5→12 (`seed-data.ts` RUN) — буфер на полный прогон + ретраи (на точное значение 42 ни один
+     тест не завязан; disabled-тест юзает 43=0). Коммит `133cf45`.
+  2. concurrency по HEAD-коммиту, одинаковому в обоих событиях:
+     `group: e2e-${{ github.event.pull_request.head.sha || github.sha }}` — убрал seed-гонку. Коммит
+     `d467553`. Но cancelled push-чек метил коммит ❌ (косметика, мешает branch-protection).
+  3. ИТОГ: `on.push.branches: [main]` — push-e2e только для main; фича-ветки покрывает pull_request-прогон
+     (один, без дубля, без cancelled-чека). concurrency оставлен страховкой от наложения повторных push.
+     Коммит `e015499`.
+- **На будущее:** при `on: push + pull_request` фича-ветки c PR получают ДВА прогона — для тестов,
+  пишущих в ОБЩУЮ БД (сток/seed/заказы), это гонка. Дефолт: `push.branches: [main]` + `pull_request`
+  (фича-ветки только через PR-прогон). `github.sha` НЕ совпадает между push и PR событиями — для общей
+  concurrency-группы брать `github.event.pull_request.head.sha || github.sha`. cancelled-прогон метит
+  коммит ❌ (не провал) — branch-protection настраивать на конкретный чек `e2e (pull_request)`, не «все».
+  Корень глубже — общая CI-Neon-ветка на все прогоны (P4/P18): изоляция БД на прогон убрала бы класс гонок.
