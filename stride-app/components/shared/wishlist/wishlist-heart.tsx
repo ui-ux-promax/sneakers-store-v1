@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { Heart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toggleWishlist } from '@/app/actions/wishlist';
+import { useWishlistStore } from '@/store';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -14,6 +15,9 @@ type Props = {
 
 export function WishlistHeart({ productId, initialActive, variant = 'card' }: Props) {
   const router = useRouter();
+  const increment = useWishlistStore((s) => s.increment);
+  const decrement = useWishlistStore((s) => s.decrement);
+  const fetchCount = useWishlistStore((s) => s.fetchCount);
   const [active, setActive] = useState(initialActive);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -22,19 +26,23 @@ export function WishlistHeart({ productId, initialActive, variant = 'card' }: Pr
     if (pending) return;
     const next = !active;
     setActive(next); // оптимистично
+    if (next) increment(); else decrement(); // бейдж обновляем мгновенно
     setError(null);
     startTransition(async () => {
       try {
         const res = await toggleWishlist({ productId });
         if (!res.ok) {
           setActive(!next); // откат
+          if (next) decrement(); else increment(); // откат бейджа
           setError('Не удалось обновить избранное');
           return;
         }
         setActive(res.active);
-        router.refresh(); // обновить счётчик/список
+        fetchCount(); // сверяем с авторитетным счётчиком сервера
+        router.refresh(); // обновить список на /wishlist
       } catch {
         setActive(!next); // откат при сбое экшена (сеть/сервер)
+        if (next) decrement(); else increment(); // откат бейджа
         setError('Не удалось обновить избранное');
       }
     });

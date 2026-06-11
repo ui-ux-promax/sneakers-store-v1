@@ -19,7 +19,7 @@ describe('calcShipping', () => {
 
 describe('orderStatusView', () => {
   it('PENDING + платёж pending → «Ожидает оплаты»', () => {
-    expect(orderStatusView('PENDING', 'pending')).toEqual({ label: 'Ожидает оплаты', badge: 'badge-warning' });
+    expect(orderStatusView('PENDING', 'pending')).toEqual({ label: 'Ожидает оплаты', badge: 'badge badge-warning' });
   });
   it('PENDING без платежа (COD) → «Оформлен»', () => {
     expect(orderStatusView('PENDING', null).label).toBe('Оформлен');

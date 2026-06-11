@@ -25,6 +25,12 @@
   html { scroll-behavior: smooth; }
   @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
+  /* Guard against any stray over-wide descendant producing a body-level
+     horizontal scroll (shifts the whole page left on mobile). `clip` (not
+     `hidden`) avoids creating a scroll container, so sticky header + anchor
+     smooth-scroll keep working. */
+  html, body { overflow-x: clip; }
+
   * { border-color: hsl(var(--color-border)); }
 
   body {
@@ -145,6 +151,33 @@
   @keyframes shimmer { to { background-position: -200% 0; } }
   @media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
 
+  /* Order-status / soft-tint pill badges (ported from design system / profile prototype). */
+  .badge {
+    display: inline-flex; align-items: center;
+    font-size: 12px; font-weight: 600;
+    padding: 6px 12px; border-radius: 999px; white-space: nowrap;
+  }
+  .badge-success { background: hsl(var(--color-success) / 0.16); color: hsl(145 63% 28%); }
+  .badge-info    { background: hsl(var(--color-info) / 0.16);    color: hsl(205 70% 35%); }
+  .badge-warning { background: hsl(var(--color-warning) / 0.16); color: hsl(38 70% 32%); }
+  .badge-danger  { background: hsl(var(--color-danger) / 0.14);  color: hsl(0 60% 42%); }
+
+  /* Home category-bento animations (ported from home prototype). */
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px hsla(0, 72%, 52%, 0.4); }
+    50%      { box-shadow: 0 0 30px hsla(0, 72%, 52%, 0.6); }
+  }
+  .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+  @keyframes rotate-badge {
+    0%   { transform: rotate(-3deg); }
+    50%  { transform: rotate(3deg); }
+    100% { transform: rotate(-3deg); }
+  }
+  .animate-rotate-badge { animation: rotate-badge 3s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    .animate-pulse-glow, .animate-rotate-badge { animation: none; }
+  }
+
   /* Длинный текстовый контент (legal-страницы). Ширину задаёт контейнер страницы. */
   .prose { color: hsl(var(--color-text)); }
   .prose h2 {
@@ -158,4 +191,19 @@
   .prose a { color: hsl(var(--color-text)); text-decoration: underline; text-underline-offset: 2px; }
   .prose a:hover { color: hsl(var(--color-text-muted)); }
   .prose strong { font-weight: 600; }
+}
+
+/* Radix scroll-lock (react-remove-scroll) ставит `overflow: hidden !important`
+   на body[data-scroll-locked], пока открыт Dialog (мобильное меню, фильтры,
+   галерея, verification-gate). `hidden` делает body scroll-контейнером, из-за
+   чего sticky site-header перепривязывается к началу документа и уезжает вверх
+   на величину прокрутки — баг виден только когда страница уже проскроллена.
+   `clip` обрезает тот же overflow, НЕ создавая scroll-контейнер, поэтому
+   sticky-хэдер остаётся на месте; фон при этом держит залоченным JS-перехват
+   wheel/touchmove у Radix (он не зависит от overflow). `html body[…]` даёт
+   специфичность (0,1,2) > радиксовской (0,1,1), чтобы перебить её !important.
+   Вне @layer — иначе Tailwind v3 может вырезать этот атрибутный селектор при
+   tree-shaking слоя components. */
+html body[data-scroll-locked] {
+  overflow: clip !important;
 }

@@ -51,11 +51,11 @@ export const ORDER_STATUS_META: Record<
   'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED',
   { label: string; badge: string }
 > = {
-  PENDING: { label: 'Оформлен', badge: 'badge-info' },
-  PROCESSING: { label: 'Обрабатывается', badge: 'badge-warning' },
-  SHIPPED: { label: 'В пути', badge: 'badge-info' },
-  DELIVERED: { label: 'Доставлен', badge: 'badge-success' },
-  CANCELLED: { label: 'Отменён', badge: 'badge-danger' },
+  PENDING: { label: 'Оформлен', badge: 'badge badge-info' },
+  PROCESSING: { label: 'Обрабатывается', badge: 'badge badge-warning' },
+  SHIPPED: { label: 'В пути', badge: 'badge badge-info' },
+  DELIVERED: { label: 'Доставлен', badge: 'badge badge-success' },
+  CANCELLED: { label: 'Отменён', badge: 'badge badge-danger' },
 };
 
 // Онлайн-заказ ждёт оплаты (PENDING + платёж pending) — показываем «Ожидает оплаты»,
@@ -65,7 +65,7 @@ export function orderStatusView(
   paymentStatus?: string | null,
 ): { label: string; badge: string } {
   if (status === 'PENDING' && paymentStatus === 'pending') {
-    return { label: 'Ожидает оплаты', badge: 'badge-warning' };
+    return { label: 'Ожидает оплаты', badge: 'badge badge-warning' };
   }
   return ORDER_STATUS_META[status];
 }

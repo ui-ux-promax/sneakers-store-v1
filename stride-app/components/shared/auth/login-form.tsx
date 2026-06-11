@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { ensureVerificationGate } from '@/app/actions/verification';
+import { safeCallbackUrl } from '@/lib/safe-redirect';
 import { Button, Input } from '@/components/ui';
 import { PasswordInput } from './password-input';
 import { loginSchema, type LoginValues } from '@/services/dto/auth.dto';
@@ -19,6 +20,7 @@ export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const oauthError = params.get('error');
+  const callbackUrl = safeCallbackUrl(params.get('callbackUrl'));
   const [error, setError] = useState<string | null>(
     oauthError ? (OAUTH_ERRORS[oauthError] ?? 'Не удалось войти через Google') : null,
   );
@@ -33,13 +35,16 @@ export function LoginForm() {
     const res = await signIn('credentials', { ...v, redirect: false });
     if (res?.error) {
       // Возможно, почта не верифицирована — поднимем гейт (без раскрытия существования email).
-      const gate = await ensureVerificationGate(v.email);
+      // callbackUrl уходит в pending-cookie: гейт уведёт туда после верификации (#4).
+      const gate = await ensureVerificationGate(v.email, callbackUrl);
       if (gate.gated) { router.refresh(); return; }
       setError('Неверный email или пароль');
       return;
     }
-    router.push('/');
-    router.refresh();
+    // Жёсткая навигация, а не router.push+refresh: refresh переспрашивал бы /login,
+    // а authorized() уводит залогиненного с /login → /profile (гость терял callbackUrl, #4).
+    // Полный переход на callbackUrl отдаёт и корректный хедер (сессия), и точку назначения.
+    window.location.assign(callbackUrl);
   };
 
   return (

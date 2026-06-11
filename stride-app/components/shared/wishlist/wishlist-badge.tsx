@@ -1,31 +1,22 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Heart } from 'lucide-react';
+import { useWishlistStore } from '@/store';
 
-// Клиентский бейдж: счётчик тянем fetch'ем к лёгкому роуту /api/wishlist/count (паттерн CartBadge),
-// БЕЗ серверного auth()/cookies()/БД в рендере хедера — иначе теряется сессия на клиентском signIn (P14).
-// Рефетч на смену маршрута: после лайка и перехода на /wishlist счётчик актуализируется.
+// Клиентский бейдж: счётчик живёт в zustand-сторе (паттерн CartBadge), мутации сердечка
+// апдейтят стор инкрементом/декрементом — счётчик меняется мгновенно, без навигации.
+// Рефетч на смену маршрута сверяет с авторитетным значением сервера (guest→login merge, cross-tab).
 export function WishlistBadge() {
   const pathname = usePathname();
-  const [count, setCount] = useState(0);
+  const count = useWishlistStore((s) => s.count);
+  const fetchCount = useWishlistStore((s) => s.fetchCount);
 
   useEffect(() => {
-    let active = true;
-    fetch('/api/wishlist/count')
-      .then((r) => (r.ok ? r.json() : { count: 0 }))
-      .then((d) => {
-        if (active) setCount(typeof d?.count === 'number' ? d.count : 0);
-      })
-      .catch(() => {
-        /* бейдж не критичен — молча игнорируем сбой */
-      });
-    return () => {
-      active = false;
-    };
-  }, [pathname]);
+    fetchCount();
+  }, [pathname, fetchCount]);
 
   return (
     <Link

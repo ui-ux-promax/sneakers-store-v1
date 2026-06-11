@@ -20,7 +20,7 @@ export default function CartPage() {
       ) : items.length === 0 ? (
         <div className="mt-6"><EmptyCart /></div>
       ) : (
-        <div className="grid lg:grid-cols-[1fr_360px] gap-6 lg:gap-8 mt-6">
+        <div className="grid lg:grid-cols-[1fr_380px] gap-6 lg:gap-8 mt-6">
           <div className="space-y-4">
             {items.map((it) => <CartLineItem key={it.id} item={it} />)}
           </div>

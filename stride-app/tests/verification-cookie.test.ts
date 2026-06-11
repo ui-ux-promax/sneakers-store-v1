@@ -25,12 +25,27 @@ describe('pending-verification cookie payload', () => {
   });
 
   it('истёкший exp → null', () => {
-    const token = signPending('user@example.com', Date.now() - 1000);
+    const token = signPending('user@example.com', undefined, Date.now() - 1000);
     expect(parsePending(token)).toBeNull();
   });
 
   it('мусор → null, не бросает', () => {
     expect(parsePending('garbage')).toBeNull();
     expect(parsePending('')).toBeNull();
+  });
+
+  it('callbackUrl: безопасный относительный путь сохраняется (round-trip)', () => {
+    const token = signPending('user@example.com', '/checkout');
+    expect(parsePending(token)).toEqual({ email: 'user@example.com', callbackUrl: '/checkout' });
+  });
+
+  it('callbackUrl: open-redirect (//evil.com) отбрасывается → только email', () => {
+    const token = signPending('user@example.com', '//evil.com');
+    expect(parsePending(token)).toEqual({ email: 'user@example.com' });
+  });
+
+  it('callbackUrl: домой (/) не сохраняется как cb → только email', () => {
+    const token = signPending('user@example.com', '/');
+    expect(parsePending(token)).toEqual({ email: 'user@example.com' });
   });
 });
