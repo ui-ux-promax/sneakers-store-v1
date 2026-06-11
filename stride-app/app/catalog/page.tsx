@@ -6,6 +6,7 @@ import { getWishlistProductIds } from '@/lib/wishlist';
 import { wishlistCookieName } from '@/lib/wishlist-cookie';
 import { ProductCard } from '@/components/shared/product-card';
 import { FilterSidebar } from '@/components/shared/catalog/filter-sidebar';
+import { MobileFilterDrawer } from '@/components/shared/catalog/mobile-filter-drawer';
 import { SortSelect } from '@/components/shared/catalog/sort-select';
 import { ActiveFilterChips } from '@/components/shared/catalog/active-filter-chips';
 import { Pagination } from '@/components/shared/catalog/pagination';
@@ -24,10 +25,13 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   return (
     <div className="mx-auto max-w-[1240px] px-4 sm:px-6 pt-8">
       <h1 className="font-display font-bold text-[28px] sm:text-[40px] mb-6">Каталог</h1>
-      <div className="grid lg:grid-cols-[260px_1fr] gap-6 lg:gap-8">
+      <div className="grid md:grid-cols-[240px_1fr] gap-6 lg:gap-8 items-start">
         <FilterSidebar facets={facets} />
         <div>
-          <div className="flex items-center gap-3 mb-4">
+          {/* Тулбар — sticky под хедером на телефоне (glassmorphism как у шапки), чтобы кнопка
+              «Фильтры» была всегда на виду при скролле. С md+ статичный, фильтр в инлайн-сайдбаре. */}
+          <div className="sticky top-16 z-30 -mx-4 sm:-mx-6 md:mx-0 px-4 sm:px-6 md:px-0 py-2.5 md:py-0 mb-4 backdrop-blur-xl md:backdrop-blur-0 border-b border-line md:border-0 md:static flex items-center gap-3">
+            <Suspense><MobileFilterDrawer facets={facets} total={total} /></Suspense>
             <p className="text-sm text-ink-muted hidden sm:block">Найдено <span className="font-semibold text-ink tnum">{total}</span></p>
             <div className="flex-1" />
             <Suspense><SortSelect /></Suspense>

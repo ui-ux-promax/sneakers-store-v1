@@ -9,7 +9,7 @@ export function OrderSummary({ totalAmount, count }: { totalAmount: number; coun
   const freeShipping = remaining === 0;
   return (
     <aside>
-      <div className="sticky bottom-0 md:static rounded-t-2xl border-t border-line md:rounded-2xl md:border bg-surface p-5 space-y-4">
+      <div className="sticky bottom-0 md:static rounded-2xl border border-line bg-surface p-5 space-y-4">
         <h2 className="font-display font-bold text-xl">Итого</h2>
 
         <div className="space-y-2 text-sm border-t border-line pt-4">
