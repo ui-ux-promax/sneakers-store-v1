@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { MainNav } from './main-nav';
 import { MobileNav } from './mobile-nav';
@@ -11,7 +12,9 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 glass-header">
       <div className="mx-auto max-w-[1240px] px-4 sm:px-6">
         <div className="relative flex items-center gap-4 h-16">
-          <MobileNav />
+          <Suspense fallback={<div className="md:hidden w-10 h-10 -ml-2" aria-hidden />}>
+            <MobileNav />
+          </Suspense>
           <Link href="/" className="flex items-center gap-2" aria-label="STRIDE — на главную">
             <span className="grid place-items-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-display font-bold text-sm">S</span>
             <span className="font-display font-bold text-lg tracking-tight">STRIDE</span>
