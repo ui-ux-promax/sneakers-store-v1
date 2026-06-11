@@ -20,7 +20,7 @@ export function ProductGallery({
 }) {
   const [active, setActive] = useState(0);
   const [open, setOpen] = useState(false);
-  if (!images.length) return <div className="rounded-[24px] border border-line bg-surface-soft aspect-[4/3] grid place-items-center text-ink-muted">нет фото</div>;
+  if (!images.length) return <div className="rounded-[24px] border border-line bg-surface-soft aspect-square grid place-items-center text-ink-muted">нет фото</div>;
   const idx = Math.min(active, images.length - 1);
   const main = images[idx];
   const multi = images.length > 1;
@@ -37,7 +37,7 @@ export function ProductGallery({
           ))}
         </div>
       )}
-      <figure className={cn('relative flex-1 min-w-0 rounded-[24px] border border-line bg-surface-soft overflow-hidden aspect-[4/3]')}>
+      <figure className={cn('relative flex-1 min-w-0 rounded-[24px] border border-line bg-surface-soft overflow-hidden aspect-square')}>
         {/* бейджи поверх главного кадра, слева сверху */}
         {(isNew || discountPct != null) && (
           <div className="absolute top-4 left-4 z-10 flex flex-col items-start gap-1.5">
@@ -98,7 +98,7 @@ export function ProductGallery({
             </Dialog.Content>
           </Dialog.Portal>
         </Dialog.Root>
-        <Image src={main.url} alt={main.alt || productName} fill className="object-contain p-6" priority />
+        <Image src={main.url} alt={main.alt || productName} fill className="object-contain" sizes="(min-width: 640px) 560px, 100vw" priority />
       </figure>
     </div>
   );
