@@ -25,7 +25,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   return (
     <div className="mx-auto max-w-[1240px] px-4 sm:px-6 pt-8">
       <h1 className="font-display font-bold text-[28px] sm:text-[40px] mb-6">Каталог</h1>
-      <div className="grid md:grid-cols-[240px_1fr] gap-6 lg:gap-8 items-start">
+      <div className="grid md:grid-cols-[240px_1fr] gap-6 lg:gap-8">
         <FilterSidebar facets={facets} />
         <div>
           {/* Тулбар — sticky под хедером на телефоне (glassmorphism как у шапки), чтобы кнопка
