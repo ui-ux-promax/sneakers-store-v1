@@ -100,7 +100,7 @@ export default async function OrderPage({ params }: { params: Promise<{ number: 
               {it.imageUrl && <Image src={it.imageUrl} alt={it.productName} fill sizes="64px" className="object-cover" />}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-medium">{it.productName}</p>
+              <Link href={`/product/${it.productVariant.colorway.product.slug}`} className="font-medium hover:underline underline-offset-2">{it.productName}</Link>
               <p className="text-ink-muted">{it.colorwayName} · {it.sizeEu} · {it.quantity} шт.</p>
             </div>
             <span className="font-semibold tnum shrink-0">{formatPrice(it.lineTotal)}</span>
