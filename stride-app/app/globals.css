@@ -192,3 +192,18 @@
   .prose a:hover { color: hsl(var(--color-text-muted)); }
   .prose strong { font-weight: 600; }
 }
+
+/* Radix scroll-lock (react-remove-scroll) ставит `overflow: hidden !important`
+   на body[data-scroll-locked], пока открыт Dialog (мобильное меню, фильтры,
+   галерея, verification-gate). `hidden` делает body scroll-контейнером, из-за
+   чего sticky site-header перепривязывается к началу документа и уезжает вверх
+   на величину прокрутки — баг виден только когда страница уже проскроллена.
+   `clip` обрезает тот же overflow, НЕ создавая scroll-контейнер, поэтому
+   sticky-хэдер остаётся на месте; фон при этом держит залоченным JS-перехват
+   wheel/touchmove у Radix (он не зависит от overflow). `html body[…]` даёт
+   специфичность (0,1,2) > радиксовской (0,1,1), чтобы перебить её !important.
+   Вне @layer — иначе Tailwind v3 может вырезать этот атрибутный селектор при
+   tree-shaking слоя components. */
+html body[data-scroll-locked] {
+  overflow: clip !important;
+}
