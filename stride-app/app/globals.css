@@ -207,3 +207,64 @@
 html body[data-scroll-locked] {
   overflow: clip !important;
 }
+
+/* ===== Admin panel theme (Phase 3.0) — scoped to .admin-root, не влияет на storefront ===== */
+@layer base {
+  .admin-root {
+    /* light (admin-main.html) */
+    --admin-bg: #ffffff;
+    --admin-surface: #ffffff;
+    --admin-surface-low: #f8f9fb;
+    --admin-surface-container: #f3f4f6;
+    --admin-surface-high: #e5e7eb;
+    --admin-on-bg: #111827;
+    --admin-on-surface: #111827;
+    --admin-on-surface-variant: #6b7280;
+    --admin-primary: #b2f700;          /* electric-lime accent */
+    --admin-on-primary: #131f00;
+    --admin-secondary-container: #f3e8ff;
+    --admin-on-secondary-container: #3b0764;
+    --admin-error: #ef4444;
+    --admin-on-error: #ffffff;
+    --admin-outline: #d1d5db;
+    --admin-outline-variant: #e5e7eb;
+
+    background: var(--admin-bg);   /* перекрывает lime-градиент body */
+    color: var(--admin-on-bg);
+    min-height: 100vh;
+  }
+  .admin-root.dark {
+    /* dark (admin-main-dark.html) */
+    --admin-bg: #131313;
+    --admin-surface: #131313;
+    --admin-surface-low: #1c1b1b;
+    --admin-surface-container: #201f1f;
+    --admin-surface-high: #2a2a2a;
+    --admin-on-bg: #e5e2e1;
+    --admin-on-surface: #e5e2e1;
+    --admin-on-surface-variant: #c2caad;
+    --admin-primary: #b2f700;
+    --admin-on-primary: #243600;
+    --admin-secondary-container: #563f71;
+    --admin-on-secondary-container: #c9ade7;
+    --admin-error: #ffb4ab;
+    --admin-on-error: #690005;
+    --admin-outline: #8c9479;
+    --admin-outline-variant: #424a33;
+  }
+  /* перебивает глобальный `* { border-color }` внутри админки */
+  .admin-root *, .admin-root *::before, .admin-root *::after {
+    border-color: var(--admin-outline-variant);
+  }
+  /* Material Symbols (иконки админки) */
+  .admin-root .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal; font-style: normal; line-height: 1;
+    letter-spacing: normal; text-transform: none; display: inline-block;
+    white-space: nowrap; word-wrap: normal; direction: ltr;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+  .admin-root .material-symbols-outlined.fill {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+}

@@ -1,0 +1,39 @@
+/**
+ * Layout для маршрутной группы (admin).
+ * SERVER component — можно использовать async/await, cookies(), requireAdminPage().
+ * Не содержит <html>/<body> — они принадлежат корневому layout.tsx.
+ */
+
+import type { ReactNode } from 'react';
+import { cookies } from 'next/headers';
+import { requireAdminPage } from '@/lib/admin/require-admin';
+import { AdminShell } from '@/components/admin/admin-shell';
+import { cn } from '@/lib/utils';
+
+export const metadata = {
+  title: {
+    default: 'Админка · STRIDE',
+    template: '%s · Админка',
+  },
+};
+
+export default async function AdminLayout({ children }: { children: ReactNode }) {
+  // Гейт: перенаправляет не-админов до рендера — получаем сессию
+  const session = await requireAdminPage();
+
+  // Читаем cookie темы, установленную ThemeToggle на клиенте
+  // В Next 15 cookies() — асинхронная функция
+  const cookieStore = await cookies();
+  const isDark = cookieStore.get('admin-theme')?.value === 'dark';
+
+  return (
+    <div className={cn('admin-root', isDark && 'dark', 'font-admin-body min-h-screen')}>
+      {/* Material Symbols icon font — нужен только в админке, поэтому здесь, а не в корне */}
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
+      />
+      <AdminShell user={session.user}>{children}</AdminShell>
+    </div>
+  );
+}

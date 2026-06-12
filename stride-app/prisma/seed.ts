@@ -1,6 +1,7 @@
 import { prisma } from '../lib/prisma-client';
 import { categories, products } from './seed-data';
 import { productDenormFromColorways } from '../lib/product-aggregates';
+import { upsertAdmin } from './seed-admin';
 
 // Neon HTTP-адаптер НЕ поддерживает транзакции. Поэтому НЕ используем createMany /
 // вложенные create / $transaction. Каждая запись — одиночный upsert
@@ -143,6 +144,18 @@ async function up() {
     });
   }
   console.log(`Seeded ${demoReviews.length} reviews`);
+
+  // --- Admin foundation (3.0): идемпотентный ADMIN-апсерт (общая логика с seed-admin.ts) ---
+  // На demo/preview-сиде удобно завести админа сразу. Для прод-бута без сноса каталога
+  // есть отдельный безопасный путь — prisma/seed-admin.ts (npm run prisma:seed-admin).
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (adminEmail && adminPassword) {
+    const email = await upsertAdmin(prisma, adminEmail, adminPassword);
+    console.log(`Seeded ADMIN user: ${email}`);
+  } else {
+    console.log('ADMIN_EMAIL/ADMIN_PASSWORD не заданы — пропускаю admin-сид');
+  }
 }
 
 async function main() {
