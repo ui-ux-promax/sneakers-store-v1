@@ -1,6 +1,7 @@
 import { prisma } from '../lib/prisma-client';
 import { categories, products } from './seed-data';
 import { productDenormFromColorways } from '../lib/product-aggregates';
+import { hashPassword } from '../lib/password';
 
 // Neon HTTP-адаптер НЕ поддерживает транзакции. Поэтому НЕ используем createMany /
 // вложенные create / $transaction. Каждая запись — одиночный upsert
@@ -143,6 +144,26 @@ async function up() {
     });
   }
   console.log(`Seeded ${demoReviews.length} reviews`);
+
+  // --- Admin foundation (3.0): идемпотентный ADMIN-апсерт, только в CI ---
+  // Создаём/чиним учётку администратора из ADMIN_EMAIL/ADMIN_PASSWORD (CI-секреты).
+  // emailVerified проставляем сразу — иначе hard-gate входа (lib/auth-credentials)
+  // не пустит. Поле пароля — passwordHash (argon2), НЕ password. down() не трогает
+  // User, поэтому админ переживает пере-сид.
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (adminEmail && adminPassword) {
+    const passwordHash = await hashPassword(adminPassword);
+    const email = adminEmail.trim().toLowerCase();
+    await prisma.user.upsert({
+      where: { email },
+      update: { role: 'ADMIN', passwordHash, emailVerified: new Date() },
+      create: { email, name: 'Store Admin', role: 'ADMIN', passwordHash, emailVerified: new Date() },
+    });
+    console.log(`Seeded ADMIN user: ${email}`);
+  } else {
+    console.log('ADMIN_EMAIL/ADMIN_PASSWORD не заданы — пропускаю admin-сид');
+  }
 }
 
 async function main() {

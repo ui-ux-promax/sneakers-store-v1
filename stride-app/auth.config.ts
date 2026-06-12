@@ -60,6 +60,13 @@ export default {
         return Response.redirect(new URL('/profile', nextUrl));
       }
 
+      // Админка: только ADMIN. Edge-safe — читаем роль из токена, без prisma.
+      if (path === '/admin' || path.startsWith('/admin/')) {
+        if (!isLoggedIn) return false;                 // Auth.js уведёт на signIn (/login)
+        if (auth!.user.role !== 'ADMIN') return Response.redirect(new URL('/', nextUrl));
+        return true;
+      }
+
       const isProtected =
         path.startsWith('/profile') ||
         path.startsWith('/checkout') ||
