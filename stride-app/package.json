@@ -16,7 +16,7 @@
     "prisma:push": "prisma db push",
     "prisma:studio": "prisma studio",
     "prisma:seed": "prisma db seed",
-    "prisma:seed-admin": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed-admin.ts",
+    "prisma:seed-admin": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed-admin.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {
