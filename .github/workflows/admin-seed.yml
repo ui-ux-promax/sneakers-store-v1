@@ -1,0 +1,37 @@
+name: admin-seed
+
+# Завести/обновить ADMIN-учётку в Neon с Ubuntu-раннера — БЕЗ truncate каталога
+# (в отличие от полного prisma:seed). Безопасно для прод-БД.
+# Запуск вручную: вкладка Actions → «admin-seed» → Run workflow.
+# Нужны секреты: ADMIN_EMAIL, ADMIN_PASSWORD + POSTGRES_URL(_NON_POOLING).
+# Чтобы нацелить на прод — временно укажи прод-строки в POSTGRES_URL секретах.
+on:
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: stride-app
+
+jobs:
+  seed-admin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING }}
+      ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: stride-app/package-lock.json
+
+      # postinstall → prisma generate (без подключения к БД).
+      - run: npm ci
+
+      # Идемпотентный upsert ADMIN. Падает, если ADMIN_EMAIL/ADMIN_PASSWORD не заданы.
+      - run: npm run prisma:seed-admin
