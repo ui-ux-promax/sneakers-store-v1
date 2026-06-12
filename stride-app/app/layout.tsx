@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
-import { Unbounded, Manrope } from 'next/font/google';
+import { Unbounded, Manrope, Anybody } from 'next/font/google';
 import './globals.css';
-import { PromoTopBar } from '@/components/shared/promo-top-bar';
-import { SiteHeader } from '@/components/shared/site-header';
-import { SiteFooter } from '@/components/shared/site-footer';
-import { VerificationGateHost } from '@/components/shared/auth/verification-gate-host';
 
+// Root layout: только <html>/<body> + шрифты. Storefront-chrome живёт в
+// app/(shop)/layout.tsx, admin-shell — в app/(admin)/layout.tsx. Это
+// единственный layout, который рендерит <html> (требование App Router).
 const manrope = Manrope({ subsets: ['latin', 'cyrillic'], variable: '--font-manrope', weight: ['400', '500', '600', '700'], display: 'swap' });
 const unbounded = Unbounded({ subsets: ['latin'], variable: '--font-unbounded', weight: ['600', '700'], display: 'swap' });
+// Anybody — заголовки админки (см. app/(admin)). На storefront не используется.
+const anybody = Anybody({ subsets: ['latin'], variable: '--font-anybody', weight: ['600', '700', '800'], display: 'swap' });
 
 export const metadata: Metadata = {
   title: { default: 'STRIDE — кроссовки', template: '%s · STRIDE' },
@@ -16,14 +17,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru" className={`${manrope.variable} ${unbounded.variable}`}>
-      <body className="font-sans">
-        <PromoTopBar />
-        <SiteHeader />
-        <main>{children}</main>
-        <SiteFooter />
-        <VerificationGateHost />
-      </body>
+    <html lang="ru" className={`${manrope.variable} ${unbounded.variable} ${anybody.variable}`}>
+      <body className="font-sans">{children}</body>
     </html>
   );
 }
