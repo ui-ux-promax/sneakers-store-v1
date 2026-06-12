@@ -75,4 +75,12 @@ describe('POST /api/admin/media/sign', () => {
     const body = await res.json();
     expect(body.folder).toBe('stride/uploads');
   });
+
+  it('ADMIN + stride/categories folder → 200 (3.2 consumer)', async () => {
+    authMock.mockResolvedValue({ user: { role: 'ADMIN' } });
+    const res = await POST(req({ folder: 'stride/categories' }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.folder).toBe('stride/categories');
+  });
 });

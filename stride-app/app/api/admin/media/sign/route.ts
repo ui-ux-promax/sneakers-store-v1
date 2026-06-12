@@ -6,7 +6,7 @@ import { isCloudinaryConfigured, getCloudinaryEnv } from '@/lib/cloudinary/confi
 import { buildUploadSignature } from '@/lib/cloudinary/sign';
 
 // Folders the admin may sign uploads into. Consumers (3.2/3.3) extend this list.
-const ALLOWED_FOLDERS = ['stride/uploads'] as const;
+const ALLOWED_FOLDERS = ['stride/uploads', 'stride/categories'] as const;
 const DEFAULT_FOLDER = 'stride/uploads';
 
 const bodySchema = z.object({ folder: z.string().optional() });
