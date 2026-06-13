@@ -7,6 +7,14 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { Button } from '@/components/admin/ui/button';
 import { Icon } from '@/components/admin/icon';
 import { AlertModal } from '@/components/admin/ui/alert-modal';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/admin/ui/dialog';
 import { deleteCategory, moveCategory } from '@/app/actions/admin/categories';
 
 export interface CategoryRow {
@@ -23,37 +31,45 @@ export function CategoryTable({ rows }: { rows: CategoryRow[] }) {
   const [pending, setPending] = React.useState<string | null>(null);
   const [toDelete, setToDelete] = React.useState<CategoryRow | null>(null);
   const [deleting, setDeleting] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  // Сообщение-блокировка показывается в отдельной модалке (категория с товарами / ошибка действия).
+  const [blockMsg, setBlockMsg] = React.useState<string | null>(null);
 
   async function handleMove(id: string, dir: 'up' | 'down') {
     setPending(id);
-    setError(null);
     const res = await moveCategory(id, dir);
     if (!res.ok) {
-      setError(res.error);
+      setBlockMsg(res.error);
     } else {
       router.refresh();
     }
     setPending(null);
   }
 
+  // Клик «Удалить»: категория с товарами — сразу модалка-блок (без confirm); иначе — confirm.
+  function requestDelete(row: CategoryRow) {
+    if (row.productCount > 0) {
+      setBlockMsg(`«${row.name}»: сначала перенесите или удалите ${row.productCount} товаров.`);
+      return;
+    }
+    setToDelete(row);
+  }
+
   async function handleDelete() {
     if (!toDelete) return;
     setDeleting(true);
-    setError(null);
     const res = await deleteCategory(toDelete.id);
     setDeleting(false);
+    setToDelete(null);
     if (!res.ok) {
-      setError(res.error);
+      // Серверный guard — источник истины (на случай гонки, если товар добавили после рендера).
+      setBlockMsg(res.error);
     } else {
       router.refresh();
     }
-    setToDelete(null);
   }
 
   return (
     <div className="space-y-3">
-      {error && <p className="text-sm text-admin-error">{error}</p>}
       <div className="bg-admin-surface border border-admin-outline-variant rounded-xl overflow-hidden">
         <Table>
           <TableHeader>
@@ -107,7 +123,7 @@ export function CategoryTable({ rows }: { rows: CategoryRow[] }) {
                     <Button asChild variant="ghost" size="sm">
                       <Link href={`/admin/catalog/${row.id}/edit`}>Изменить</Link>
                     </Button>
-                    <Button variant="danger" size="sm" onClick={() => setToDelete(row)}>
+                    <Button variant="danger" size="sm" onClick={() => requestDelete(row)}>
                       Удалить
                     </Button>
                   </div>
@@ -126,6 +142,20 @@ export function CategoryTable({ rows }: { rows: CategoryRow[] }) {
         title="Удалить категорию?"
         description={toDelete ? `«${toDelete.name}» будет удалена безвозвратно.` : undefined}
       />
+
+      <Dialog open={blockMsg !== null} onOpenChange={(open) => !open && setBlockMsg(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Нельзя удалить категорию</DialogTitle>
+            <DialogDescription>{blockMsg}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="pt-2">
+            <Button variant="outline" onClick={() => setBlockMsg(null)}>
+              Понятно
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
