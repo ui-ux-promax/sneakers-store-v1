@@ -65,8 +65,15 @@ SelectScrollDownButton.displayName = SelectPrimitive.ScrollDownButton.displayNam
 const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
->(({ className, children, position = 'popper', ...props }, ref) => (
-  <SelectPrimitive.Portal>
+>(({ className, children, position = 'popper', ...props }, ref) => {
+  // Radix порталит в document.body — вне .admin-root, где живут admin CSS-переменные.
+  // Без контейнера var(--admin-surface) не резолвится → прозрачная выпадашка. Порталим в .admin-root.
+  const [container, setContainer] = React.useState<HTMLElement | null>(null);
+  React.useEffect(() => {
+    setContainer(document.querySelector<HTMLElement>('.admin-root'));
+  }, []);
+  return (
+  <SelectPrimitive.Portal container={container ?? undefined}>
     <SelectPrimitive.Content
       ref={ref}
       position={position}
@@ -96,7 +103,8 @@ const SelectContent = React.forwardRef<
       <SelectScrollDownButton />
     </SelectPrimitive.Content>
   </SelectPrimitive.Portal>
-));
+  );
+});
 SelectContent.displayName = SelectPrimitive.Content.displayName;
 
 const SelectLabel = React.forwardRef<

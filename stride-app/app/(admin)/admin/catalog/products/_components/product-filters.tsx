@@ -24,8 +24,8 @@ const STATUSES = [
 ];
 const ALL = '__all__';
 
-// Триггер селекта в стиле прототипа: rounded-xl, увеличенный паддинг.
-const TRIGGER = 'rounded-xl h-auto py-2.5';
+// Триггер селекта в стиле прототипа: пилюля (rounded-full), увеличенный паддинг.
+const TRIGGER = 'rounded-full h-auto px-5 py-2.5';
 
 export function ProductFilters({ options }: { options: ProductFilterOptions }) {
   const router = useRouter();
@@ -47,7 +47,7 @@ export function ProductFilters({ options }: { options: ProductFilterOptions }) {
           className="absolute left-3 top-1/2 -translate-y-1/2 text-admin-on-surface-variant text-[20px] pointer-events-none"
         />
         <Input
-          className="pl-10 rounded-xl py-2.5 h-auto"
+          className="pl-10 pr-4 rounded-full py-2.5 h-auto"
           placeholder="Поиск товаров…"
           defaultValue={params.get('q') ?? ''}
           onKeyDown={(e) => {

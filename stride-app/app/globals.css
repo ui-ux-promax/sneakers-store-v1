@@ -212,7 +212,7 @@ html body[data-scroll-locked] {
 @layer base {
   .admin-root {
     /* light (admin-main.html) */
-    --admin-bg: #ffffff;
+    --admin-bg: #f7f8f4;
     --admin-surface: #ffffff;
     --admin-surface-low: #f8f9fb;
     --admin-surface-container: #f3f4f6;
