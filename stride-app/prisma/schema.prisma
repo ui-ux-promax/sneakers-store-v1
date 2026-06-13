@@ -20,8 +20,9 @@ model Category {
   name       String
   slug       String    @unique
   tagline    String?
-  coverImage String?
-  sortOrder  Int       @default(0)
+  coverImage         String?
+  coverImagePublicId String?
+  sortOrder          Int       @default(0)
   products   Product[]
 
   @@index([sortOrder])
