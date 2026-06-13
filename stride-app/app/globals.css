@@ -233,6 +233,12 @@ html body[data-scroll-locked] {
     color: var(--admin-on-bg);
     min-height: 100vh;
   }
+  /* На admin-страницах скроллит main, а не документ (модель прототипа): убираем скролл body.
+     Иначе получаем два скроллбара + при открытии Radix-поповеров react-remove-scroll
+     сдвигает контент и проступает lime-полоса body. :has() не трогает витрину. */
+  body:has(.admin-root) {
+    overflow: hidden;
+  }
   .admin-root.dark {
     /* dark (admin-main-dark.html) */
     --admin-bg: #131313;
