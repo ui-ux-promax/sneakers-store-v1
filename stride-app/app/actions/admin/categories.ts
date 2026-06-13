@@ -10,7 +10,7 @@ import { categorySchema } from '@/services/dto/category.dto';
 
 export type CategoryActionResult = { ok: true } | { ok: false; error: string };
 
-const LIST_PATH = '/admin/catalog';
+const LIST_PATH = '/admin/catalog/categories';
 
 // Нормализация формы: пустой slug → derive из name; пустые строки → undefined.
 function normalize(raw: unknown) {

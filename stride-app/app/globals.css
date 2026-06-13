@@ -212,7 +212,7 @@ html body[data-scroll-locked] {
 @layer base {
   .admin-root {
     /* light (admin-main.html) */
-    --admin-bg: #ffffff;
+    --admin-bg: #f7f8f4;
     --admin-surface: #ffffff;
     --admin-surface-low: #f8f9fb;
     --admin-surface-container: #f3f4f6;
@@ -232,6 +232,14 @@ html body[data-scroll-locked] {
     background: var(--admin-bg);   /* перекрывает lime-градиент body */
     color: var(--admin-on-bg);
     min-height: 100vh;
+  }
+  /* На admin-страницах скроллит main, а не документ (модель прототипа): глушим скролл
+     И html (documentElement — на нём обычно вьюпорт-скроллбар), И body. Иначе два скроллбара
+     + при открытии Radix-поповеров react-remove-scroll сдвигает контент и видна lime-полоса.
+     :has() не трогает витрину (там нет .admin-root). */
+  html:has(.admin-root),
+  body:has(.admin-root) {
+    overflow: hidden;
   }
   .admin-root.dark {
     /* dark (admin-main-dark.html) */

@@ -121,7 +121,7 @@ export function CategoryTable({ rows }: { rows: CategoryRow[] }) {
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button asChild variant="ghost" size="sm">
-                      <Link href={`/admin/catalog/${row.id}/edit`}>Изменить</Link>
+                      <Link href={`/admin/catalog/categories/${row.id}/edit`}>Изменить</Link>
                     </Button>
                     <Button variant="danger" size="sm" onClick={() => requestDelete(row)}>
                       Удалить

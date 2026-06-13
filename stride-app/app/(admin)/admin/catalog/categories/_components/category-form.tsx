@@ -61,7 +61,7 @@ export function CategoryForm({ initial }: { initial?: CategoryFormInitial }) {
       setServerError(res.error);
       return;
     }
-    router.push('/admin/catalog');
+    router.push('/admin/catalog/categories');
   }
 
   return (
