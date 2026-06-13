@@ -5,9 +5,7 @@ import { Button } from '@/components/admin/ui/button';
 import { Input } from '@/components/admin/ui/input';
 import { Switch } from '@/components/admin/ui/switch';
 import { Icon } from '@/components/admin/icon';
-import type {
-  Control, UseFieldArrayReturn, UseFormRegister, UseFormSetValue, UseFormGetValues, FieldValues,
-} from 'react-hook-form';
+import { useWatch, type Control, type UseFieldArrayReturn, type UseFormRegister, type UseFormSetValue, type UseFormGetValues, type FieldValues } from 'react-hook-form';
 import { suggestSku } from '@/lib/sku';
 
 // Размерный грид по умолчанию: 35.0 … 48.0 с шагом 0.5
@@ -28,9 +26,11 @@ export interface VariantMatrixProps {
   referencedVariantIds: Set<string>; // variants, удаление которых заблокировано (в заказах)
 }
 
-export function VariantMatrix({ ci, register, fieldArray, setValue, getValues, referencedVariantIds }: VariantMatrixProps) {
+export function VariantMatrix({ ci, control, register, fieldArray, setValue, getValues, referencedVariantIds }: VariantMatrixProps) {
   const { fields, append, remove } = fieldArray;
   const base = `colorways.${ci}.variants` as const;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const watchedVariants = (useWatch({ control, name: base }) as any[] | undefined) ?? [];
 
   function activeSizes(): Set<number> {
     const vs = (getValues(base) as { sizeEu: number }[]) ?? [];
@@ -101,11 +101,11 @@ export function VariantMatrix({ ci, register, fieldArray, setValue, getValues, r
                   <span className="text-sm text-admin-on-surface-variant">{String(row.sizeEu)}</span>
                   <Input placeholder="SKU" {...register(`${base}.${i}.sku`)} />
                   <Input type="number" placeholder="Цена" {...register(`${base}.${i}.price`, { valueAsNumber: true })} />
-                  <Input type="number" placeholder="Старая цена" {...register(`${base}.${i}.compareAtPrice`, { valueAsNumber: true, setValueAs: (v) => (v === '' || Number.isNaN(v) ? null : Number(v)) })} />
+                  <Input type="number" placeholder="Старая цена" {...register(`${base}.${i}.compareAtPrice`, { setValueAs: (v) => (v === '' || v === null || Number.isNaN(Number(v)) ? null : Number(v)) })} />
                   <Input type="number" placeholder="Сток" {...register(`${base}.${i}.stock`, { valueAsNumber: true })} />
                   <Switch
-                    checked={(getValues(`${base}.${i}.active`) as boolean) ?? true}
-                    onCheckedChange={(c) => setValue(`${base}.${i}.active`, c)}
+                    checked={Boolean(watchedVariants[i]?.active ?? true)}
+                    onCheckedChange={(c) => setValue(`${base}.${i}.active`, c, { shouldDirty: true })}
                   />
                   <button
                     type="button"

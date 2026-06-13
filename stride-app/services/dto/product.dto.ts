@@ -66,6 +66,10 @@ export const productSchema = z
     colorways: z.array(colorwaySchema),
   })
   .superRefine((p, ctx) => {
+    const specKeys = p.specs.map((s) => s.key);
+    if (new Set(specKeys).size !== specKeys.length) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Характеристики: ключи не должны повторяться', path: ['specs'] });
+    }
     if (p.colorways.length > 0) {
       const defaults = p.colorways.filter((c) => c.isDefault).length;
       if (defaults !== 1) {

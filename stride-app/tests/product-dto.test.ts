@@ -64,4 +64,8 @@ describe('productSchema', () => {
   it('accepts specs as key/value entries', () => {
     expect(productSchema.safeParse({ ...base, specs: [{ key: 'Материал', value: 'Сетка' }] }).success).toBe(true);
   });
+
+  it('rejects duplicate spec keys', () => {
+    expect(productSchema.safeParse({ ...base, specs: [{ key: 'Материал', value: 'Сетка' }, { key: 'Материал', value: 'Кожа' }] }).success).toBe(false);
+  });
 });
