@@ -62,7 +62,6 @@ export function CategoryForm({ initial }: { initial?: CategoryFormInitial }) {
       return;
     }
     router.push('/admin/catalog');
-    router.refresh();
   }
 
   return (

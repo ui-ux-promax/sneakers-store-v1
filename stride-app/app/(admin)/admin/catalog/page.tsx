@@ -25,13 +25,9 @@ export default async function CatalogPage() {
     },
   });
 
-  const rows: CategoryRow[] = categories.map((c) => ({
-    id: c.id,
-    name: c.name,
-    slug: c.slug,
-    tagline: c.tagline,
-    coverImage: c.coverImage,
-    productCount: c._count.products,
+  const rows: CategoryRow[] = categories.map(({ _count, ...c }) => ({
+    ...c,
+    productCount: _count.products,
   }));
 
   return (

@@ -9,9 +9,9 @@ const RU_MAP: Record<string, string> = {
 /** name → url-safe slug: транслит кириллицы, lowercase, non-alnum → '-', схлопывание и trim дефисов. */
 export function slugify(input: string): string {
   const lower = input.trim().toLowerCase();
-  let out = '';
+  const chars: string[] = [];
   for (const ch of lower) {
-    out += RU_MAP[ch] !== undefined ? RU_MAP[ch] : ch;
+    chars.push(RU_MAP[ch] !== undefined ? RU_MAP[ch] : ch);
   }
-  return out.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return chars.join('').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }

@@ -29,9 +29,12 @@ export function CategoryTable({ rows }: { rows: CategoryRow[] }) {
     setPending(id);
     setError(null);
     const res = await moveCategory(id, dir);
-    if (!res.ok) setError(res.error);
+    if (!res.ok) {
+      setError(res.error);
+    } else {
+      router.refresh();
+    }
     setPending(null);
-    router.refresh();
   }
 
   async function handleDelete() {
