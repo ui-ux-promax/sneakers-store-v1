@@ -83,6 +83,7 @@ model ProductImage {
   colorwayId String
   colorway   ProductColorway @relation(fields: [colorwayId], references: [id], onDelete: Cascade)
   url        String
+  publicId   String?
   alt        String?
   sortOrder  Int             @default(0)
 
