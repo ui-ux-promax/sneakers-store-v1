@@ -27,7 +27,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const isDark = cookieStore.get('admin-theme')?.value === 'dark';
 
   return (
-    <div className={cn('admin-root', isDark && 'dark', 'font-admin-body min-h-screen')}>
+    <div className={cn('admin-root', isDark && 'dark', 'font-admin-body h-screen overflow-hidden')}>
       {/* Material Symbols icon font — нужен только в админке, поэтому здесь, а не в корне */}
       <link
         rel="stylesheet"

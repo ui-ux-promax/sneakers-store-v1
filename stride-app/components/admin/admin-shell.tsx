@@ -190,8 +190,8 @@ export function AdminShell({ user, children }: AdminShellProps) {
         {/* Правая сторона topbar зарезервирована для page-level actions (Phase 3.x) */}
       </header>
 
-      {/* ── Основной контент ─────────────────────────────────────────── */}
-      <main className="md:ml-[280px] pt-16 min-h-screen bg-admin-bg">
+      {/* ── Основной контент (скроллится сам, как в прототипе: body фиксирован) ─────── */}
+      <main className="md:ml-[280px] mt-16 h-[calc(100vh-4rem)] overflow-y-auto bg-admin-bg [scrollbar-gutter:stable]">
         <div className="max-w-[1440px] mx-auto p-8">{children}</div>
       </main>
     </>
