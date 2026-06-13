@@ -8,6 +8,7 @@ import type { ReactNode } from 'react';
 import { cookies } from 'next/headers';
 import { requireAdminPage } from '@/lib/admin/require-admin';
 import { AdminShell } from '@/components/admin/admin-shell';
+import { ScrollLock } from '@/components/admin/scroll-lock';
 import { cn } from '@/lib/utils';
 
 export const metadata = {
@@ -28,6 +29,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   return (
     <div className={cn('admin-root', isDark && 'dark', 'font-admin-body h-screen overflow-hidden')}>
+      <ScrollLock />
       {/* Material Symbols icon font — нужен только в админке, поэтому здесь, а не в корне */}
       <link
         rel="stylesheet"
