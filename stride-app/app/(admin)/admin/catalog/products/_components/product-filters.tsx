@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Input } from '@/components/admin/ui/input';
+import { Icon } from '@/components/admin/icon';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/admin/ui/select';
 
 export interface ProductFilterOptions {
@@ -17,11 +18,14 @@ const GENDERS = [
   { value: 'KIDS', label: 'Детские' },
 ];
 const STATUSES = [
-  { value: 'all', label: 'Все' },
+  { value: 'all', label: 'Все статусы' },
   { value: 'active', label: 'Активные' },
   { value: 'inactive', label: 'Черновики' },
 ];
 const ALL = '__all__';
+
+// Триггер селекта в стиле прототипа: rounded-xl, увеличенный паддинг.
+const TRIGGER = 'rounded-xl h-auto py-2.5';
 
 export function ProductFilters({ options }: { options: ProductFilterOptions }) {
   const router = useRouter();
@@ -36,39 +40,48 @@ export function ProductFilters({ options }: { options: ProductFilterOptions }) {
   }
 
   return (
-    <div className="flex flex-wrap gap-3 items-end">
-      <div className="w-64">
+    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="relative">
+        <Icon
+          name="search"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-admin-on-surface-variant text-[20px] pointer-events-none"
+        />
         <Input
-          placeholder="Поиск: название, slug, SKU"
+          className="pl-10 rounded-xl py-2.5 h-auto"
+          placeholder="Поиск товаров…"
           defaultValue={params.get('q') ?? ''}
           onKeyDown={(e) => {
             if (e.key === 'Enter') setParam('q', (e.target as HTMLInputElement).value.trim() || undefined);
           }}
         />
       </div>
-      <Select value={params.get('brand') ?? ALL} onValueChange={(v) => setParam('brand', v)}>
-        <SelectTrigger className="w-40"><SelectValue placeholder="Бренд" /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL}>Все бренды</SelectItem>
-          {options.brands.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
-        </SelectContent>
-      </Select>
-      <Select value={params.get('gender') ?? ALL} onValueChange={(v) => setParam('gender', v)}>
-        <SelectTrigger className="w-40"><SelectValue placeholder="Пол" /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL}>Любой пол</SelectItem>
-          {GENDERS.map((g) => <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>)}
-        </SelectContent>
-      </Select>
+
       <Select value={params.get('category') ?? ALL} onValueChange={(v) => setParam('category', v)}>
-        <SelectTrigger className="w-48"><SelectValue placeholder="Категория" /></SelectTrigger>
+        <SelectTrigger className={TRIGGER}><SelectValue placeholder="Все категории" /></SelectTrigger>
         <SelectContent>
           <SelectItem value={ALL}>Все категории</SelectItem>
           {options.categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
         </SelectContent>
       </Select>
+
+      <Select value={params.get('brand') ?? ALL} onValueChange={(v) => setParam('brand', v)}>
+        <SelectTrigger className={TRIGGER}><SelectValue placeholder="Все бренды" /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value={ALL}>Все бренды</SelectItem>
+          {options.brands.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+        </SelectContent>
+      </Select>
+
+      <Select value={params.get('gender') ?? ALL} onValueChange={(v) => setParam('gender', v)}>
+        <SelectTrigger className={TRIGGER}><SelectValue placeholder="Любой пол" /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value={ALL}>Любой пол</SelectItem>
+          {GENDERS.map((g) => <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>)}
+        </SelectContent>
+      </Select>
+
       <Select value={params.get('status') ?? 'all'} onValueChange={(v) => setParam('status', v)}>
-        <SelectTrigger className="w-40"><SelectValue placeholder="Статус" /></SelectTrigger>
+        <SelectTrigger className={TRIGGER}><SelectValue placeholder="Статус" /></SelectTrigger>
         <SelectContent>
           {STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
         </SelectContent>
