@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { PERIOD_VALUES, DEFAULT_PERIOD } from '@/lib/admin/analytics';
+import { PERIOD_VALUES, DEFAULT_PERIOD } from '@/lib/admin/analytics-config';
 
 const LABELS: Record<number, string> = { 7: '7 дней', 30: '30 дней', 90: '90 дней' };
 

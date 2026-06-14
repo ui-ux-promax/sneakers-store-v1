@@ -31,7 +31,7 @@ export function LowStock({ rows }: { rows: LowStockRow[] }) {
                 <div className="min-w-0">
                   <p className="font-bold text-admin-on-surface truncate">{row.productName}</p>
                   <p className="text-xs text-admin-on-surface-variant truncate">
-                    EU {row.sizeEu} · {row.sku}
+                    {row.colorwayName} · EU {row.sizeEu} · {row.sku}
                   </p>
                 </div>
                 <div className="text-right shrink-0">

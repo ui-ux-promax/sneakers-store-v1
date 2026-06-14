@@ -3,12 +3,11 @@ import { Prisma, type OrderStatus } from '@prisma/client';
 import { prisma as defaultPrisma } from '@/lib/prisma-client';
 import { ORDER_STATUS_META } from '@/lib/order';
 import { ORDER_STATUS_VALUES } from '@/lib/order-admin';
+import { PERIOD_VALUES, DEFAULT_PERIOD, type Period } from './analytics-config';
+
+export { PERIOD_VALUES, DEFAULT_PERIOD, type Period } from './analytics-config';
 
 // ─────────────────────────── Period ───────────────────────────
-
-export const PERIOD_VALUES = [7, 30, 90] as const;
-export type Period = (typeof PERIOD_VALUES)[number];
-export const DEFAULT_PERIOD: Period = 30;
 
 export type DateRange = { gte: Date; lt: Date };
 export type ResolvedPeriod = { days: Period; current: DateRange; previous: DateRange };
@@ -192,6 +191,12 @@ export async function getRevenueSeries(
   for (let t = range.current.gte.getTime(); t < range.current.lt.getTime(); t += DAY_MS) {
     const d = new Date(t);
     dayKeys.push({ key: MSK_DAY_KEY.format(d), label: MSK_DAY_LABEL.format(d) });
+  }
+  // Окно [gte, lt) не выравнено по MSK-полуночи → MSK-день самого lt (текущий частичный день)
+  // не попадает в цикл. Добавляем его, иначе сегодняшняя выручка молча теряется на графике.
+  const ltKey = MSK_DAY_KEY.format(range.current.lt);
+  if (!dayKeys.some((d) => d.key === ltKey)) {
+    dayKeys.push({ key: ltKey, label: MSK_DAY_LABEL.format(range.current.lt) });
   }
   return fillRevenueSeries(dayKeys, rows);
 }

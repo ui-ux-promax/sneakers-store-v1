@@ -103,7 +103,7 @@ describe('analytics pure core', () => {
   });
 });
 
-import { getKpis, getStatusDistribution, getLowStock } from '@/lib/admin/analytics';
+import { getKpis, getStatusDistribution, getLowStock, getRevenueSeries } from '@/lib/admin/analytics';
 import { prisma } from '@/lib/prisma-client';
 
 const p = prisma as unknown as {
@@ -173,5 +173,27 @@ describe('getLowStock', () => {
     const rows = await getLowStock(prisma as never);
     expect(rows[0]).toMatchObject({ id: 'v1', tier: 'critical', productName: 'Urban Flow', stock: 2 });
     expect(rows[1]).toMatchObject({ id: 'v2', tier: 'warning', productName: 'Cloud', stock: 7 });
+  });
+});
+
+describe('getRevenueSeries', () => {
+  it('returns a full daily series with zero-filled gaps, no lost or invented revenue', async () => {
+    vi.clearAllMocks();
+    const range = resolvePeriod({ period: '7' }, new Date('2026-06-14T12:00:00.000Z'));
+    // SQL returns one in-range day; every other day must be zero-filled.
+    p.$queryRaw.mockResolvedValue([{ day: '2026-06-10', revenue: 1234 }]);
+    const series = await getRevenueSeries(prisma as never, range);
+
+    // 7 full days [gte .. lt-1d] + the partial lt day → at least 7 entries.
+    expect(series.length).toBeGreaterThanOrEqual(7);
+    for (const point of series) {
+      expect(typeof point.label).toBe('string');
+      expect(typeof point.revenue).toBe('number');
+    }
+    // Zero-fill must neither lose nor invent revenue. 2026-06-10 is mid-window → its
+    // key is generated, so the single mocked row is the entire series total.
+    const total = series.reduce((sum, point) => sum + point.revenue, 0);
+    expect(total).toBe(1234);
+    expect(series.filter((point) => point.revenue !== 0)).toHaveLength(1);
   });
 });
