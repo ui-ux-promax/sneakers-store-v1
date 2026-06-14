@@ -1,4 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+vi.mock('@/lib/prisma-client', () => {
+  const prisma = {
+    order: { aggregate: vi.fn(), count: vi.fn(), groupBy: vi.fn(), findMany: vi.fn() },
+    user: { count: vi.fn() },
+    productVariant: { findMany: vi.fn() },
+    product: { findMany: vi.fn() },
+    $queryRaw: vi.fn(),
+  };
+  return { prisma };
+});
+
 import {
   PERIOD_VALUES,
   DEFAULT_PERIOD,
@@ -88,5 +100,78 @@ describe('analytics pure core', () => {
         { label: '14.06', revenue: 900 },
       ]);
     });
+  });
+});
+
+import { getKpis, getStatusDistribution, getLowStock } from '@/lib/admin/analytics';
+import { prisma } from '@/lib/prisma-client';
+
+const p = prisma as unknown as {
+  order: Record<string, ReturnType<typeof vi.fn>>;
+  user: Record<string, ReturnType<typeof vi.fn>>;
+  productVariant: Record<string, ReturnType<typeof vi.fn>>;
+  product: Record<string, ReturnType<typeof vi.fn>>;
+  $queryRaw: ReturnType<typeof vi.fn>;
+};
+
+const RANGE = resolvePeriod({ period: '30' }, new Date('2026-06-14T12:00:00.000Z'));
+
+describe('getKpis', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // 2 calls each (current, previous) for revenue/orders/newCustomers; $queryRaw for units.
+    p.order.aggregate.mockResolvedValueOnce({ _sum: { totalAmount: 100000 } }) // rev current
+      .mockResolvedValueOnce({ _sum: { totalAmount: 80000 } });                // rev previous
+    p.order.count.mockResolvedValueOnce(50).mockResolvedValueOnce(40);         // orders cur/prev
+    p.user.count.mockResolvedValueOnce(12).mockResolvedValueOnce(10);          // customers cur/prev
+    p.$queryRaw.mockResolvedValueOnce([{ units: 200 }]).mockResolvedValueOnce([{ units: 150 }]); // units cur/prev
+  });
+
+  it('computes the five KPIs with trends', async () => {
+    const k = await getKpis(prisma as never, RANGE);
+    expect(k.revenue.value).toBe(100000);
+    expect(k.revenue.trend).toEqual({ pct: 25, dir: 'up' });
+    expect(k.orders.value).toBe(50);
+    expect(k.avgOrder.value).toBe(2000); // round(100000/50)
+    expect(k.newCustomers.value).toBe(12);
+    expect(k.unitsSold.value).toBe(200);
+  });
+
+  it('avgOrder is 0 when there are no orders (no div-by-zero)', async () => {
+    vi.resetAllMocks();
+    p.order.aggregate.mockResolvedValue({ _sum: { totalAmount: 0 } });
+    p.order.count.mockResolvedValue(0);
+    p.user.count.mockResolvedValue(0);
+    p.$queryRaw.mockResolvedValue([{ units: 0 }]);
+    const k = await getKpis(prisma as never, RANGE);
+    expect(k.avgOrder.value).toBe(0);
+  });
+});
+
+describe('getStatusDistribution', () => {
+  it('maps groupBy rows to labels + total (all-time)', async () => {
+    vi.clearAllMocks();
+    p.order.groupBy.mockResolvedValue([
+      { status: 'DELIVERED', _count: { _all: 6 } },
+      { status: 'PENDING', _count: { _all: 2 } },
+    ]);
+    const d = await getStatusDistribution(prisma as never);
+    expect(d.total).toBe(8);
+    const delivered = d.segments.find((s) => s.status === 'DELIVERED');
+    expect(delivered?.count).toBe(6);
+    expect(delivered?.label).toMatch(/достав/i);
+  });
+});
+
+describe('getLowStock', () => {
+  it('classifies tier by stock and shapes rows', async () => {
+    vi.clearAllMocks();
+    p.productVariant.findMany.mockResolvedValue([
+      { id: 'v1', stock: 2, sku: 'A-1', sizeEu: '42', colorway: { name: 'Black', product: { name: 'Urban Flow' } } },
+      { id: 'v2', stock: 7, sku: 'B-2', sizeEu: '38', colorway: { name: 'White', product: { name: 'Cloud' } } },
+    ]);
+    const rows = await getLowStock(prisma as never);
+    expect(rows[0]).toMatchObject({ id: 'v1', tier: 'critical', productName: 'Urban Flow', stock: 2 });
+    expect(rows[1]).toMatchObject({ id: 'v2', tier: 'warning', productName: 'Cloud', stock: 7 });
   });
 });
