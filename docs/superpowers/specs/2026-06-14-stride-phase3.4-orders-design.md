@@ -119,9 +119,10 @@ Neon WebSocket-адаптером (AGENTS.md §3).
 - Парс: `parsePaginationParams`, `readSearchQuery('q')`, `readEnumParam('status', ORDER_STATUS_VALUES)`,
   `readEnumParam('payment', [...PAYMENT_STATUS_VALUES,'none'])`.
 - `where: Prisma.OrderWhereInput`: `status` (если задан); платёж: `succeeded/pending/canceled` →
-  `{ payment: { is: { status } } }`, `none` → `{ payment: { is: null } }`; поиск `q` → `OR` из
-  `contactName/Phone/Email` (`contains`, `mode:'insensitive'`) **плюс** `orderNumber: Number(q)` если
-  `q` целочисленный (orderNumber — Int, `contains` к нему неприменим).
+  `{ payment: { is: { status } } }`, `none` → `{ payment: { is: null } }`; поиск `q` — **режим по
+  типу запроса**: если `q` целочисленный → точное `orderNumber: Number(q)` (БЕЗ контактов, иначе цифры
+  из email/телефона дают ложные строки); иначе `OR` из `contactName/Phone/Email` (`contains`,
+  `mode:'insensitive'`). orderNumber — Int, `contains` к нему неприменим.
 - Запрос `Promise.all`: `count(where)`, `findMany(where, orderBy:[{createdAt:'desc'}], skip, take,
   select: { id, orderNumber, status, totalAmount, paymentMethod, contactName, contactEmail, createdAt,
   payment:{ select:{ status } }, items:{ select:{ imageUrl, quantity }} })`, плюс лёгкая сводка
@@ -177,8 +178,10 @@ UI-компоненты не юнит-тестим (vitest node-only) — руч
   вручную. Сток возвращается (товар не уехал по бизнес-смыслу «до отгрузки»).
 - **`Payment.status` — сырая строка**: маппим через `PAYMENT_STATUS_META` с фолбэком на неизвестное
   значение (не падаем).
-- **Поиск по `orderNumber` (Int)**: `contains` неприменим → числовой `q` добавляем как точное
-  `orderNumber: Number(q)`; нечисловой — только по контактам.
+- **Поиск по `orderNumber` (Int)**: `contains` неприменим. Числовой `q` ищет ТОЛЬКО точное
+  `orderNumber` (контакты исключены — иначе цифры из email/телефона зашумляют выдачу, см. правку
+  2026-06-14 после preview); нечисловой `q` — по контактам. Поиск по части телефона цифрами при этом
+  не работает (осознанный размен против шума; e2e-заказы делят телефон). Гард `q ≤ 2147483647` (Int4).
 - **Бейджи `.badge-*` внутри `.admin-root`**: токены `--color-*` на `:root`, резолвятся; проверить
   визуально на preview (шаг чек-листа).
 - **`prisma db push` не нужен** (схема не тронута) — `vercel.json` всё равно гоняет push (no-op diff).

@@ -21,16 +21,18 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const status = readEnumParam(sp, 'status', ORDER_STATUS_VALUES);
   const payment = readEnumParam(sp, 'payment', PAYMENT_FILTER_VALUES);
 
-  // Поиск по orderNumber (Int) — только если q целочисленный; иначе по контактам (текст).
-  const qNum = q !== '' && /^\d+$/.test(q) ? Number(q) : undefined;
-  const searchOR: Prisma.OrderWhereInput[] = q
-    ? [
-        { contactName: { contains: q, mode: 'insensitive' } },
-        { contactPhone: { contains: q, mode: 'insensitive' } },
-        { contactEmail: { contains: q, mode: 'insensitive' } },
-        ...(qNum !== undefined ? [{ orderNumber: qNum } as Prisma.OrderWhereInput] : []),
-      ]
-    : [];
+  // Числовой запрос трактуем как номер заказа — точное совпадение по orderNumber, БЕЗ матча по
+  // контактам (иначе цифры из email/телефона дают ложные строки). Текст → поиск по контактам.
+  const qNum = /^\d+$/.test(q) && Number(q) <= 2147483647 ? Number(q) : undefined;
+  const searchOR: Prisma.OrderWhereInput[] = !q
+    ? []
+    : qNum !== undefined
+      ? [{ orderNumber: qNum }]
+      : [
+          { contactName: { contains: q, mode: 'insensitive' } },
+          { contactPhone: { contains: q, mode: 'insensitive' } },
+          { contactEmail: { contains: q, mode: 'insensitive' } },
+        ];
 
   const where: Prisma.OrderWhereInput = {
     ...(status ? { status } : {}),
