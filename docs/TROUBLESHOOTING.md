@@ -587,3 +587,66 @@
   concurrency-группы брать `github.event.pull_request.head.sha || github.sha`. cancelled-прогон метит
   коммит ❌ (не провал) — branch-protection настраивать на конкретный чек `e2e (pull_request)`, не «все».
   Корень глубже — общая CI-Neon-ветка на все прогоны (P4/P18): изоляция БД на прогон убрала бы класс гонок.
+
+## P25. e2e логаут-тест флакал `cookies() outside request scope` — `next dev` + 2 воркера = конкурентные server actions
+
+- **Когда:** 2026-06-13…14, Фаза 3.3 (мерж в main), CI e2e — 1 тест, флак.
+- **Симптом:** `auth.spec.ts` «вход существующего пользователя» падал (3/3 ретрая) на
+  `getByLabel('Email').fill` — локатор резолвился в **disabled `#p-email`** (поле `/profile`), т.е.
+  `/login` редиректнул залогиненного на профиль. В webServer-логе ~3× (НЕ на каждом логауте)
+  `⨯ Error: cookies was called outside a request scope … at` логаут-экшене (`auth-nav.tsx`). Сестринский
+  тест с ТЕМ ЖЕ логаутом проходил → флак, не детерминизм.
+- **Причина:** логаут — server action, чистящий cart/wishlist-куки (`cookies()`) перед `signOut` (P22).
+  e2e гоняется на **`next dev`** (конфиг: dev нужен для не-secure cookie по http), и при **2 воркерах**
+  разные spec-файлы шлют КОНКУРЕНТНЫЕ server actions в один dev-процесс → Next 15.1.x периодически теряет
+  async-request-scope (AsyncLocalStorage) → `cookies()` бросает «outside request scope» → экшен падает ДО
+  `signOut` → сессия жива → каскад: uncaught → error-boundary (кнопки «Выйти» нет → `toHaveCount(0)`
+  проходит ЛОЖНО) → `/login` при живой сессии редиректит на `/profile` (P23) → disabled `#p-email` →
+  таймаут. **Прод на Vercel НЕ затронут:** serverless изолирует каждый запрос, нет shared-process
+  ALS-bleed — поэтому прод-логаут работает.
+- **Решение:** `playwright.config.ts` → **`workers: 1`** (сериализация; `fullyParallel:false` уже стоял) —
+  нет конкурентных server actions → нет гонки. Только конфиг, код приложения НЕ трогаем. e2e ~2× дольше
+  (в пределах 20-мин job). Коммит `ce38202`.
+- **ГРАБЛИ (что НЕ сработало — важно):** сначала чинил как «структуру кода»: (1) статик-импорт
+  `next/headers` вместо динамического `await import()`; (2) вынос логаута из inline-экшена в модульный
+  `app/actions/logout.ts`. ОБА не помогли (`cookies()` падал так же), а вынос ещё добавил webpack
+  `Cannot read properties of undefined (reading 'call')` (циклический чанк) → откатил обе правки.
+  Урок: **интермиттентный симптом ≠ структура кода**. По systematic-debugging: 2 провала фикса → вопрос
+  о среде/архитектуре, а не фикс №3 наугад.
+- **На будущее:** интермиттентный `cookies()/headers() outside request scope` под e2e — почти всегда
+  **`next dev` + параллельные воркеры** (конкурентные server actions ломают ALS Next 15.1.x), НЕ форма
+  экшена. Лечить сериализацией e2e (`workers:1`), не перестановкой импортов/inline↔module. Прод
+  (serverless) этим не болеет. NB: `auth.spec.ts` флакал уже ТРИЖДЫ по РАЗНЫМ причинам — P14 (async-RSC в
+  хедере), P20 (redirect-гонка), P25 (dev-конкурентность) — при падении сверять ИМЕННО текущую причину.
+
+## P26. e2e a11y `/catalog`: Radix Slider Root `aria-label` на `<span>` без роли → `aria-prohibited-attr`
+
+- **Когда:** 2026-06-13…14, Фаза 3.3 (тот же green-CI заход, что P25), flaky.
+- **Симптом:** `a11y.spec.ts` «нет серьёзных нарушений на /catalog» падал: axe `aria-prohibited-attr`
+  (serious) — `<span … aria-label="Диапазон цены">` (Radix Slider Root) без `role`. Помечался flaky
+  (иногда проходил на retry — гонка axe-скана vs гидрация слайдера).
+- **Причина:** `price-filter.tsx` шлёт `aria-label="Диапазон цены"` в `<Slider>` → попадает на
+  `SliderPrimitive.Root` (`<span>`, `role=null`). axe: `aria-label` запрещён на элементе без подходящей роли.
+- **Решение:** `components/ui/slider.tsx` → `role="group"` на `SliderPrimitive.Root` (для роли `group`
+  `aria-label` валиден; ручки внутри = `role=slider`). Покрывает и `mobile-filter-drawer` (тот же
+  компонент). Коммит `7c2f637`.
+- **На будущее:** `aria-label` валиден только на элементах с поддерживающей ролью. Radix-примитивы-контейнеры
+  (`Slider.Root` и т.п.) рендерят `<span>`/`<div>` без роли — вешаешь на них `aria-label` → добавляй
+  `role="group"` (или меть внутренние интерактивные элементы). Правило axe — `aria-prohibited-attr`.
+
+## P27. CI `prisma:push` падал `P1001: Can't reach database server` — спящий/недоступный Neon-compute
+
+- **Когда:** 2026-06-14, PR #21 (fix/logout-e2e-flake), шаг `prisma:push` ДО тестов.
+- **Симптом:** workflow падал на `npm run prisma:push`: `Error: P1001: Can't reach database server at
+  ep-…neon.tech:5432` — до запуска любого теста. **Re-run job → прошло** (зелено).
+- **Причина:** Neon free-tier авто-suspend'ит compute при простое; первый коннект к холодному/спящему
+  эндпоинту иногда отбивается `P1001` до пробуждения (либо транзиентная сетевая недоступность). НЕ код —
+  `prisma:push`/схема не менялись. Прод (Vercel) при этом работал → сама БД жива.
+- **Решение:** **re-run упавшего job** (Actions → run → «Re-run failed jobs») — спящий Neon просыпается,
+  push проходит. Помогло с первого ретрая.
+- **На будущее:** `P1001` на `prisma:push`/коннекте в CI = инфра Neon (спящий compute/сеть), НЕ код →
+  сначала re-run. Если держится после 1-2 ретраев — эндпоинт устарел: сверить хост в **Vercel env**
+  (рабочий, прод жив) vs **GitHub Secret** `POSTGRES_URL`/`POSTGRES_URL_NON_POOLING` (Neon мог сменить
+  `ep-…` после reset/restore ветки, P19) и обновить секрет. Различать: `P1001` (не достучаться — инфра)
+  vs `P1017`/timeout (коннект рвётся — латентность, P4) vs `42P01`/`P2021` (достучались, нет таблиц —
+  схема, P7).
