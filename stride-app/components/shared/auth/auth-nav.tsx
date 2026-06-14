@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { User } from 'lucide-react';
-import { auth } from '@/auth';
-import { logout } from '@/app/actions/logout';
+import { auth, signOut } from '@/auth';
 import { LogoutButton } from './logout-button';
 
 // Server-компонент: читает сессию (JWT, без БД-I/O) и показывает вход или профиль+выход.
@@ -30,7 +29,20 @@ export async function AuthNav() {
       >
         <User className="w-5 h-5" aria-hidden />
       </Link>
-      <form action={logout}>
+      <form
+        action={async () => {
+          'use server';
+          // Чистим гостевые токены корзины/избранного: иначе следующий гость/юзер на этом
+          // браузере увидит корзину/избранное предыдущего по несброшенной cookie (#leak).
+          const { cookies } = await import('next/headers');
+          const { cartCookieName } = await import('@/lib/cart-cookie');
+          const { wishlistCookieName } = await import('@/lib/wishlist-cookie');
+          const store = await cookies();
+          store.delete(cartCookieName);
+          store.delete(wishlistCookieName);
+          await signOut({ redirectTo: '/' });
+        }}
+      >
         <LogoutButton />
       </form>
     </div>
