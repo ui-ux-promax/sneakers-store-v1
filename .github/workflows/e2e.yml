@@ -48,6 +48,15 @@ jobs:
       # postinstall запускает `prisma generate` (подключение к БД не требуется).
       - run: npm ci
 
+      # Azure-раннер тащит предустановленные Microsoft apt-репы (packages.microsoft.com), которые
+      # периодически отдают 403/«no longer signed» → `apt-get update` внутри `--with-deps` падает
+      # (exit 100) ещё ДО установки браузеров. Сносим битый источник; апдейт не блокирует шаг.
+      # Ref: microsoft/playwright#30502.
+      - name: Drop broken Microsoft apt source
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list /etc/apt/sources.list.d/microsoft.list
+          sudo apt-get update || true
+
       # Браузер + системные зависимости для Chromium (в playwright.config только chromium).
       - run: npx playwright install --with-deps chromium
 
