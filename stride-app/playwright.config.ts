@@ -3,6 +3,11 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
+  // Один воркер: e2e гоняется на `next dev`, и при 2 воркерах разные spec-файлы шлют
+  // КОНКУРЕНТНЫЕ server actions → Next 15.1.x в dev периодически теряет async-request-scope
+  // → `cookies()` бросает "outside request scope" в логаут-экшене (флак auth-теста). Прод на
+  // Vercel serverless-изолирован, там этого нет. Сериализация убирает гонку (e2e чуть дольше).
+  workers: 1,
   retries: 2, // транзиентные Neon-аборты (cold start «operation aborted») на медленном соединении
   timeout: 120_000,
   expect: { timeout: 40_000 },
