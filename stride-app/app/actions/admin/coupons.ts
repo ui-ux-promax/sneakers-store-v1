@@ -62,3 +62,62 @@ export async function createCoupon(raw: unknown): Promise<CouponActionResult> {
   revalidatePath(LIST_PATH);
   return { ok: true };
 }
+
+export async function updateCoupon(id: string, raw: unknown): Promise<CouponActionResult> {
+  const gate = await requireAdminAction();
+  if (!gate.ok) return { ok: false, error: gate.error };
+
+  const parsed = couponSchema.safeParse(normalize(raw));
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? 'Проверьте поля' };
+  const v = parsed.data;
+
+  let expiresAt: Date | null;
+  try {
+    expiresAt = parseExpiresAt(v.expiresAt);
+  } catch {
+    return { ok: false, error: 'Некорректная дата окончания' };
+  }
+
+  const existing = await prisma.coupon.findUnique({ where: { id }, select: { id: true } });
+  if (!existing) return { ok: false, error: 'Купон не найден' };
+
+  try {
+    await prisma.coupon.update({
+      where: { id },
+      data: { code: v.code, percent: v.percent, active: v.active, expiresAt },
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+      return { ok: false, error: 'Код уже занят' };
+    }
+    throw e;
+  }
+  revalidatePath(LIST_PATH);
+  return { ok: true };
+}
+
+// Тонкий флип active из Switch в списке (без полной формы).
+export async function toggleCoupon(id: string, next: boolean): Promise<CouponActionResult> {
+  const gate = await requireAdminAction();
+  if (!gate.ok) return { ok: false, error: gate.error };
+
+  const existing = await prisma.coupon.findUnique({ where: { id }, select: { id: true } });
+  if (!existing) return { ok: false, error: 'Купон не найден' };
+
+  await prisma.coupon.update({ where: { id }, data: { active: next } });
+  revalidatePath(LIST_PATH);
+  return { ok: true };
+}
+
+// FK на Coupon нет (Order.couponCode — денормализованная строка) → удаление безопасно, гард только «существует».
+export async function deleteCoupon(id: string): Promise<CouponActionResult> {
+  const gate = await requireAdminAction();
+  if (!gate.ok) return { ok: false, error: gate.error };
+
+  const existing = await prisma.coupon.findUnique({ where: { id }, select: { id: true } });
+  if (!existing) return { ok: false, error: 'Купон не найден' };
+
+  await prisma.coupon.delete({ where: { id } });
+  revalidatePath(LIST_PATH);
+  return { ok: true };
+}

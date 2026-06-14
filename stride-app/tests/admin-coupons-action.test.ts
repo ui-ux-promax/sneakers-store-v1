@@ -10,7 +10,7 @@ vi.mock('@/lib/prisma-client', () => {
 });
 
 import { Prisma } from '@prisma/client';
-import { createCoupon } from '@/app/actions/admin/coupons';
+import { createCoupon, updateCoupon, toggleCoupon, deleteCoupon } from '@/app/actions/admin/coupons';
 import { auth } from '@/auth';
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma-client';
@@ -23,6 +23,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   authMock.mockResolvedValue({ user: { id: 'admin1', role: 'ADMIN' } });
   p.coupon.create.mockResolvedValue({ id: 'c1' });
+  p.coupon.update.mockResolvedValue({ id: 'c1' });
+  p.coupon.delete.mockResolvedValue({ id: 'c1' });
 });
 
 describe('createCoupon', () => {
@@ -74,5 +76,79 @@ describe('createCoupon', () => {
     const r = await createCoupon({ code: 'STRIDE10', percent: 10, active: true });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toMatch(/занят/i);
+  });
+});
+
+describe('updateCoupon', () => {
+  it('not found → error, no update', async () => {
+    p.coupon.findUnique.mockResolvedValue(null);
+    const r = await updateCoupon('cX', { code: 'NEW10', percent: 10, active: true });
+    expect(r.ok).toBe(false);
+    expect(p.coupon.update).not.toHaveBeenCalled();
+  });
+
+  it('happy → update with normalized data + revalidate', async () => {
+    p.coupon.findUnique.mockResolvedValue({ id: 'c1' });
+    const r = await updateCoupon('c1', { code: 'new10', percent: 20, active: false, expiresAt: '' });
+    expect(r.ok).toBe(true);
+    expect(p.coupon.update).toHaveBeenCalledWith({
+      where: { id: 'c1' },
+      data: { code: 'NEW10', percent: 20, active: false, expiresAt: null },
+    });
+    expect(revalidateMock).toHaveBeenCalledWith('/admin/marketing');
+  });
+
+  it('non-admin → error', async () => {
+    authMock.mockResolvedValue(null);
+    const r = await updateCoupon('c1', { code: 'NEW10', percent: 10, active: true });
+    expect(r.ok).toBe(false);
+    expect(p.coupon.findUnique).not.toHaveBeenCalled();
+  });
+});
+
+describe('toggleCoupon', () => {
+  it('flips active, revalidates', async () => {
+    p.coupon.findUnique.mockResolvedValue({ id: 'c1' });
+    const r = await toggleCoupon('c1', false);
+    expect(r.ok).toBe(true);
+    expect(p.coupon.update).toHaveBeenCalledWith({ where: { id: 'c1' }, data: { active: false } });
+  });
+
+  it('not found → error', async () => {
+    p.coupon.findUnique.mockResolvedValue(null);
+    const r = await toggleCoupon('cX', true);
+    expect(r.ok).toBe(false);
+    expect(p.coupon.update).not.toHaveBeenCalled();
+  });
+
+  it('non-admin → error', async () => {
+    authMock.mockResolvedValue(null);
+    const r = await toggleCoupon('c1', true);
+    expect(r.ok).toBe(false);
+    expect(p.coupon.findUnique).not.toHaveBeenCalled();
+  });
+});
+
+describe('deleteCoupon', () => {
+  it('happy → delete + revalidate', async () => {
+    p.coupon.findUnique.mockResolvedValue({ id: 'c1' });
+    const r = await deleteCoupon('c1');
+    expect(r.ok).toBe(true);
+    expect(p.coupon.delete).toHaveBeenCalledWith({ where: { id: 'c1' } });
+    expect(revalidateMock).toHaveBeenCalledWith('/admin/marketing');
+  });
+
+  it('not found → error, no delete', async () => {
+    p.coupon.findUnique.mockResolvedValue(null);
+    const r = await deleteCoupon('cX');
+    expect(r.ok).toBe(false);
+    expect(p.coupon.delete).not.toHaveBeenCalled();
+  });
+
+  it('non-admin → error', async () => {
+    authMock.mockResolvedValue(null);
+    const r = await deleteCoupon('c1');
+    expect(r.ok).toBe(false);
+    expect(p.coupon.findUnique).not.toHaveBeenCalled();
   });
 });
