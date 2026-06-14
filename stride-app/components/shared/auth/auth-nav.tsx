@@ -1,9 +1,7 @@
 import Link from 'next/link';
-import { cookies } from 'next/headers';
 import { User } from 'lucide-react';
-import { auth, signOut } from '@/auth';
-import { cartCookieName } from '@/lib/cart-cookie';
-import { wishlistCookieName } from '@/lib/wishlist-cookie';
+import { auth } from '@/auth';
+import { logout } from '@/app/actions/logout';
 import { LogoutButton } from './logout-button';
 
 // Server-компонент: читает сессию (JWT, без БД-I/O) и показывает вход или профиль+выход.
@@ -32,19 +30,7 @@ export async function AuthNav() {
       >
         <User className="w-5 h-5" aria-hidden />
       </Link>
-      <form
-        action={async () => {
-          'use server';
-          // Чистим гостевые токены корзины/избранного: иначе следующий гость/юзер на этом
-          // браузере увидит корзину/избранное предыдущего по несброшенной cookie (#leak).
-          // ВАЖНО: cookies/имена импортированы статически. Динамический `await import()` здесь
-          // терял request-scope → `cookies()` бросал "called outside a request scope" и логаут падал.
-          const store = await cookies();
-          store.delete(cartCookieName);
-          store.delete(wishlistCookieName);
-          await signOut({ redirectTo: '/' });
-        }}
-      >
+      <form action={logout}>
         <LogoutButton />
       </form>
     </div>
