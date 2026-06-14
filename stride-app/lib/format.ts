@@ -14,3 +14,19 @@ export function formatPrice(rub: number): string {
   const grouped = RUB.format(Math.round(rub)).replace(/[\u202f\u00a0]/g, ' ');
   return `${grouped} ₽`;
 }
+
+// Абсолютная дата+время в МСК: '14.06.2026 13:01'. Таймзону фиксируем явно — RSC рендерится на
+// сервере Vercel (UTC), без неё время уехало бы на −3ч от московского.
+const DATE_TIME = new Intl.DateTimeFormat('ru-RU', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'Europe/Moscow',
+});
+
+export function formatDateTime(date: Date): string {
+  // ru-RU отдаёт 'дд.мм.гггг, чч:мм' — убираем запятую, оставляя 'дд.мм.гггг чч:мм'.
+  return DATE_TIME.format(date).replace(',', '');
+}

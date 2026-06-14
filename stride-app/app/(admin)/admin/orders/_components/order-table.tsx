@@ -20,7 +20,7 @@ export interface OrderRow {
   itemCount: number;
   totalAmount: number;
   coverImage: string | null;
-  addedAgo: string;
+  createdLabel: string;
 }
 
 export interface OrderTableProps {
@@ -76,7 +76,7 @@ export function OrderTable({ rows, page, totalPages, total, limit }: OrderTableP
                     >
                       #{row.orderNumber}
                     </a>
-                    <div className="text-xs text-admin-on-surface-variant">{row.addedAgo}</div>
+                    <div className="text-xs text-admin-on-surface-variant tabular-nums">{row.createdLabel}</div>
                   </td>
                   {/* Покупатель */}
                   <td className="px-6 py-4">

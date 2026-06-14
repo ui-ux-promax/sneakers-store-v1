@@ -2,8 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma-client';
 import { Icon } from '@/components/admin/icon';
-import { formatPrice } from '@/lib/format';
-import { formatAddedAgo } from '@/lib/relative-time';
+import { formatPrice, formatDateTime } from '@/lib/format';
 import { orderStatusView } from '@/lib/order';
 import { paymentStatusView } from '@/lib/order-admin';
 import { OrderStatusActions } from '../_components/order-status-actions';
@@ -49,7 +48,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <span className={sv.badge}>{sv.label}</span>
             <span className={pv.badge}>{pv.label}</span>
           </div>
-          <p className="text-sm text-admin-on-surface-variant">Оформлен {formatAddedAgo(order.createdAt)}</p>
+          <p className="text-sm text-admin-on-surface-variant tabular-nums">Оформлен {formatDateTime(order.createdAt)}</p>
         </div>
         <OrderStatusActions orderId={order.id} status={order.status} />
       </div>
@@ -135,7 +134,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 <dd><span className={pv.badge}>{pv.label}</span></dd>
               </div>
               {order.payment && <Row label="Сумма" value={formatPrice(order.payment.amount)} />}
-              {order.payment?.paidAt && <Row label="Оплачен" value={formatAddedAgo(order.payment.paidAt)} />}
+              {order.payment?.paidAt && <Row label="Оплачен" value={formatDateTime(order.payment.paidAt)} />}
             </dl>
           </Section>
         </div>

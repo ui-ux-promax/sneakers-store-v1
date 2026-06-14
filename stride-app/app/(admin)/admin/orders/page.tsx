@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma-client';
 import { parsePaginationParams, buildPaginationMeta, readSearchQuery, readEnumParam } from '@/lib/admin/pagination';
 import { ORDER_STATUS_META } from '@/lib/order';
 import { ORDER_STATUS_VALUES, PAYMENT_STATUS_VALUES } from '@/lib/order-admin';
-import { formatAddedAgo } from '@/lib/relative-time';
+import { formatDateTime } from '@/lib/format';
 import { OrderFilters } from './_components/order-filters';
 import { OrderTable, type OrderRow } from './_components/order-table';
 
@@ -80,7 +80,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     itemCount: o.items.reduce((s, it) => s + it.quantity, 0),
     totalAmount: o.totalAmount,
     coverImage: o.items.find((it) => it.imageUrl)?.imageUrl ?? null,
-    addedAgo: formatAddedAgo(o.createdAt),
+    createdLabel: formatDateTime(o.createdAt),
   }));
 
   const countByStatus = new Map<OrderStatus, number>();
