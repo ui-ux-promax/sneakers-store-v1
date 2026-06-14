@@ -30,3 +30,15 @@ export function formatDateTime(date: Date): string {
   // ru-RU отдаёт 'дд.мм.гггг, чч:мм' — убираем запятую, оставляя 'дд.мм.гггг чч:мм'.
   return DATE_TIME.format(date).replace(',', '');
 }
+
+// Только дата в МСК: '14.06.2026'. Для дня рождения и т.п. (без времени).
+const DATE_ONLY = new Intl.DateTimeFormat('ru-RU', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  timeZone: 'Europe/Moscow',
+});
+
+export function formatDate(date: Date): string {
+  return DATE_ONLY.format(date);
+}
