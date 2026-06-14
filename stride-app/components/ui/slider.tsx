@@ -15,6 +15,9 @@ const Slider = React.forwardRef<
   return (
     <SliderPrimitive.Root
       ref={ref}
+      // role=group: на Root-span есть aria-label (напр. "Диапазон цены"), но без роли axe
+      // ругается (aria-prohibited-attr) — для group aria-label валиден; ручки внутри = role=slider.
+      role="group"
       value={value}
       defaultValue={defaultValue}
       className={cn('relative flex w-full touch-none select-none items-center', className)}
