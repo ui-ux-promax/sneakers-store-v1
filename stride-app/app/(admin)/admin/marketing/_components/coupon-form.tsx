@@ -8,7 +8,6 @@ import { Button } from '@/components/admin/ui/button';
 import { Input } from '@/components/admin/ui/input';
 import { Switch } from '@/components/admin/ui/switch';
 import { couponSchema, type CouponValues } from '@/services/dto/coupon-admin.dto';
-import { normalizeCouponCode } from '@/lib/coupon';
 import { createCoupon, updateCoupon } from '@/app/actions/admin/coupons';
 
 export interface CouponFormInitial {
@@ -57,7 +56,9 @@ export function CouponForm({ initial }: { initial?: CouponFormInitial }) {
         <label className="text-sm font-medium text-admin-on-surface">Код</label>
         <Input
           {...register('code', {
-            onBlur: (e) => setValue('code', normalizeCouponCode(e.target.value)),
+            // Косметический uppercase (client-safe инлайн, чтобы не тянуть @/lib/coupon→prisma в бандл).
+            // Авторитетная нормализация — normalizeCouponCode в server action перед валидацией/БД.
+            onBlur: (e) => setValue('code', e.target.value.trim().toUpperCase()),
           })}
           placeholder="STRIDE10"
           autoCapitalize="characters"
