@@ -6,6 +6,7 @@ import { signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 import { Icon } from '@/components/admin/icon';
 import { ThemeToggle } from '@/components/admin/theme-toggle';
+import SidebarSkeletonGate from '@/components/admin/sidebar-skeleton-gate';
 
 interface AdminShellProps {
   user: {
@@ -15,15 +16,23 @@ interface AdminShellProps {
     image?: string | null;
   };
   children: React.ReactNode;
+  /** Тема из cookie admin-theme (читается в (admin)/layout) — стартовое значение тоггла. */
+  initialTheme: 'light' | 'dark';
 }
 
 const NAV_ITEMS = [
-  { label: 'Dashboard',  href: '/admin',            icon: 'dashboard',      exact: true },
-  { label: 'Catalog',    href: '/admin/catalog',     icon: 'inventory_2',    exact: false },
-  { label: 'Orders',     href: '/admin/orders',      icon: 'shopping_cart',  exact: false },
-  { label: 'Customers',  href: '/admin/customers',   icon: 'group',          exact: false },
-  { label: 'Marketing',  href: '/admin/marketing',   icon: 'campaign',       exact: false },
+  { label: 'Дашборд',   href: '/admin',            icon: 'dashboard',      exact: true },
+  { label: 'Каталог',   href: '/admin/catalog',     icon: 'inventory_2',    exact: false },
+  { label: 'Заказы',    href: '/admin/orders',      icon: 'shopping_cart',  exact: false },
+  { label: 'Клиенты',   href: '/admin/customers',   icon: 'group',          exact: false },
+  { label: 'Маркетинг', href: '/admin/marketing',   icon: 'campaign',       exact: false },
 ];
+
+/** Человекочитаемые названия ролей */
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN: 'Администратор',
+  CUSTOMER: 'Клиент',
+};
 
 /** Инициалы из имени или email (для аватара-заглушки) */
 function getInitials(name?: string | null, email?: string | null): string {
@@ -38,7 +47,7 @@ function getInitials(name?: string | null, email?: string | null): string {
   return (email?.[0] ?? '?').toUpperCase();
 }
 
-export function AdminShell({ user, children }: AdminShellProps) {
+export function AdminShell({ user, children, initialTheme }: AdminShellProps) {
   const pathname = usePathname();
 
   /** Активен ли пункт меню с учётом точного совпадения для Dashboard */
@@ -57,6 +66,10 @@ export function AdminShell({ user, children }: AdminShellProps) {
           'hidden md:flex',
         )}
       >
+        {/* Оверлей-скелетон сайдбара на первой загрузке (пока грузится иконочный шрифт).
+            <aside> — fixed → служит containing block для absolute-оверлея. */}
+        <SidebarSkeletonGate />
+
         {/* ── Бренд-блок ───────────────────────────────────────────── */}
         <div className="mb-10 px-2 flex items-center gap-3">
           <div className="w-10 h-10 bg-admin-primary rounded-xl flex items-center justify-center flex-shrink-0">
@@ -66,7 +79,7 @@ export function AdminShell({ user, children }: AdminShellProps) {
             <p className="font-admin-head font-bold text-lg leading-none text-admin-on-surface">
               STRIDE
             </p>
-            <p className="text-xs text-admin-on-surface-variant mt-0.5">Premium Sneakers</p>
+            <p className="text-xs text-admin-on-surface-variant mt-0.5">Премиум-кроссовки</p>
           </div>
         </div>
 
@@ -97,9 +110,9 @@ export function AdminShell({ user, children }: AdminShellProps) {
           {/* Переключатель темы */}
           <div className="px-2 py-2">
             <p className="text-[10px] uppercase tracking-widest text-admin-on-surface-variant mb-2">
-              Appearance
+              Оформление
             </p>
-            <ThemeToggle />
+            <ThemeToggle initialTheme={initialTheme} />
           </div>
 
           {/* Служебные ссылки */}
@@ -108,14 +121,14 @@ export function AdminShell({ user, children }: AdminShellProps) {
             className="flex items-center gap-3 px-4 py-3 text-admin-on-surface-variant hover:text-admin-on-surface transition-colors rounded-xl hover:bg-admin-surface-high"
           >
             <Icon name="help" />
-            <span className="text-sm">Help</span>
+            <span className="text-sm">Помощь</span>
           </a>
           <a
             href="#"
             className="flex items-center gap-3 px-4 py-3 text-admin-on-surface-variant hover:text-admin-on-surface transition-colors rounded-xl hover:bg-admin-surface-high"
           >
             <Icon name="settings" />
-            <span className="text-sm">Settings</span>
+            <span className="text-sm">Настройки</span>
           </a>
 
           {/* Профиль-карточка */}
@@ -140,8 +153,8 @@ export function AdminShell({ user, children }: AdminShellProps) {
               <p className="text-sm font-bold text-admin-on-surface truncate">
                 {user.name ?? user.email ?? 'Admin'}
               </p>
-              <p className="text-xs text-admin-on-surface-variant truncate capitalize">
-                {user.role.toLowerCase()}
+              <p className="text-xs text-admin-on-surface-variant truncate">
+                {ROLE_LABELS[user.role] ?? user.role}
               </p>
             </div>
 
@@ -176,7 +189,7 @@ export function AdminShell({ user, children }: AdminShellProps) {
           />
           <input
             type="text"
-            placeholder="Search orders, customers, products..."
+            placeholder="Поиск заказов, клиентов, товаров…"
             readOnly
             className={cn(
               'w-full pl-10 pr-4 py-2 rounded-full text-sm',
