@@ -28,31 +28,57 @@ export default function SidebarSkeletonGate(): JSX.Element | null {
   useIsomorphicLayoutEffect(() => {
     if (typeof document === 'undefined') return;
 
-    const FONT = '1em "Material Symbols Outlined"';
-
-    // Горячий кеш: шрифт уже доступен — скрываемся до paint, без мерцания.
-    if (document.fonts && document.fonts.check(FONT)) {
-      setState('ready');
-      return;
-    }
-
+    const root = document.querySelector<HTMLElement>('.admin-root');
     let cancelled = false;
-    const done = () => {
-      if (!cancelled) setState('ready');
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const startedAt = typeof performance !== 'undefined' ? performance.now() : 0;
+    const MAX_WAIT = 4000; // страховка: не зависаем в скелетоне навсегда
+
+    /**
+     * Иконочный глиф реально доступен? Меряем ширину тест-лигатуры: загруженный глиф
+     * Material Symbols ≈ квадрат (≈ font-size), а fallback-текст «settings» заметно шире.
+     * Почему не document.fonts.check: пока @font-face ещё не объявлен (CSS шрифта грузится),
+     * check() возвращает true (нет совпадающих faces → «нечего грузить»), из-за чего гейт
+     * снимался слишком рано и мелькали текст-имена иконок.
+     */
+    const glyphReady = (): boolean => {
+      const probe = document.createElement('span');
+      probe.textContent = 'settings';
+      probe.setAttribute('aria-hidden', 'true');
+      probe.style.cssText =
+        'position:absolute;left:-9999px;top:-9999px;visibility:hidden;white-space:nowrap;' +
+        "font-family:'Material Symbols Outlined';font-weight:400;font-size:48px;line-height:1;";
+      document.body.appendChild(probe);
+      const w = probe.offsetWidth;
+      document.body.removeChild(probe);
+      return w > 0 && w < 80; // глиф ≈ 48px; текст «settings» ≈ 190px
     };
 
-    document.fonts
-      ?.load(FONT)
-      .then(() => document.fonts.ready)
-      .then(done)
-      .catch(done);
+    const elapsed = () =>
+      (typeof performance !== 'undefined' ? performance.now() : 0) - startedAt;
 
-    // Страховка, согласованная с font-display: block (~3s) — не зависаем навсегда.
-    const t = setTimeout(done, 3500);
+    const reveal = () => {
+      if (cancelled) return;
+      root?.classList.add('ms-ready'); // показать иконки во всей админке (снять FOUT-гард)
+      setState('ready'); // убрать оверлей-скелетон сайдбара
+    };
+
+    const poll = () => {
+      if (cancelled) return;
+      if (glyphReady() || elapsed() > MAX_WAIT) {
+        reveal();
+        return;
+      }
+      timer = setTimeout(poll, 90);
+    };
+
+    // Best-effort подтолкнуть загрузку шрифта и начать опрос (первый — синхронно до paint).
+    document.fonts?.load("48px 'Material Symbols Outlined'").catch(() => {});
+    poll();
 
     return () => {
       cancelled = true;
-      clearTimeout(t);
+      if (timer) clearTimeout(timer);
     };
   }, []);
 

@@ -283,6 +283,14 @@ html body[data-scroll-locked] {
   .admin-root .material-symbols-outlined.fill {
     font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   }
+  /* FOUT-гард: пока иконочный шрифт не подтверждён загруженным (класс .ms-ready ставит
+     SidebarSkeletonGate по измерению глифа), прячем текст-лигатуры Material Symbols во ВСЕЙ
+     админке — иначе на первом (холодном) заходе, пока грузится сам CSS шрифта, видны сырые
+     имена иконок (dashboard, payments, light_mode…) и в сайдбаре, и в контенте, и в кнопках.
+     visibility (не display) сохраняет геометрию — иконки просто пустые до готовности. */
+  .admin-root:not(.ms-ready) .material-symbols-outlined {
+    visibility: hidden;
+  }
 
   /* ===== Skeleton shimmer engine (порт skeleton-A-shimmer) — admin-only, имя .sk (НЕ .skel витрины) ===== */
   /* Базовый плейсхолдер: сплошной --admin-surface-high, поверх — диагональный световой блик. */
@@ -400,6 +408,7 @@ html body[data-scroll-locked] {
     place-items: center;
     width: 18px;
     height: 18px;
+    overflow: hidden; /* подстраховка: незагруженный глиф-текст лигатуры не толкает подпись */
   }
   .admin-root .seg__ico .material-symbols-outlined {
     grid-area: 1 / 1;
