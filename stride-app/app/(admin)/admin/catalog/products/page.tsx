@@ -102,7 +102,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           <h2 className="font-admin-head text-3xl font-bold text-admin-on-surface mb-1">Товары ({total})</h2>
           <p className="text-admin-on-surface-variant">Управление каталогом и статусом отображения товаров.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <ViewToggle />
           <Button asChild>
             <Link href="/admin/catalog/products/new">
