@@ -144,7 +144,7 @@ export function ProductTable({ rows, page, totalPages, total, limit }: ProductTa
                 </td>
                 {/* Действия */}
                 <td className="px-6 py-4 text-right">
-                  <DropdownMenu>
+                  <DropdownMenu modal={false}>
                     <DropdownMenuTrigger asChild>
                       <button
                         type="button"
@@ -200,7 +200,7 @@ export function ProductTable({ rows, page, totalPages, total, limit }: ProductTa
                 </div>
               </div>
 
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
