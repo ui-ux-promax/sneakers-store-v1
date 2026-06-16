@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ru" class="light">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>STRIDE Admin — Сайдбар: плавающий лайм-док</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@400;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: { extend: {
+      colors: {
+        "admin-bg": "var(--admin-bg)", "admin-surface": "var(--admin-surface)",
+        "admin-surface-low": "var(--admin-surface-low)", "admin-surface-container": "var(--admin-surface-container)",
+        "admin-surface-high": "var(--admin-surface-high)", "admin-on-bg": "var(--admin-on-bg)",
+        "admin-on-surface": "var(--admin-on-surface)", "admin-on-surface-variant": "var(--admin-on-surface-variant)",
+        "admin-primary": "var(--admin-primary)", "admin-on-primary": "var(--admin-on-primary)",
+        "admin-secondary-container": "var(--admin-secondary-container)", "admin-on-secondary-container": "var(--admin-on-secondary-container)",
+        "admin-error": "var(--admin-error)", "admin-on-error": "var(--admin-on-error)",
+        "admin-outline": "var(--admin-outline)", "admin-outline-variant": "var(--admin-outline-variant)"
+      },
+      fontFamily: { "admin-head": ["Anybody","sans-serif"], "admin-body": ["Manrope","sans-serif"] }
+    }}
+  }
+</script>
+<style>
+  :root{--admin-bg:#f7f8f4;--admin-surface:#ffffff;--admin-surface-low:#f8f9fb;--admin-surface-container:#f3f4f6;--admin-surface-high:#e5e7eb;--admin-on-bg:#111827;--admin-on-surface:#111827;--admin-on-surface-variant:#6b7280;--admin-primary:#b2f700;--admin-on-primary:#131f00;--admin-secondary-container:#f3e8ff;--admin-on-secondary-container:#3b0764;--admin-error:#ef4444;--admin-on-error:#ffffff;--admin-outline:#d1d5db;--admin-outline-variant:#e5e7eb;}
+  html.dark{--admin-bg:#131313;--admin-surface:#131313;--admin-surface-low:#1c1b1b;--admin-surface-container:#201f1f;--admin-surface-high:#2a2a2a;--admin-on-bg:#e5e2e1;--admin-on-surface:#e5e2e1;--admin-on-surface-variant:#c2caad;--admin-primary:#b2f700;--admin-on-primary:#243600;--admin-secondary-container:#563f71;--admin-on-secondary-container:#c9ade7;--admin-error:#ffb4ab;--admin-on-error:#690005;--admin-outline:#8c9479;--admin-outline-variant:#424a33;}
+  body{font-family:Manrope,sans-serif;background:var(--admin-bg);color:var(--admin-on-bg);}
+  .material-symbols-outlined{font-variation-settings:"FILL" 0,"wght" 400,"GRAD" 0,"opsz" 24;vertical-align:middle;}
+  .material-symbols-outlined.fill{font-variation-settings:"FILL" 1,"wght" 400,"GRAD" 0,"opsz" 24;}
+  .admin-scope *{border-color:var(--admin-outline-variant);}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;}}
+
+  /* Dock motion */
+  .dock-item{
+    opacity:0; transform:translateY(14px) scale(.96);
+    transition:opacity .22s ease-out, transform .26s cubic-bezier(.34,1.56,.64,1);
+    pointer-events:none;
+  }
+  .dock-open .dock-item{ opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
+  .scrim{ opacity:0; pointer-events:none; transition:opacity .25s ease-out; }
+  .scrim.show{ opacity:1; pointer-events:auto; }
+  .fab-icon{ transition:transform .3s cubic-bezier(.34,1.56,.64,1); }
+  .fab-open .fab-icon{ transform:rotate(135deg); }
+  .lime-glow{ box-shadow:0 8px 24px -6px rgba(178,247,0,.55), 0 4px 12px rgba(0,0,0,.18); }
+  .frame-scroll::-webkit-scrollbar{width:0;height:0;}
+</style>
+</head>
+<body class="admin-scope min-h-screen p-4 sm:p-8 flex flex-col items-center gap-5">
+
+  <!-- CONTROL BAR -->
+  <div class="bg-admin-surface rounded-2xl border border-admin-outline-variant p-4 max-w-[440px] w-full">
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <h1 class="font-admin-head font-bold text-lg leading-tight text-admin-on-surface">Сайдбар: плавающий лайм-док</h1>
+        <p class="text-sm text-admin-on-surface-variant mt-1 leading-snug">
+          Навигация спрятана в круглую лаймовую кнопку (FAB) внизу справа. Тап — и она раскрывается в плавающий док из 5 разделов с пружинной анимацией и затемнением фона. Самый смелый вариант — выбирай его, когда нужен «вау» и максимум контента на экране.
+        </p>
+      </div>
+    </div>
+    <div class="flex items-center justify-between mt-3">
+      <span class="text-xs text-admin-on-surface-variant tabular-nums">≈390px</span>
+      <button id="themeToggle" class="inline-flex items-center gap-2 rounded-full border border-admin-outline-variant bg-admin-surface-container px-3 py-2 text-sm font-medium text-admin-on-surface hover:bg-admin-surface-high transition">
+        <span id="themeIcon" class="material-symbols-outlined text-[20px]">dark_mode</span>
+        <span id="themeLabel">Тёмная</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- PHONE FRAME -->
+  <div class="max-w-[390px] w-full bg-admin-bg rounded-[2.2rem] border-[6px] border-admin-on-surface/10 shadow-2xl overflow-hidden" style="min-height:720px;">
+    <div id="phone" class="relative h-[720px] overflow-y-auto frame-scroll">
+
+      <!-- status bar -->
+      <div class="sticky top-0 z-30 bg-admin-surface">
+        <div class="flex items-center justify-between px-5 pt-2 pb-1 text-[11px] font-semibold text-admin-on-surface">
+          <span class="tabular-nums">9:41</span>
+          <div class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-[15px]">signal_cellular_alt</span>
+            <span class="material-symbols-outlined text-[15px]">wifi</span>
+            <span class="material-symbols-outlined text-[15px]">battery_full</span>
+          </div>
+        </div>
+
+        <!-- topbar -->
+        <div class="h-16 flex items-center gap-3 px-4 border-b border-admin-outline-variant">
+          <div class="flex items-center gap-2 shrink-0">
+            <div class="w-9 h-9 rounded-xl bg-admin-primary grid place-items-center">
+              <span class="material-symbols-outlined fill text-admin-on-primary text-[22px]">bolt</span>
+            </div>
+            <div class="leading-none">
+              <div class="font-admin-head font-bold text-[15px] text-admin-on-surface">STRIDE</div>
+              <div class="text-[9px] text-admin-on-surface-variant mt-0.5">Премиум-кроссовки</div>
+            </div>
+          </div>
+          <div class="ml-auto flex items-center gap-1.5 rounded-full bg-admin-surface-container px-3 h-9 w-[120px]">
+            <span class="material-symbols-outlined text-admin-on-surface-variant text-[18px]">search</span>
+            <span class="text-[11px] text-admin-on-surface-variant truncate">Поиск…</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- DASHBOARD CONTENT (behind dock) -->
+      <main class="px-4 pt-4 pb-28">
+        <div class="mb-4">
+          <h2 class="font-admin-head font-bold text-xl text-admin-on-surface">Дашборд</h2>
+          <p class="text-xs text-admin-on-surface-variant mt-0.5">Обзор за последние 30 дней</p>
+        </div>
+
+        <!-- KPI grid -->
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div class="bg-admin-surface rounded-xl border border-admin-outline-variant p-3">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] text-admin-on-surface-variant">Выручка</span>
+              <span class="material-symbols-outlined text-admin-on-surface-variant text-[18px]">payments</span>
+            </div>
+            <div class="font-admin-head font-bold text-lg text-admin-on-surface mt-1 tabular-nums">1 284 900 ₽</div>
+            <div class="text-[11px] text-admin-on-primary bg-admin-primary inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 mt-1.5 font-semibold">
+              <span class="material-symbols-outlined text-[13px]">trending_up</span>+12.4%
+            </div>
+          </div>
+          <div class="bg-admin-surface rounded-xl border border-admin-outline-variant p-3">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] text-admin-on-surface-variant">Заказы</span>
+              <span class="material-symbols-outlined text-admin-on-surface-variant text-[18px]">shopping_cart</span>
+            </div>
+            <div class="font-admin-head font-bold text-lg text-admin-on-surface mt-1 tabular-nums">342</div>
+            <div class="text-[11px] text-admin-on-primary bg-admin-primary inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 mt-1.5 font-semibold">
+              <span class="material-symbols-outlined text-[13px]">trending_up</span>+8.1%
+            </div>
+          </div>
+          <div class="bg-admin-surface rounded-xl border border-admin-outline-variant p-3">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] text-admin-on-surface-variant">Клиенты</span>
+              <span class="material-symbols-outlined text-admin-on-surface-variant text-[18px]">group</span>
+            </div>
+            <div class="font-admin-head font-bold text-lg text-admin-on-surface mt-1 tabular-nums">1 908</div>
+            <div class="text-[11px] text-admin-on-secondary-container bg-admin-secondary-container inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 mt-1.5 font-semibold">
+              <span class="material-symbols-outlined text-[13px]">person_add</span>+54
+            </div>
+          </div>
+          <div class="bg-admin-surface rounded-xl border border-admin-outline-variant p-3">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] text-admin-on-surface-variant">Сред. чек</span>
+              <span class="material-symbols-outlined text-admin-on-surface-variant text-[18px]">receipt_long</span>
+            </div>
+            <div class="font-admin-head font-bold text-lg text-admin-on-surface mt-1 tabular-nums">13 480 ₽</div>
+            <div class="text-[11px] text-admin-error inline-flex items-center gap-0.5 mt-1.5 font-semibold">
+              <span class="material-symbols-outlined text-[13px]">trending_down</span>-1.2%
+            </div>
+          </div>
+        </div>
+
+        <!-- revenue chart card -->
+        <div class="bg-admin-surface rounded-xl border border-admin-outline-variant p-3 mb-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm font-semibold text-admin-on-surface">Выручка по дням</span>
+            <span class="text-[11px] text-admin-on-surface-variant">30 дн.</span>
+          </div>
+          <div class="flex items-end gap-1 h-24">
+            <div class="flex-1 rounded-t bg-admin-surface-high" style="height:40%"></div>
+            <div class="flex-1 rounded-t bg-admin-surface-high" style="height:62%"></div>
+            <div class="flex-1 rounded-t bg-admin-surface-high" style="height:48%"></div>
+            <div class="flex-1 rounded-t bg-admin-primary" style="height:78%"></div>
+            <div class="flex-1 rounded-t bg-admin-surface-high" style="height:55%"></div>
+            <div class="flex-1 rounded-t bg-admin-surface-high" style="height:70%"></div>
+            <div class="flex-1 rounded-t bg-admin-primary" style="height:92%"></div>
+            <div class="flex-1 rounded-t bg-admin-surface-high" style="height:66%"></div>
+            <div class="flex-1 rounded-t bg-admin-surface-high" style="height:50%"></div>
+            <div class="flex-1 rounded-t bg-admin-surface-high" style="height:74%"></div>
+          </div>
+        </div>
+
+        <!-- recent orders -->
+        <div class="bg-admin-surface rounded-xl border border-admin-outline-variant p-3">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm font-semibold text-admin-on-surface">Последние заказы</span>
+            <span class="text-[11px] text-admin-on-surface-variant">Все</span>
+          </div>
+          <div class="space-y-2.5">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-admin-surface-high grid place-items-center shrink-0">
+                <span class="material-symbols-outlined text-admin-on-surface-variant text-[18px]">image</span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="text-[13px] font-medium text-admin-on-surface truncate">#10428 · Velocity Trail</div>
+                <div class="text-[11px] text-admin-on-surface-variant">2 мин назад</div>
+              </div>
+              <div class="text-[13px] font-semibold text-admin-on-surface tabular-nums whitespace-nowrap">12 990 ₽</div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-admin-surface-high grid place-items-center shrink-0">
+                <span class="material-symbols-outlined text-admin-on-surface-variant text-[18px]">image</span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="text-[13px] font-medium text-admin-on-surface truncate">#10427 · Lux Platform</div>
+                <div class="text-[11px] text-admin-on-surface-variant">18 мин назад</div>
+              </div>
+              <div class="text-[13px] font-semibold text-admin-on-surface tabular-nums whitespace-nowrap">11 240 ₽</div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-admin-surface-high grid place-items-center shrink-0">
+                <span class="material-symbols-outlined text-admin-on-surface-variant text-[18px]">image</span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="text-[13px] font-medium text-admin-on-surface truncate">#10426 · Peak Trail</div>
+                <div class="text-[11px] text-admin-on-surface-variant">41 мин назад</div>
+              </div>
+              <div class="text-[13px] font-semibold text-admin-on-surface tabular-nums whitespace-nowrap">15 490 ₽</div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- SCRIM -->
+      <div id="scrim" class="scrim absolute inset-0 z-40 bg-black/40"></div>
+
+      <!-- FLOATING DOCK + FAB (absolute within frame) -->
+      <div class="absolute inset-0 z-50 pointer-events-none">
+        <!-- dock stack -->
+        <div id="dock" class="absolute right-4 flex flex-col items-end gap-2.5" style="bottom:5.5rem;">
+
+          <!-- secondary row: тема / помощь / настройки / профиль -->
+          <div id="dockSecondary" class="dock-item flex items-center gap-2 mb-1">
+            <button data-action="theme" class="h-11 w-11 rounded-full bg-admin-surface border border-admin-outline-variant grid place-items-center shadow-md active:scale-95 transition">
+              <span class="material-symbols-outlined text-admin-on-surface text-[20px]" data-theme-mini>dark_mode</span>
+            </button>
+            <button data-nav="Помощь" class="h-11 w-11 rounded-full bg-admin-surface border border-admin-outline-variant grid place-items-center shadow-md active:scale-95 transition">
+              <span class="material-symbols-outlined text-admin-on-surface text-[20px]">help</span>
+            </button>
+            <button data-nav="Настройки" class="h-11 w-11 rounded-full bg-admin-surface border border-admin-outline-variant grid place-items-center shadow-md active:scale-95 transition">
+              <span class="material-symbols-outlined text-admin-on-surface text-[20px]">settings</span>
+            </button>
+            <button data-nav="Профиль" class="h-11 w-11 rounded-full bg-admin-primary grid place-items-center shadow-md active:scale-95 transition">
+              <span class="font-admin-head font-bold text-admin-on-primary text-[13px]">АР</span>
+            </button>
+          </div>
+
+          <!-- primary nav pills -->
+          <button data-nav="Дашборд" data-active="true" class="dock-item nav-pill flex items-center gap-3 rounded-full bg-admin-surface border border-admin-outline-variant pl-2 pr-4 py-2 shadow-lg active:scale-[.97] transition">
+            <span class="h-11 w-11 rounded-full bg-admin-primary grid place-items-center shrink-0">
+              <span class="material-symbols-outlined fill text-admin-on-primary text-[22px]">dashboard</span>
+            </span>
+            <span class="text-sm font-bold text-admin-on-surface whitespace-nowrap">Дашборд</span>
+          </button>
+
+          <button data-nav="Каталог" class="dock-item nav-pill flex items-center gap-3 rounded-full bg-admin-surface border border-admin-outline-variant pl-2 pr-4 py-2 shadow-lg active:scale-[.97] transition">
+            <span class="h-11 w-11 rounded-full bg-admin-surface-high grid place-items-center shrink-0">
+              <span class="material-symbols-outlined text-admin-on-surface text-[22px]">inventory_2</span>
+            </span>
+            <span class="text-sm font-semibold text-admin-on-surface whitespace-nowrap">Каталог</span>
+          </button>
+
+          <button data-nav="Заказы" class="dock-item nav-pill flex items-center gap-3 rounded-full bg-admin-surface border border-admin-outline-variant pl-2 pr-4 py-2 shadow-lg active:scale-[.97] transition">
+            <span class="h-11 w-11 rounded-full bg-admin-surface-high grid place-items-center shrink-0">
+              <span class="material-symbols-outlined text-admin-on-surface text-[22px]">shopping_cart</span>
+            </span>
+            <span class="text-sm font-semibold text-admin-on-surface whitespace-nowrap">Заказы</span>
+          </button>
+
+          <button data-nav="Клиенты" class="dock-item nav-pill flex items-center gap-3 rounded-full bg-admin-surface border border-admin-outline-variant pl-2 pr-4 py-2 shadow-lg active:scale-[.97] transition">
+            <span class="h-11 w-11 rounded-full bg-admin-surface-high grid place-items-center shrink-0">
+              <span class="material-symbols-outlined text-admin-on-surface text-[22px]">group</span>
+            </span>
+            <span class="text-sm font-semibold text-admin-on-surface whitespace-nowrap">Клиенты</span>
+          </button>
+
+          <button data-nav="Маркетинг" class="dock-item nav-pill flex items-center gap-3 rounded-full bg-admin-surface border border-admin-outline-variant pl-2 pr-4 py-2 shadow-lg active:scale-[.97] transition">
+            <span class="h-11 w-11 rounded-full bg-admin-surface-high grid place-items-center shrink-0">
+              <span class="material-symbols-outlined text-admin-on-surface text-[22px]">campaign</span>
+            </span>
+            <span class="text-sm font-semibold text-admin-on-surface whitespace-nowrap">Маркетинг</span>
+          </button>
+        </div>
+
+        <!-- FAB -->
+        <button id="fab" class="pointer-events-auto absolute bottom-5 right-4 h-14 w-14 rounded-full bg-admin-primary grid place-items-center lime-glow active:scale-95 transition" aria-label="Навигация">
+          <span class="fab-icon material-symbols-outlined fill text-admin-on-primary text-[28px]">apps</span>
+        </button>
+      </div>
+
+      <!-- toast -->
+      <div id="toast" class="absolute left-1/2 -translate-x-1/2 bottom-24 z-[60] opacity-0 transition-opacity duration-200 pointer-events-none">
+        <div class="rounded-full bg-admin-on-surface text-admin-surface px-4 py-2 text-xs font-medium shadow-lg whitespace-nowrap"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // ---- Theme toggle (control bar) ----
+    const root = document.documentElement;
+    const tIcon = document.getElementById('themeIcon');
+    const tLabel = document.getElementById('themeLabel');
+    function syncTheme(){
+      const dark = root.classList.contains('dark');
+      tIcon.textContent = dark ? 'light_mode' : 'dark_mode';
+      tLabel.textContent = dark ? 'Светлая' : 'Тёмная';
+      document.querySelectorAll('[data-theme-mini]').forEach(el=>{ el.textContent = dark ? 'light_mode' : 'dark_mode'; });
+    }
+    document.getElementById('themeToggle').addEventListener('click', ()=>{ root.classList.toggle('dark'); syncTheme(); });
+    syncTheme();
+
+    // ---- Floating dock ----
+    const fab = document.getElementById('fab');
+    const dock = document.getElementById('dock');
+    const scrim = document.getElementById('scrim');
+    const fabWrap = fab.parentElement;
+    const items = [...document.querySelectorAll('.dock-item')];
+    let open = false;
+
+    function setStagger(){
+      // bottom-up stagger: items closest to FAB animate first
+      const order = [...items].reverse(); // last in DOM (Маркетинг) is closest to FAB
+      order.forEach((el,i)=>{ el.style.transitionDelay = open ? (i*45)+'ms' : '0ms'; });
+    }
+    function openDock(){
+      open = true;
+      setStagger();
+      dock.classList.add('dock-open');
+      scrim.classList.add('show');
+      fabWrap.classList.add('fab-open');
+    }
+    function closeDock(){
+      open = false;
+      setStagger();
+      dock.classList.remove('dock-open');
+      scrim.classList.remove('show');
+      fabWrap.classList.remove('fab-open');
+    }
+    fab.addEventListener('click', ()=> open ? closeDock() : openDock());
+    scrim.addEventListener('click', closeDock);
+
+    // ---- Toast ----
+    const toast = document.getElementById('toast');
+    const toastInner = toast.firstElementChild;
+    let toastTimer;
+    function showToast(msg){
+      toastInner.textContent = msg;
+      toast.style.opacity = '1';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=>{ toast.style.opacity = '0'; }, 1400);
+    }
+
+    // ---- Nav selection ----
+    document.querySelectorAll('[data-nav]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        // mark active among primary pills
+        if(btn.classList.contains('nav-pill')){
+          document.querySelectorAll('.nav-pill').forEach(p=>{
+            p.querySelector('span.h-11').className = 'h-11 w-11 rounded-full bg-admin-surface-high grid place-items-center shrink-0';
+            const ic = p.querySelector('.material-symbols-outlined');
+            ic.classList.remove('fill'); ic.classList.add('text-admin-on-surface');
+            const lbl = p.querySelector('span:last-child');
+            lbl.classList.remove('font-bold'); lbl.classList.add('font-semibold');
+          });
+          btn.querySelector('span.h-11').className = 'h-11 w-11 rounded-full bg-admin-primary grid place-items-center shrink-0';
+          const ic = btn.querySelector('.material-symbols-outlined');
+          ic.classList.add('fill');
+          const lbl = btn.querySelector('span:last-child');
+          lbl.classList.remove('font-semibold'); lbl.classList.add('font-bold');
+        }
+        showToast('Переход: ' + btn.getAttribute('data-nav'));
+        closeDock();
+      });
+    });
+
+    // theme mini button inside dock
+    document.querySelector('[data-action="theme"]').addEventListener('click', ()=>{
+      root.classList.toggle('dark'); syncTheme();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ru" class="light">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>STRIDE Admin — Сайдбар: нижний таб-бар</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@400;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: { extend: {
+      colors: {
+        "admin-bg": "var(--admin-bg)", "admin-surface": "var(--admin-surface)",
+        "admin-surface-low": "var(--admin-surface-low)", "admin-surface-container": "var(--admin-surface-container)",
+        "admin-surface-high": "var(--admin-surface-high)", "admin-on-bg": "var(--admin-on-bg)",
+        "admin-on-surface": "var(--admin-on-surface)", "admin-on-surface-variant": "var(--admin-on-surface-variant)",
+        "admin-primary": "var(--admin-primary)", "admin-on-primary": "var(--admin-on-primary)",
+        "admin-secondary-container": "var(--admin-secondary-container)", "admin-on-secondary-container": "var(--admin-on-secondary-container)",
+        "admin-error": "var(--admin-error)", "admin-on-error": "var(--admin-on-error)",
+        "admin-outline": "var(--admin-outline)", "admin-outline-variant": "var(--admin-outline-variant)"
+      },
+      fontFamily: { "admin-head": ["Anybody","sans-serif"], "admin-body": ["Manrope","sans-serif"] }
+    }}
+  }
+</script>
+<style>
+  :root{--admin-bg:#f7f8f4;--admin-surface:#ffffff;--admin-surface-low:#f8f9fb;--admin-surface-container:#f3f4f6;--admin-surface-high:#e5e7eb;--admin-on-bg:#111827;--admin-on-surface:#111827;--admin-on-surface-variant:#6b7280;--admin-primary:#b2f700;--admin-on-primary:#131f00;--admin-secondary-container:#f3e8ff;--admin-on-secondary-container:#3b0764;--admin-error:#ef4444;--admin-on-error:#ffffff;--admin-outline:#d1d5db;--admin-outline-variant:#e5e7eb;}
+  html.dark{--admin-bg:#131313;--admin-surface:#131313;--admin-surface-low:#1c1b1b;--admin-surface-container:#201f1f;--admin-surface-high:#2a2a2a;--admin-on-bg:#e5e2e1;--admin-on-surface:#e5e2e1;--admin-on-surface-variant:#c2caad;--admin-primary:#b2f700;--admin-on-primary:#243600;--admin-secondary-container:#563f71;--admin-on-secondary-container:#c9ade7;--admin-error:#ffb4ab;--admin-on-error:#690005;--admin-outline:#8c9479;--admin-outline-variant:#424a33;}
+  body{font-family:Manrope,sans-serif;background:var(--admin-bg);color:var(--admin-on-bg);}
+  .material-symbols-outlined{font-variation-settings:"FILL" 0,"wght" 400,"GRAD" 0,"opsz" 24;vertical-align:middle;}
+  .material-symbols-outlined.fill{font-variation-settings:"FILL" 1,"wght" 400,"GRAD" 0,"opsz" 24;}
+  .admin-scope *{border-color:var(--admin-outline-variant);}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;}}
+  .frame-scroll::-webkit-scrollbar{width:0;height:0;}
+  .frame-scroll{scrollbar-width:none;}
+</style>
+</head>
+<body class="admin-scope min-h-screen p-4 sm:p-8 flex flex-col items-center gap-5">
+
+  <!-- CONTROL BAR -->
+  <div class="bg-admin-surface rounded-2xl border border-admin-outline-variant p-4 max-w-[440px] w-full">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <h1 class="font-admin-head font-bold text-lg text-admin-on-surface">Сайдбар: нижний таб-бар</h1>
+        <p class="text-sm text-admin-on-surface-variant mt-1 leading-snug">Нативный мобильный паттерн: 5 основных разделов вынесены в фиксированный нижний таб-бар, вторичные действия (помощь, настройки, тема, профиль, выход) — в дропдаун из топбара. Берите, когда нужна привычная мобильная навигация большим пальцем.</p>
+      </div>
+      <button id="themeToggle" class="shrink-0 flex items-center gap-1.5 bg-admin-surface-container text-admin-on-surface rounded-full px-3 py-2 text-sm font-medium border border-admin-outline-variant active:scale-95 transition-transform">
+        <span id="themeIcon" class="material-symbols-outlined text-[20px]">dark_mode</span>
+        <span id="themeLabel">Тёмная</span>
+      </button>
+    </div>
+    <div class="mt-2 text-[11px] text-admin-on-surface-variant font-medium">≈390px</div>
+  </div>
+
+  <!-- PHONE FRAME -->
+  <div class="max-w-[390px] w-full bg-admin-bg rounded-[2.2rem] border-[6px] border-admin-on-surface/10 shadow-2xl overflow-hidden relative" style="min-height:720px;">
+    <!-- status bar -->
+    <div class="h-8 px-5 flex items-center justify-between bg-admin-surface text-admin-on-surface text-[12px] font-semibold">
+      <span>9:41</span>
+      <div class="flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-[16px]">signal_cellular_alt</span>
+        <span class="material-symbols-outlined text-[16px]">wifi</span>
+        <span class="material-symbols-outlined text-[16px]">battery_full</span>
+      </div>
+    </div>
+
+    <!-- topbar -->
+    <div class="h-16 px-3 flex items-center gap-2 bg-admin-surface border-b border-admin-outline-variant relative">
+      <div class="flex items-center gap-2 shrink-0">
+        <div class="w-9 h-9 rounded-xl bg-admin-primary grid place-items-center">
+          <span class="material-symbols-outlined fill text-admin-on-primary text-[22px]">bolt</span>
+        </div>
+        <div class="leading-none">
+          <div class="font-admin-head font-bold text-admin-on-surface text-[15px]">STRIDE</div>
+          <div class="text-[9px] text-admin-on-surface-variant mt-0.5">Премиум-кроссовки</div>
+        </div>
+      </div>
+      <div class="flex-1 min-w-0 mx-1">
+        <div class="flex items-center gap-2 bg-admin-surface-container rounded-full px-3 h-9 text-admin-on-surface-variant">
+          <span class="material-symbols-outlined text-[18px]">search</span>
+          <span class="text-[12px] truncate">Поиск…</span>
+        </div>
+      </div>
+      <!-- avatar btn -->
+      <button id="avatarBtn" class="shrink-0 w-9 h-9 rounded-full bg-admin-primary text-admin-on-primary font-admin-head font-bold text-[13px] grid place-items-center active:scale-95 transition-transform">АР</button>
+
+      <!-- dropdown sheet -->
+      <div id="avatarMenu" class="absolute right-3 top-[60px] w-56 bg-admin-surface rounded-xl border border-admin-outline-variant shadow-2xl p-2 z-50 origin-top-right transition-all duration-200 ease-out opacity-0 scale-95 pointer-events-none">
+        <div class="flex items-center gap-3 px-2 py-2">
+          <div class="w-10 h-10 rounded-full bg-admin-primary text-admin-on-primary font-admin-head font-bold grid place-items-center">АР</div>
+          <div class="min-w-0">
+            <div class="text-[13px] font-semibold text-admin-on-surface truncate">Алексей Р.</div>
+            <div class="text-[11px] text-admin-on-surface-variant">Администратор</div>
+          </div>
+        </div>
+        <div class="h-px bg-admin-outline-variant my-1.5"></div>
+        <button class="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg text-admin-on-surface-variant hover:bg-admin-surface-high transition-colors text-[13px]">
+          <span class="material-symbols-outlined text-[20px]">settings</span> Настройки
+        </button>
+        <button class="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg text-admin-on-surface-variant hover:bg-admin-surface-high transition-colors text-[13px]">
+          <span class="material-symbols-outlined text-[20px]">help</span> Помощь
+        </button>
+        <button id="menuTheme" class="w-full flex items-center justify-between gap-3 px-2 py-2.5 rounded-lg text-admin-on-surface-variant hover:bg-admin-surface-high transition-colors text-[13px]">
+          <span class="flex items-center gap-3"><span id="menuThemeIcon" class="material-symbols-outlined text-[20px]">dark_mode</span> Тема</span>
+          <span id="menuThemeState" class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-admin-surface-high">Светлая</span>
+        </button>
+        <div class="h-px bg-admin-outline-variant my-1.5"></div>
+        <button class="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg text-admin-error hover:bg-admin-surface-high transition-colors text-[13px] font-medium">
+          <span class="material-symbols-outlined text-[20px]">logout</span> Выйти
+        </button>
+      </div>
+    </div>
+
+    <!-- BODY (scrollable) -->
+    <div class="frame-scroll overflow-y-auto" style="height:608px;">
+      <div class="px-4 pt-4 pb-28">
+
+        <!-- section label -->
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <div class="text-[11px] text-admin-on-surface-variant font-medium">Раздел</div>
+            <div id="sectionLabel" class="font-admin-head font-bold text-xl text-admin-on-surface">Дашборд</div>
+          </div>
+          <span class="text-[11px] text-admin-on-surface-variant bg-admin-surface-container px-2.5 py-1 rounded-full border border-admin-outline-variant">Сегодня</span>
+        </div>
+
+        <!-- KPI cards -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-admin-surface rounded-xl border border-admin-outline-variant p-3.5">
+            <div class="flex items-center justify-between">
+              <span class="w-8 h-8 rounded-lg bg-admin-primary grid place-items-center"><span class="material-symbols-outlined fill text-admin-on-primary text-[18px]">payments</span></span>
+              <span class="text-[11px] text-admin-on-primary bg-admin-primary px-1.5 py-0.5 rounded-full font-semibold">+12%</span>
+            </div>
+            <div class="mt-3 font-admin-head font-bold text-[19px] text-admin-on-surface tabular-nums whitespace-nowrap">284 500 ₽</div>
+            <div class="text-[11px] text-admin-on-surface-variant mt-0.5">Выручка</div>
+          </div>
+          <div class="bg-admin-surface rounded-xl border border-admin-outline-variant p-3.5">
+            <div class="flex items-center justify-between">
+              <span class="w-8 h-8 rounded-lg bg-admin-surface-high grid place-items-center"><span class="material-symbols-outlined text-admin-on-surface text-[18px]">shopping_cart</span></span>
+              <span class="text-[11px] text-admin-on-primary bg-admin-primary px-1.5 py-0.5 rounded-full font-semibold">+8%</span>
+            </div>
+            <div class="mt-3 font-admin-head font-bold text-[19px] text-admin-on-surface tabular-nums">142</div>
+            <div class="text-[11px] text-admin-on-surface-variant mt-0.5">Заказы</div>
+          </div>
+          <div class="bg-admin-surface rounded-xl border border-admin-outline-variant p-3.5">
+            <div class="flex items-center justify-between">
+              <span class="w-8 h-8 rounded-lg bg-admin-surface-high grid place-items-center"><span class="material-symbols-outlined text-admin-on-surface text-[18px]">group</span></span>
+              <span class="text-[11px] text-admin-on-primary bg-admin-primary px-1.5 py-0.5 rounded-full font-semibold">+5%</span>
+            </div>
+            <div class="mt-3 font-admin-head font-bold text-[19px] text-admin-on-surface tabular-nums">1 280</div>
+            <div class="text-[11px] text-admin-on-surface-variant mt-0.5">Клиенты</div>
+          </div>
+          <div class="bg-admin-surface rounded-xl border border-admin-outline-variant p-3.5">
+            <div class="flex items-center justify-between">
+              <span class="w-8 h-8 rounded-lg bg-admin-surface-high grid place-items-center"><span class="material-symbols-outlined text-admin-error text-[18px]">inventory_2</span></span>
+              <span class="text-[11px] text-admin-error font-semibold">3 SKU</span>
+            </div>
+            <div class="mt-3 font-admin-head font-bold text-[19px] text-admin-on-surface tabular-nums">5</div>
+            <div class="text-[11px] text-admin-on-surface-variant mt-0.5">Мало на складе</div>
+          </div>
+        </div>
+
+        <!-- recent orders mini list -->
+        <div class="mt-4 bg-admin-surface rounded-xl border border-admin-outline-variant overflow-hidden">
+          <div class="px-3.5 py-3 flex items-center justify-between border-b border-admin-outline-variant">
+            <div class="font-admin-head font-bold text-[14px] text-admin-on-surface">Последние заказы</div>
+            <button class="text-[12px] text-admin-on-surface-variant flex items-center gap-0.5">Все <span class="material-symbols-outlined text-[16px]">chevron_right</span></button>
+          </div>
+          <div class="divide-y divide-admin-outline-variant">
+            <div class="px-3.5 py-3 flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-admin-surface-high border border-admin-outline-variant grid place-items-center"><span class="material-symbols-outlined text-admin-on-surface-variant text-[18px]">receipt_long</span></div>
+              <div class="min-w-0 flex-1">
+                <div class="text-[13px] font-semibold text-admin-on-surface truncate">#1042 · Мария К.</div>
+                <div class="text-[11px] text-admin-on-surface-variant">2 товара · 5 мин назад</div>
+              </div>
+              <div class="text-right">
+                <div class="text-[13px] font-bold text-admin-on-surface tabular-nums whitespace-nowrap">24 230 ₽</div>
+                <span class="inline-flex items-center gap-1 text-[10px] mt-0.5 bg-admin-primary text-admin-on-primary px-1.5 py-0.5 rounded-full font-semibold"><span class="material-symbols-outlined fill text-[12px]">check_circle</span>Оплачен</span>
+              </div>
+            </div>
+            <div class="px-3.5 py-3 flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-admin-surface-high border border-admin-outline-variant grid place-items-center"><span class="material-symbols-outlined text-admin-on-surface-variant text-[18px]">receipt_long</span></div>
+              <div class="min-w-0 flex-1">
+                <div class="text-[13px] font-semibold text-admin-on-surface truncate">#1041 · Игорь П.</div>
+                <div class="text-[11px] text-admin-on-surface-variant">1 товар · 18 мин назад</div>
+              </div>
+              <div class="text-right">
+                <div class="text-[13px] font-bold text-admin-on-surface tabular-nums whitespace-nowrap">12 990 ₽</div>
+                <span class="inline-flex items-center gap-1 text-[10px] mt-0.5 bg-admin-secondary-container text-admin-on-secondary-container px-1.5 py-0.5 rounded-full font-semibold"><span class="material-symbols-outlined text-[12px]">local_shipping</span>Доставка</span>
+              </div>
+            </div>
+            <div class="px-3.5 py-3 flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-admin-surface-high border border-admin-outline-variant grid place-items-center"><span class="material-symbols-outlined text-admin-on-surface-variant text-[18px]">receipt_long</span></div>
+              <div class="min-w-0 flex-1">
+                <div class="text-[13px] font-semibold text-admin-on-surface truncate">#1040 · Анна С.</div>
+                <div class="text-[11px] text-admin-on-surface-variant">3 товара · 40 мин назад</div>
+              </div>
+              <div class="text-right">
+                <div class="text-[13px] font-bold text-admin-on-surface tabular-nums whitespace-nowrap">37 470 ₽</div>
+                <span class="inline-flex items-center gap-1 text-[10px] mt-0.5 bg-admin-primary text-admin-on-primary px-1.5 py-0.5 rounded-full font-semibold"><span class="material-symbols-outlined fill text-[12px]">check_circle</span>Оплачен</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BOTTOM TAB BAR — скользящая лайм-пилюля (механика тоггла темы) -->
+    <style>
+      #tabBar{ position:relative; display:flex; align-items:stretch; height:64px; padding:6px; isolation:isolate; }
+      #tabThumb{ position:absolute; top:6px; left:6px; height:calc(100% - 12px); width:64px; border-radius:9999px;
+                 background:var(--admin-primary); box-shadow:var(--pill-shadow); transform:translateX(0);
+                 transition:transform .42s cubic-bezier(.34,1.56,.64,1); z-index:0; }
+      #tabBar .tab{ position:relative; z-index:1; flex:1 1 0; display:flex; flex-direction:column; align-items:center;
+                    justify-content:center; gap:3px; min-height:44px; background:transparent; border:0; cursor:pointer;
+                    color:var(--admin-on-surface-variant); transition:color .3s cubic-bezier(.4,0,.2,1);
+                    -webkit-tap-highlight-color:transparent; }
+      #tabBar .tab__lbl{ font-size:10px; font-weight:600; line-height:1; }
+      #tabBar .tab[aria-selected="true"]{ color:var(--admin-on-primary); }
+      #tabBar .tab__ico{ position:relative; display:inline-grid; place-items:center; width:26px; height:26px; }
+      #tabBar .tab__ico .material-symbols-outlined{ grid-area:1/1; font-size:26px;
+                    transition:opacity .34s ease, transform .42s cubic-bezier(.34,1.56,.64,1); }
+      #tabBar .tab__ico .ico-off{ opacity:1; transform:scale(1) rotate(0); }
+      #tabBar .tab__ico .ico-on{ opacity:0; transform:scale(.6) rotate(-18deg); }
+      #tabBar .tab[aria-selected="true"] .ico-off{ opacity:0; transform:scale(.6) rotate(18deg); }
+      #tabBar .tab[aria-selected="true"] .ico-on{ opacity:1; transform:scale(1) rotate(0); }
+      :root{ --pill-shadow:0 2px 8px rgba(17,24,39,.10),0 1px 2px rgba(17,24,39,.06); }
+      html.dark #tabThumb{ box-shadow:0 0 0 1px rgba(178,247,0,.22),0 4px 14px rgba(178,247,0,.20); }
+      @media (prefers-reduced-motion: reduce){ #tabThumb, #tabBar .tab, #tabBar .tab__ico .material-symbols-outlined{ transition:none !important; } }
+    </style>
+    <div class="absolute left-0 right-0 bottom-0 bg-admin-surface border-t border-admin-outline-variant" style="padding-bottom:env(safe-area-inset-bottom);">
+      <div id="tabBar" role="tablist" aria-label="Основная навигация">
+        <span id="tabThumb" aria-hidden="true"></span>
+        <button class="tab" role="tab" aria-selected="true" aria-label="Дашборд" data-tab="Дашборд">
+          <span class="tab__ico"><span class="material-symbols-outlined ico-off">dashboard</span><span class="material-symbols-outlined fill ico-on">dashboard</span></span>
+        </button>
+        <button class="tab" role="tab" aria-selected="false" aria-label="Каталог" data-tab="Каталог">
+          <span class="tab__ico"><span class="material-symbols-outlined ico-off">inventory_2</span><span class="material-symbols-outlined fill ico-on">inventory_2</span></span>
+        </button>
+        <button class="tab" role="tab" aria-selected="false" aria-label="Заказы" data-tab="Заказы">
+          <span class="tab__ico"><span class="material-symbols-outlined ico-off">shopping_cart</span><span class="material-symbols-outlined fill ico-on">shopping_cart</span></span>
+        </button>
+        <button class="tab" role="tab" aria-selected="false" aria-label="Клиенты" data-tab="Клиенты">
+          <span class="tab__ico"><span class="material-symbols-outlined ico-off">group</span><span class="material-symbols-outlined fill ico-on">group</span></span>
+        </button>
+        <button class="tab" role="tab" aria-selected="false" aria-label="Маркетинг" data-tab="Маркетинг">
+          <span class="tab__ico"><span class="material-symbols-outlined ico-off">campaign</span><span class="material-symbols-outlined fill ico-on">campaign</span></span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  var root = document.documentElement;
+
+  function syncThemeUI(){
+    var dark = root.classList.contains('dark');
+    document.getElementById('themeIcon').textContent = dark ? 'light_mode' : 'dark_mode';
+    document.getElementById('themeLabel').textContent = dark ? 'Светлая' : 'Тёмная';
+    document.getElementById('menuThemeIcon').textContent = dark ? 'light_mode' : 'dark_mode';
+    document.getElementById('menuThemeState').textContent = dark ? 'Тёмная' : 'Светлая';
+  }
+  function toggleTheme(){ root.classList.toggle('dark'); if(!root.classList.contains('dark')) root.classList.add('light'); else root.classList.remove('light'); syncThemeUI(); }
+  document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+  document.getElementById('menuTheme').addEventListener('click', toggleTheme);
+
+  // avatar dropdown
+  var avatarBtn = document.getElementById('avatarBtn');
+  var avatarMenu = document.getElementById('avatarMenu');
+  var menuOpen = false;
+  function setMenu(open){
+    menuOpen = open;
+    if(open){
+      avatarMenu.classList.remove('opacity-0','scale-95','pointer-events-none');
+      avatarMenu.classList.add('opacity-100','scale-100');
+    } else {
+      avatarMenu.classList.add('opacity-0','scale-95','pointer-events-none');
+      avatarMenu.classList.remove('opacity-100','scale-100');
+    }
+  }
+  avatarBtn.addEventListener('click', function(e){ e.stopPropagation(); setMenu(!menuOpen); });
+  document.addEventListener('click', function(e){ if(menuOpen && !avatarMenu.contains(e.target)) setMenu(false); });
+
+  // tabs — скользящая пилюля (positionThumb как у тоггла темы)
+  var tabBar = document.getElementById('tabBar');
+  var tabThumb = document.getElementById('tabThumb');
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('#tabBar .tab'));
+  var sectionLabel = document.getElementById('sectionLabel');
+
+  function positionThumb(){
+    var active = tabBar.querySelector('.tab[aria-selected="true"]') || tabs[0];
+    var pad = parseFloat(getComputedStyle(tabBar).paddingLeft) || 0;
+    tabThumb.style.width = active.offsetWidth + 'px';
+    tabThumb.style.transform = 'translateX(' + (active.offsetLeft - pad) + 'px)';
+  }
+  function activate(idx){
+    tabs.forEach(function(t, i){ t.setAttribute('aria-selected', i === idx ? 'true' : 'false'); });
+    positionThumb();
+    sectionLabel.textContent = tabs[idx].getAttribute('data-tab');
+  }
+  tabs.forEach(function(t, i){ t.addEventListener('click', function(){ activate(i); }); });
+
+  // resize / fonts: пересчёт позиции без анимации скольжения
+  function reflowThumb(){
+    tabThumb.style.transition = 'none';
+    positionThumb();
+    void tabBar.offsetWidth;
+    tabThumb.style.transition = '';
+  }
+
+  // init — первый кадр без скольжения
+  syncThemeUI();
+  tabThumb.style.transition = 'none';
+  activate(0);
+  void tabBar.offsetWidth;
+  tabThumb.style.transition = '';
+  window.addEventListener('resize', reflowThumb);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(reflowThumb);
+</script>
+</body>
+</html>

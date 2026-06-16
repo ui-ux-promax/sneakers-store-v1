@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ru" class="light">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>STRIDE Admin — Форма: адаптивная сетка с подписями</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@400;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: { extend: {
+      colors: {
+        "admin-bg": "var(--admin-bg)", "admin-surface": "var(--admin-surface)",
+        "admin-surface-low": "var(--admin-surface-low)", "admin-surface-container": "var(--admin-surface-container)",
+        "admin-surface-high": "var(--admin-surface-high)", "admin-on-bg": "var(--admin-on-bg)",
+        "admin-on-surface": "var(--admin-on-surface)", "admin-on-surface-variant": "var(--admin-on-surface-variant)",
+        "admin-primary": "var(--admin-primary)", "admin-on-primary": "var(--admin-on-primary)",
+        "admin-secondary-container": "var(--admin-secondary-container)", "admin-on-secondary-container": "var(--admin-on-secondary-container)",
+        "admin-error": "var(--admin-error)", "admin-on-error": "var(--admin-on-error)",
+        "admin-outline": "var(--admin-outline)", "admin-outline-variant": "var(--admin-outline-variant)"
+      },
+      fontFamily: { "admin-head": ["Anybody","sans-serif"], "admin-body": ["Manrope","sans-serif"] }
+    }}
+  }
+</script>
+<style>
+  :root{--admin-bg:#f7f8f4;--admin-surface:#ffffff;--admin-surface-low:#f8f9fb;--admin-surface-container:#f3f4f6;--admin-surface-high:#e5e7eb;--admin-on-bg:#111827;--admin-on-surface:#111827;--admin-on-surface-variant:#6b7280;--admin-primary:#b2f700;--admin-on-primary:#131f00;--admin-secondary-container:#f3e8ff;--admin-on-secondary-container:#3b0764;--admin-error:#ef4444;--admin-on-error:#ffffff;--admin-outline:#d1d5db;--admin-outline-variant:#e5e7eb;}
+  html.dark{--admin-bg:#131313;--admin-surface:#131313;--admin-surface-low:#1c1b1b;--admin-surface-container:#201f1f;--admin-surface-high:#2a2a2a;--admin-on-bg:#e5e2e1;--admin-on-surface:#e5e2e1;--admin-on-surface-variant:#c2caad;--admin-primary:#b2f700;--admin-on-primary:#243600;--admin-secondary-container:#563f71;--admin-on-secondary-container:#c9ade7;--admin-error:#ffb4ab;--admin-on-error:#690005;--admin-outline:#8c9479;--admin-outline-variant:#424a33;}
+  body{font-family:Manrope,sans-serif;background:var(--admin-bg);color:var(--admin-on-bg);}
+  .material-symbols-outlined{font-variation-settings:"FILL" 0,"wght" 400,"GRAD" 0,"opsz" 24;vertical-align:middle;}
+  .material-symbols-outlined.fill{font-variation-settings:"FILL" 1,"wght" 400,"GRAD" 0,"opsz" 24;}
+  .admin-scope *{border-color:var(--admin-outline-variant);}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;}}
+  /* hide number spinners for a cleaner admin look */
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  input[type=number]{-moz-appearance:textfield;}
+  .frame-scroll::-webkit-scrollbar{width:0;height:0;}
+  .frame-scroll{scrollbar-width:none;}
+</style>
+</head>
+<body class="admin-scope min-h-screen p-4 sm:p-8 flex flex-col items-center gap-5">
+
+  <!-- ============ CONTROL BAR ============ -->
+  <div class="bg-admin-surface rounded-2xl border border-admin-outline-variant p-4 max-w-[440px] w-full">
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <h1 class="font-admin-head font-bold text-lg leading-tight text-admin-on-surface">Форма: адаптивная сетка с подписями</h1>
+        <span class="inline-block mt-1 text-[11px] font-medium text-admin-on-surface-variant px-2 py-0.5 rounded-full bg-admin-surface-high">≈390px</span>
+      </div>
+      <button id="themeToggle" class="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-admin-outline-variant bg-admin-surface-container px-3 h-10 text-sm font-medium text-admin-on-surface hover:bg-admin-surface-high transition-colors duration-200">
+        <span id="themeIcon" class="material-symbols-outlined text-[20px]">dark_mode</span>
+        <span id="themeLabel">Тёмная</span>
+      </button>
+    </div>
+    <p class="mt-3 text-sm leading-relaxed text-admin-on-surface-variant">
+      Минимальное вмешательство в текущую разметку: вместо фиксированной grid-строки на ~566px каждая строка размера
+      <b class="text-admin-on-surface">переносится (reflow)</b> в блок с подписанными полями 2-в-ряд и тонким лаймовым акцентом слева.
+      На широких экранах (md+) тот же блок схлопывается обратно в одну табличную строку. Берите, когда нужно убрать
+      горизонтальный скролл малой кровью — только добавив <code class="text-admin-on-surface">md:</code>-брейкпоинты и wrap.
+    </p>
+  </div>
+
+  <!-- ============ PHONE FRAME ============ -->
+  <div class="max-w-[390px] w-full bg-admin-bg rounded-[2.2rem] border-[6px] border-admin-on-surface/10 shadow-2xl overflow-hidden" style="min-height:720px;">
+    <div class="frame-scroll h-[720px] overflow-y-auto">
+
+      <!-- status bar strip -->
+      <div class="flex items-center justify-between px-5 pt-2 pb-1 text-[11px] font-semibold text-admin-on-surface bg-admin-bg">
+        <span>9:41</span>
+        <div class="flex items-center gap-1">
+          <span class="material-symbols-outlined text-[15px]">signal_cellular_alt</span>
+          <span class="material-symbols-outlined text-[15px]">wifi</span>
+          <span class="material-symbols-outlined text-[15px]">battery_full</span>
+        </div>
+      </div>
+
+      <!-- topbar -->
+      <header class="h-16 px-4 flex items-center gap-3 bg-admin-surface border-b border-admin-outline-variant sticky top-0 z-20">
+        <button class="shrink-0 w-10 h-10 grid place-items-center rounded-lg text-admin-on-surface-variant hover:bg-admin-surface-high transition-colors">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 h-10 rounded-full bg-admin-surface-container px-3.5 border border-admin-outline-variant">
+            <span class="material-symbols-outlined text-[20px] text-admin-on-surface-variant">search</span>
+            <span class="text-[13px] text-admin-on-surface-variant truncate">Поиск заказов, клиентов, товаров…</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- page body -->
+      <main class="px-4 pb-28 pt-4">
+
+        <!-- breadcrumb / heading -->
+        <div class="flex items-center gap-1.5 text-[12px] text-admin-on-surface-variant mb-1">
+          <span>Каталог</span>
+          <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+          <span>Товары</span>
+          <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+          <span class="text-admin-on-surface font-medium">Velocity Runner</span>
+        </div>
+        <h2 class="font-admin-head font-bold text-xl text-admin-on-surface mb-4">Размеры и варианты</h2>
+
+        <!-- colorway card -->
+        <section class="bg-admin-surface rounded-xl border border-admin-outline-variant overflow-hidden">
+
+          <!-- colorway header -->
+          <div class="flex items-center gap-3 p-4 border-b border-admin-outline-variant">
+            <div class="w-9 h-9 rounded-lg shrink-0" style="background:linear-gradient(135deg,#b2f700,#7bbf00);"></div>
+            <div class="min-w-0 flex-1">
+              <div class="font-admin-head font-bold text-[15px] text-admin-on-surface leading-tight">Lime Flash</div>
+              <div class="text-[12px] text-admin-on-surface-variant">Расцветка · 7 активных размеров</div>
+            </div>
+            <button class="shrink-0 w-10 h-10 grid place-items-center rounded-lg text-admin-on-surface-variant hover:bg-admin-surface-high transition-colors">
+              <span class="material-symbols-outlined text-[20px]">expand_less</span>
+            </button>
+          </div>
+
+          <div class="p-4 space-y-5">
+
+            <!-- size chip grid -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label class="text-[12px] font-semibold text-admin-on-surface-variant uppercase tracking-wide">Размеры (EU)</label>
+                <span id="selCount" class="text-[12px] text-admin-on-surface-variant tabular-nums">выбрано 7</span>
+              </div>
+              <div id="chipGrid" class="grid grid-cols-5 gap-1.5"></div>
+            </div>
+
+            <!-- bulk controls -->
+            <div class="rounded-xl bg-admin-surface-low border border-admin-outline-variant p-3 space-y-2.5">
+              <div class="text-[12px] font-semibold text-admin-on-surface-variant uppercase tracking-wide">Массовое изменение</div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div class="flex items-center gap-2">
+                  <input id="bulkPrice" type="number" placeholder="Цена всем" inputmode="numeric"
+                    class="min-w-0 flex-1 h-11 rounded-xl bg-admin-surface border border-admin-outline-variant px-3 text-sm text-admin-on-surface tabular-nums placeholder:text-admin-on-surface-variant focus:outline-none focus:ring-2 focus:ring-admin-primary focus:border-admin-primary"/>
+                  <button data-bulk="price" class="bulk-ok shrink-0 h-11 px-4 rounded-full bg-admin-primary text-admin-on-primary font-bold text-sm hover:opacity-90 active:scale-95 transition">OK</button>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input id="bulkStock" type="number" placeholder="Остаток всем" inputmode="numeric"
+                    class="min-w-0 flex-1 h-11 rounded-xl bg-admin-surface border border-admin-outline-variant px-3 text-sm text-admin-on-surface tabular-nums placeholder:text-admin-on-surface-variant focus:outline-none focus:ring-2 focus:ring-admin-primary focus:border-admin-primary"/>
+                  <button data-bulk="stock" class="bulk-ok shrink-0 h-11 px-4 rounded-full bg-admin-primary text-admin-on-primary font-bold text-sm hover:opacity-90 active:scale-95 transition">OK</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- desktop header note -->
+            <p class="text-[11px] text-admin-on-surface-variant leading-relaxed flex items-start gap-1.5">
+              <span class="material-symbols-outlined text-[16px] mt-px shrink-0">info</span>
+              <span>На широком экране (<b class="text-admin-on-surface">md+</b>) каждый блок ниже схлопывается в одну строку
+              <code class="text-admin-on-surface">grid-cols-[60px_1fr_110px_110px_90px_auto_auto]</code>. Здесь, на мобильном, поля переносятся 2-в-ряд.</span>
+            </p>
+
+            <!-- variant rows -->
+            <div id="rows" class="space-y-3"></div>
+
+            <!-- add size -->
+            <button class="w-full h-11 rounded-xl border border-dashed border-admin-outline text-admin-on-surface-variant text-sm font-medium hover:bg-admin-surface-high transition flex items-center justify-center gap-1.5">
+              <span class="material-symbols-outlined text-[20px]">add</span> Добавить размер
+            </button>
+
+          </div>
+        </section>
+
+        <!-- save bar -->
+        <div class="mt-5 flex items-center gap-3">
+          <button class="flex-1 h-12 rounded-full bg-admin-primary text-admin-on-primary font-bold text-[15px] hover:opacity-90 active:scale-[0.98] transition flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-[20px]">save</span> Сохранить вариант
+          </button>
+          <button class="shrink-0 h-12 px-5 rounded-full border border-admin-outline-variant text-admin-on-surface font-medium text-[15px] hover:bg-admin-surface-high transition">Отмена</button>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+<script>
+/* ---------- THEME TOGGLE ---------- */
+const root = document.documentElement;
+const tBtn = document.getElementById('themeToggle');
+const tIcon = document.getElementById('themeIcon');
+const tLabel = document.getElementById('themeLabel');
+tBtn.addEventListener('click', () => {
+  const dark = root.classList.toggle('dark');
+  tIcon.textContent = dark ? 'light_mode' : 'dark_mode';
+  tLabel.textContent = dark ? 'Светлая' : 'Тёмная';
+});
+
+/* ---------- SIZE CHIP GRID ---------- */
+const ALL_SIZES = [];
+for (let s = 35; s <= 47; s += 0.5) ALL_SIZES.push(s);
+const SELECTED = new Set([40,41,42,42.5,43,44,45]);
+
+const fmtSize = s => (Number.isInteger(s) ? String(s) : String(s));
+const chipGrid = document.getElementById('chipGrid');
+const selCount = document.getElementById('selCount');
+
+function renderChips(){
+  chipGrid.innerHTML = '';
+  ALL_SIZES.forEach(s => {
+    const on = SELECTED.has(s);
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.size = s;
+    b.textContent = fmtSize(s);
+    b.className = 'h-11 rounded-full text-[13px] font-semibold tabular-nums transition active:scale-95 ' +
+      (on
+        ? 'bg-admin-primary text-admin-on-primary'
+        : 'bg-admin-surface border border-admin-outline-variant text-admin-on-surface-variant hover:bg-admin-surface-high');
+    b.addEventListener('click', () => toggleSize(s));
+    chipGrid.appendChild(b);
+  });
+  selCount.textContent = 'выбрано ' + SELECTED.size;
+}
+
+/* ---------- ROW DATA ---------- */
+const ROWS = [
+  {size:40,   sku:'NK-VEL-LF-40',  price:12990, old:'',      stock:4, active:true},
+  {size:41,   sku:'NK-VEL-LF-41',  price:12990, old:'',      stock:3, active:true},
+  {size:42,   sku:'NK-VEL-LF-42',  price:12990, old:14990,   stock:8, active:true},
+  {size:42.5, sku:'NK-VEL-LF-425', price:12990, old:'',      stock:2, active:true},
+  {size:43,   sku:'NK-VEL-LF-43',  price:12990, old:'',      stock:0, active:false},
+  {size:44,   sku:'NK-VEL-LF-44',  price:12990, old:'',      stock:6, active:true},
+  {size:45,   sku:'NK-VEL-LF-45',  price:12990, old:'',      stock:1, active:true},
+];
+
+const rowsEl = document.getElementById('rows');
+const inputCls = 'w-full h-11 rounded-xl bg-admin-surface border border-admin-outline-variant px-3 text-sm text-admin-on-surface tabular-nums placeholder:text-admin-on-surface-variant focus:outline-none focus:ring-2 focus:ring-admin-primary focus:border-admin-primary';
+
+function fieldBlock(label, value, opts={}){
+  const ph = opts.placeholder || '';
+  const extra = opts.cls || '';
+  return `<label class="block">
+      <span class="block text-[11px] font-medium text-admin-on-surface-variant mb-1">${label}</span>
+      <input type="${opts.type||'text'}" ${opts.type==='number'?'inputmode="numeric"':''} value="${value===''||value==null?'':value}" placeholder="${ph}" class="${inputCls} ${extra}"/>
+    </label>`;
+}
+
+function stockBadge(stock){
+  if (stock === 0) return '<span class="inline-flex items-center gap-1 text-[11px] font-semibold text-admin-error"><span class="material-symbols-outlined text-[14px]">error</span>Нет в наличии</span>';
+  if (stock <= 3) return '<span class="text-[11px] font-semibold text-admin-error">Мало · '+stock+' шт</span>';
+  return '<span class="text-[11px] text-admin-on-surface-variant tabular-nums">'+stock+' шт на складе</span>';
+}
+
+function renderRows(){
+  rowsEl.innerHTML = '';
+  ROWS.forEach((r, i) => {
+    const dim = r.active ? '' : 'opacity-60';
+    const block = document.createElement('div');
+    block.className = `row-block ${dim} border-l-2 border-admin-primary pl-3 transition-opacity duration-200`;
+    block.dataset.idx = i;
+    block.innerHTML = `
+      <!-- heading line: size + status + toggle + delete -->
+      <div class="flex items-center gap-2 mb-2">
+        <span class="font-admin-head font-bold text-[15px] text-admin-on-surface tabular-nums shrink-0">EU ${fmtSize(r.size)}</span>
+        <span class="hidden xs:inline">·</span>
+        <span class="flex-1 min-w-0 truncate">${stockBadge(r.stock)}</span>
+        <button class="toggle shrink-0 relative w-12 h-7 rounded-full transition-colors duration-200 ${r.active?'bg-admin-primary':'bg-admin-surface-high'}" role="switch" aria-checked="${r.active}" aria-label="Активен размер ${fmtSize(r.size)}">
+          <span class="absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${r.active?'translate-x-5':'translate-x-0'}"></span>
+        </button>
+        <button class="del shrink-0 w-11 h-11 grid place-items-center rounded-lg text-admin-on-surface-variant hover:text-admin-error hover:bg-admin-surface-high transition" aria-label="Удалить размер ${fmtSize(r.size)}">
+          <span class="material-symbols-outlined text-[20px]">delete</span>
+        </button>
+      </div>
+      <!-- fields: 2-up grid, stacks cleanly at 360px -->
+      <div class="grid grid-cols-2 gap-2.5">
+        ${fieldBlock('Цена, ₽', r.price, {type:'number'})}
+        ${fieldBlock('Старая цена, ₽', r.old, {type:'number', placeholder:'—'})}
+        ${fieldBlock('Сток, шт', r.stock, {type:'number'})}
+        ${fieldBlock('SKU', r.sku, {placeholder:'NK-…'})}
+      </div>
+    `;
+    rowsEl.appendChild(block);
+  });
+  bindRowEvents();
+}
+
+function bindRowEvents(){
+  rowsEl.querySelectorAll('.toggle').forEach(t => {
+    t.addEventListener('click', () => {
+      const idx = +t.closest('.row-block').dataset.idx;
+      ROWS[idx].active = !ROWS[idx].active;
+      renderRows();
+    });
+  });
+  rowsEl.querySelectorAll('.del').forEach(d => {
+    d.addEventListener('click', () => {
+      const block = d.closest('.row-block');
+      const idx = +block.dataset.idx;
+      block.style.transition = 'opacity .18s ease-out, transform .18s ease-out';
+      block.style.opacity = '0';
+      block.style.transform = 'translateX(8px)';
+      setTimeout(() => {
+        SELECTED.delete(ROWS[idx].size);
+        ROWS.splice(idx, 1);
+        renderChips();
+        renderRows();
+      }, 180);
+    });
+  });
+}
+
+/* ---------- SIZE TOGGLE (chip <-> row) ---------- */
+function toggleSize(s){
+  if (SELECTED.has(s)) {
+    SELECTED.delete(s);
+    const idx = ROWS.findIndex(r => r.size === s);
+    if (idx > -1) ROWS.splice(idx, 1);
+  } else {
+    SELECTED.add(s);
+    const sku = 'NK-VEL-LF-' + fmtSize(s).replace('.','');
+    ROWS.push({size:s, sku, price:12990, old:'', stock:0, active:true});
+    ROWS.sort((a,b) => a.size - b.size);
+  }
+  renderChips();
+  renderRows();
+}
+
+/* ---------- BULK CONTROLS ---------- */
+document.querySelectorAll('.bulk-ok').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const kind = btn.dataset.bulk;
+    const inp = document.getElementById(kind === 'price' ? 'bulkPrice' : 'bulkStock');
+    const val = parseInt(inp.value, 10);
+    if (isNaN(val)) { inp.focus(); return; }
+    ROWS.forEach(r => { r[kind] = val; });
+    renderRows();
+    inp.value = '';
+    btn.textContent = '✓';
+    setTimeout(() => btn.textContent = 'OK', 900);
+  });
+});
+
+/* ---------- INIT ---------- */
+renderChips();
+renderRows();
+</script>
+</body>
+</html>
