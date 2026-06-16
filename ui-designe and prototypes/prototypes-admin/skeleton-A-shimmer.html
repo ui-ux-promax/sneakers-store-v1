@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<!-- ВАРИАНТ: Shimmer Sweep — индустриальный скелетон: мягкие плейсхолдеры на --admin-surface-high с бесконечным диагональным световым бликом слева-направо. -->
+<html class="light" lang="ru"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>STRIDE Admin | Загрузка дашборда (Skeleton)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@400;600;700;800&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        fontFamily: {
+          "body": ["Manrope", "sans-serif"],
+          "display": ["Anybody", "sans-serif"],
+        },
+        borderRadius: {
+          "lg": "16px",
+          "xl": "24px",
+          "full": "9999px",
+        },
+        maxWidth: {
+          "container": "1440px",
+        },
+      },
+    },
+  }
+</script>
+<style>
+    /* ---- ТОКЕНЫ ЦВЕТА STRIDE ADMIN (light = :root, dark = .dark) ---- */
+    :root {
+      --admin-bg:#f7f8f4; --admin-surface:#ffffff; --admin-surface-low:#f8f9fb;
+      --admin-surface-container:#f3f4f6; --admin-surface-high:#e5e7eb;
+      --admin-on-surface:#111827; --admin-on-surface-variant:#6b7280;
+      --admin-primary:#b2f700; --admin-on-primary:#131f00;
+      --admin-secondary-container:#f3e8ff; --admin-on-secondary-container:#3b0764;
+      --admin-error:#ef4444; --admin-on-error:#ffffff;
+      --admin-outline:#d1d5db; --admin-outline-variant:#e5e7eb;
+      /* блик для shimmer (на base = --admin-surface-high) */
+      --admin-shimmer:rgba(255,255,255,0.65);
+    }
+    .dark {
+      --admin-bg:#131313; --admin-surface:#131313; --admin-surface-low:#1c1b1b;
+      --admin-surface-container:#201f1f; --admin-surface-high:#2a2a2a;
+      --admin-on-surface:#e5e2e1; --admin-on-surface-variant:#c2caad;
+      --admin-primary:#b2f700; --admin-on-primary:#243600;
+      --admin-secondary-container:#563f71; --admin-on-secondary-container:#c9ade7;
+      --admin-error:#ffb4ab; --admin-on-error:#690005;
+      --admin-outline:#8c9479; --admin-outline-variant:#424a33;
+      --admin-shimmer:rgba(255,255,255,0.10);
+    }
+
+    html, body { background: var(--admin-bg); color: var(--admin-on-surface); font-family: "Manrope", sans-serif; }
+
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .material-symbols-outlined.fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+
+    /* ---- SKELETON SHIMMER ENGINE ---- */
+    /* Базовый плейсхолдер: сплошной --admin-surface-high, поверх — диагональный блик. */
+    .sk {
+      position: relative;
+      overflow: hidden;
+      background: var(--admin-surface-high);
+      border-radius: 8px;
+    }
+    .sk::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(
+        100deg,
+        transparent 20%,
+        var(--admin-shimmer) 50%,
+        transparent 80%
+      );
+      animation: sk-sweep 1.6s linear infinite;
+      will-change: transform;
+    }
+    @keyframes sk-sweep {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    /* мягкая стаггер-задержка, чтобы блик «дышал» по полотну, а не маршировал синхронно */
+    .sk.d1::after { animation-delay: .12s; }
+    .sk.d2::after { animation-delay: .24s; }
+    .sk.d3::after { animation-delay: .36s; }
+    .sk.d4::after { animation-delay: .48s; }
+    .sk.d5::after { animation-delay: .60s; }
+
+    .sk-line  { height: 12px; border-radius: 9999px; }
+    .sk-pill  { border-radius: 9999px; }
+    .sk-circle{ border-radius: 9999px; }
+
+    /* Скелетон-карточки/контейнеры держим прозрачными снаружи, заливая только плейсхолдеры */
+    .sk-card {
+      background: var(--admin-surface-low);
+      border: 1px solid var(--admin-outline-variant);
+      border-radius: 24px;
+    }
+
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+
+    /* Уважаем prefers-reduced-motion: гасим блик, оставляем статичный плейсхолдер. */
+    @media (prefers-reduced-motion: reduce) {
+      .sk::after { animation: none; opacity: .35; transform: none;
+        background: linear-gradient(100deg, transparent, var(--admin-shimmer), transparent); }
+    }
+
+    /* Переключение режимов: что показано в skeleton vs loaded */
+    [data-state="skeleton"] .when-loaded { display: none !important; }
+    [data-state="loaded"]   .when-skeleton { display: none !important; }
+
+    /* Плавающие контролы */
+    .fab {
+      font-family: "Manrope", sans-serif;
+      background: var(--admin-surface);
+      color: var(--admin-on-surface);
+      border: 1px solid var(--admin-outline-variant);
+      box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    }
+    .fab-accent { background: var(--admin-primary); color: var(--admin-on-primary); border-color: transparent; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+<!-- ======= ПЛАВАЮЩИЕ КОНТРОЛЫ (skeleton ⇄ loaded + light/dark) ======= -->
+<div class="fixed top-4 right-4 z-[100] flex items-center gap-2">
+  <button id="stateToggle"
+    class="fab fab-accent flex items-center gap-2 px-4 py-2.5 rounded-full font-bold text-sm transition-all active:scale-95">
+    <span class="material-symbols-outlined text-[18px]">sync</span>
+    <span id="stateLabel">Показать загруженное</span>
+  </button>
+  <button id="themeToggle"
+    class="fab flex items-center justify-center w-11 h-11 rounded-full transition-all active:scale-95"
+    title="Сменить тему">
+    <span class="material-symbols-outlined text-[20px]" id="themeIcon">dark_mode</span>
+  </button>
+</div>
+
+<!-- ======= КОРЕНЬ АДМИНКИ ======= -->
+<div id="adminRoot" class="admin-root light" data-state="skeleton">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="fixed left-0 top-0 h-full flex flex-col py-6 px-4 z-40 w-[280px]"
+    style="background: var(--admin-surface); border-right: 1px solid var(--admin-outline-variant);">
+
+    <!-- Бренд -->
+    <div class="mb-12 px-2 flex items-center gap-3">
+      <!-- skeleton: лайм-квадрат (фирменный, не серый — узнаваемость бренда), без shimmer -->
+      <div class="when-skeleton w-10 h-10 rounded-xl flex items-center justify-center"
+        style="background: var(--admin-primary);">
+        <span class="material-symbols-outlined fill" style="color: var(--admin-on-primary);">bolt</span>
+      </div>
+      <div class="when-skeleton flex-1">
+        <div class="sk sk-line" style="width:96px; height:18px; margin-bottom:8px;"></div>
+        <div class="sk sk-line d1" style="width:120px; height:9px;"></div>
+      </div>
+
+      <!-- loaded -->
+      <div class="when-loaded w-10 h-10 rounded-xl flex items-center justify-center"
+        style="background: var(--admin-primary);">
+        <span class="material-symbols-outlined fill" style="color: var(--admin-on-primary);">bolt</span>
+      </div>
+      <div class="when-loaded">
+        <h1 class="font-display font-bold tracking-tight text-[26px] leading-none" style="color: var(--admin-on-surface);">STRIDE</h1>
+        <p class="text-[12px] tracking-wide" style="color: var(--admin-on-surface-variant);">Premium Sneakers</p>
+      </div>
+    </div>
+
+    <!-- Навигация -->
+    <nav class="flex-1 flex flex-col gap-1">
+
+      <!-- ---- SKELETON nav (5 пунктов; первый «активный» — лайм-плашка) ---- -->
+      <div class="when-skeleton flex flex-col gap-1">
+        <!-- активный пункт: лайм-фон, плейсхолдеры on-primary внутри -->
+        <div class="flex items-center gap-3 px-4 py-3 rounded-xl" style="background: var(--admin-primary);">
+          <div class="sk sk-circle" style="width:24px;height:24px; background: rgba(19,31,0,.25);"></div>
+          <div class="sk sk-line" style="width:84px; background: rgba(19,31,0,.25);"></div>
+        </div>
+        <!-- неактивные 4 -->
+        <div class="flex items-center gap-3 px-4 py-3 rounded-xl">
+          <div class="sk sk-circle d1" style="width:24px;height:24px;"></div>
+          <div class="sk sk-line d1" style="width:72px;"></div>
+        </div>
+        <div class="flex items-center gap-3 px-4 py-3 rounded-xl">
+          <div class="sk sk-circle d2" style="width:24px;height:24px;"></div>
+          <div class="sk sk-line d2" style="width:64px;"></div>
+        </div>
+        <div class="flex items-center gap-3 px-4 py-3 rounded-xl">
+          <div class="sk sk-circle d3" style="width:24px;height:24px;"></div>
+          <div class="sk sk-line d3" style="width:80px;"></div>
+        </div>
+        <div class="flex items-center gap-3 px-4 py-3 rounded-xl">
+          <div class="sk sk-circle d4" style="width:24px;height:24px;"></div>
+          <div class="sk sk-line d4" style="width:90px;"></div>
+        </div>
+      </div>
+
+      <!-- ---- LOADED nav ---- -->
+      <div class="when-loaded flex flex-col gap-1">
+        <a class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200" href="#"
+          style="background: var(--admin-primary); color: var(--admin-on-primary);">
+          <span class="material-symbols-outlined fill">dashboard</span><span>Дашборд</span>
+        </a>
+        <a class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200" href="#"
+          style="color: var(--admin-on-surface-variant);">
+          <span class="material-symbols-outlined">inventory_2</span><span>Каталог</span>
+        </a>
+        <a class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200" href="#"
+          style="color: var(--admin-on-surface-variant);">
+          <span class="material-symbols-outlined">shopping_cart</span><span>Заказы</span>
+        </a>
+        <a class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200" href="#"
+          style="color: var(--admin-on-surface-variant);">
+          <span class="material-symbols-outlined">group</span><span>Клиенты</span>
+        </a>
+        <a class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200" href="#"
+          style="color: var(--admin-on-surface-variant);">
+          <span class="material-symbols-outlined">campaign</span><span>Маркетинг</span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- Низ сайдбара -->
+    <div class="mt-auto flex flex-col gap-1 pt-6" style="border-top: 1px solid var(--admin-outline-variant);">
+
+      <!-- ОФОРМЛЕНИЕ + тоггл темы (всегда виден, это служебный блок) -->
+      <div class="px-4 py-2">
+        <p class="mb-2 uppercase tracking-widest text-[10px] font-semibold" style="color: var(--admin-on-surface-variant);">Оформление</p>
+        <div class="flex p-1 rounded-full" style="background: var(--admin-surface-container); border: 1px solid var(--admin-outline-variant);">
+          <button class="sidebar-theme-btn flex-1 flex items-center justify-center gap-2 py-1.5 rounded-full font-bold transition-all" data-theme="light">
+            <span class="material-symbols-outlined text-[18px] fill">light_mode</span>
+            <span class="text-[12px]">Светлая</span>
+          </button>
+          <button class="sidebar-theme-btn flex-1 flex items-center justify-center gap-2 py-1.5 rounded-full transition-all" data-theme="dark">
+            <span class="material-symbols-outlined text-[18px]">dark_mode</span>
+            <span class="text-[12px]">Тёмная</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Помощь / Настройки -->
+      <div class="when-skeleton flex flex-col gap-1">
+        <div class="flex items-center gap-3 px-4 py-3">
+          <div class="sk sk-circle d2" style="width:24px;height:24px;"></div>
+          <div class="sk sk-line d2" style="width:70px;"></div>
+        </div>
+        <div class="flex items-center gap-3 px-4 py-3">
+          <div class="sk sk-circle d3" style="width:24px;height:24px;"></div>
+          <div class="sk sk-line d3" style="width:96px;"></div>
+        </div>
+      </div>
+      <div class="when-loaded flex flex-col gap-1">
+        <a class="nav-link flex items-center gap-3 px-4 py-3 transition-colors" href="#" style="color: var(--admin-on-surface-variant);">
+          <span class="material-symbols-outlined">help</span><span>Помощь</span>
+        </a>
+        <a class="nav-link flex items-center gap-3 px-4 py-3 transition-colors" href="#" style="color: var(--admin-on-surface-variant);">
+          <span class="material-symbols-outlined">settings</span><span>Настройки</span>
+        </a>
+      </div>
+
+      <!-- Профиль -->
+      <div class="when-skeleton mt-4 p-4 rounded-xl flex items-center gap-3" style="background: var(--admin-surface-container);">
+        <div class="sk sk-circle d1" style="width:40px;height:40px;"></div>
+        <div class="flex-1">
+          <div class="sk sk-line d1" style="width:80px; margin-bottom:7px;"></div>
+          <div class="sk sk-line d2" style="width:48px; height:9px;"></div>
+        </div>
+        <div class="sk sk-circle d3" style="width:22px;height:22px;"></div>
+      </div>
+      <div class="when-loaded mt-4 p-4 rounded-xl flex items-center gap-3" style="background: var(--admin-surface-container);">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold"
+          style="background: var(--admin-primary); color: var(--admin-on-primary);">SA</div>
+        <div class="flex-1 overflow-hidden">
+          <p class="font-bold truncate" style="color: var(--admin-on-surface);">Store Admin</p>
+          <p class="text-[12px] truncate" style="color: var(--admin-on-surface-variant);">Админ</p>
+        </div>
+        <span class="material-symbols-outlined cursor-pointer" style="color: var(--admin-on-surface-variant);">logout</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <main class="ml-[280px] min-h-screen pb-12">
+
+    <!-- ---- ТОПБАР ---- -->
+    <header class="sticky top-0 h-16 flex justify-between items-center px-8 z-30 backdrop-blur-md"
+      style="background: color-mix(in srgb, var(--admin-surface) 80%, transparent); border-bottom: 1px solid var(--admin-outline-variant);">
+      <!-- Поиск -->
+      <div class="flex items-center gap-4 flex-1 max-w-xl">
+        <!-- skeleton: пилюля поиска -->
+        <div class="when-skeleton sk sk-pill" style="width:100%; height:40px;"></div>
+        <!-- loaded -->
+        <div class="when-loaded relative w-full">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[20px]" style="color: var(--admin-on-surface-variant);">search</span>
+          <input class="w-full pl-10 pr-4 py-2 border-none rounded-full text-[16px] transition-all"
+            style="background: var(--admin-surface-container); color: var(--admin-on-surface);"
+            placeholder="Поиск заказов, клиентов, товаров…" type="text"/>
+        </div>
+      </div>
+      <!-- Справа -->
+      <div class="flex items-center gap-2">
+        <div class="when-skeleton flex items-center gap-3">
+          <div class="sk sk-circle d1" style="width:36px;height:36px;"></div>
+          <div class="sk sk-circle d2" style="width:36px;height:36px;"></div>
+        </div>
+        <div class="when-loaded flex items-center gap-2">
+          <button class="p-2 rounded-full transition-all relative" style="color: var(--admin-on-surface-variant);">
+            <span class="material-symbols-outlined">notifications</span>
+            <span class="absolute top-2 right-2 w-2 h-2 rounded-full" style="background: var(--admin-error); border: 2px solid var(--admin-surface);"></span>
+          </button>
+          <button class="p-2 rounded-full transition-all" style="color: var(--admin-on-surface-variant);">
+            <span class="material-symbols-outlined">chat_bubble</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ---- КОНТЕНТ ДАШБОРДА ---- -->
+    <div class="px-8 pt-8 max-w-container mx-auto">
+
+      <!-- Заголовок + period toggle -->
+      <div class="flex items-end justify-between mb-8">
+        <!-- skeleton title -->
+        <div class="when-skeleton">
+          <div class="sk sk-line" style="width:280px; height:34px; margin-bottom:10px;"></div>
+          <div class="sk sk-line d1" style="width:200px; height:12px;"></div>
+        </div>
+        <div class="when-skeleton sk sk-pill" style="width:200px; height:38px;"></div>
+
+        <!-- loaded title -->
+        <div class="when-loaded">
+          <h2 class="font-display font-bold text-[40px] leading-tight mb-1" style="color: var(--admin-on-surface);">Performance Hub</h2>
+          <p style="color: var(--admin-on-surface-variant);">Метрики магазина STRIDE</p>
+        </div>
+        <div class="when-loaded flex rounded-full p-1" style="background: var(--admin-surface-container); border: 1px solid var(--admin-outline-variant);">
+          <button class="px-4 py-1.5 text-[12px] font-bold rounded-full" style="background: var(--admin-primary); color: var(--admin-on-primary);">7 дней</button>
+          <button class="px-4 py-1.5 text-[12px] font-bold rounded-full" style="color: var(--admin-on-surface-variant);">30 дней</button>
+          <button class="px-4 py-1.5 text-[12px] font-bold rounded-full" style="color: var(--admin-on-surface-variant);">90 дней</button>
+        </div>
+      </div>
+
+      <!-- ===== 6 KPI БЕНТО-КАРТОЧЕК ===== -->
+      <!-- SKELETON -->
+      <div class="when-skeleton grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
+        <!-- 6 одинаковых плейсхолдеров -->
+        <div class="sk-card p-6">
+          <div class="flex justify-between items-start mb-4">
+            <div class="sk" style="width:40px;height:40px;border-radius:12px;"></div>
+            <div class="sk sk-line d1" style="width:40px;height:14px;"></div>
+          </div>
+          <div class="sk sk-line d1" style="width:70px; height:10px; margin-bottom:12px;"></div>
+          <div class="sk sk-line d2" style="width:88px; height:26px;"></div>
+        </div>
+        <div class="sk-card p-6">
+          <div class="flex justify-between items-start mb-4">
+            <div class="sk d1" style="width:40px;height:40px;border-radius:12px;"></div>
+            <div class="sk sk-line d2" style="width:40px;height:14px;"></div>
+          </div>
+          <div class="sk sk-line d2" style="width:64px; height:10px; margin-bottom:12px;"></div>
+          <div class="sk sk-line d3" style="width:80px; height:26px;"></div>
+        </div>
+        <div class="sk-card p-6">
+          <div class="flex justify-between items-start mb-4">
+            <div class="sk d2" style="width:40px;height:40px;border-radius:12px;"></div>
+            <div class="sk sk-line d3" style="width:40px;height:14px;"></div>
+          </div>
+          <div class="sk sk-line d3" style="width:76px; height:10px; margin-bottom:12px;"></div>
+          <div class="sk sk-line d4" style="width:72px; height:26px;"></div>
+        </div>
+        <div class="sk-card p-6">
+          <div class="flex justify-between items-start mb-4">
+            <div class="sk d3" style="width:40px;height:40px;border-radius:12px;"></div>
+            <div class="sk sk-line d4" style="width:40px;height:14px;"></div>
+          </div>
+          <div class="sk sk-line d4" style="width:60px; height:10px; margin-bottom:12px;"></div>
+          <div class="sk sk-line d5" style="width:84px; height:26px;"></div>
+        </div>
+        <div class="sk-card p-6">
+          <div class="flex justify-between items-start mb-4">
+            <div class="sk d4" style="width:40px;height:40px;border-radius:12px;"></div>
+            <div class="sk sk-line d5" style="width:40px;height:14px;"></div>
+          </div>
+          <div class="sk sk-line d5" style="width:72px; height:10px; margin-bottom:12px;"></div>
+          <div class="sk sk-line d1" style="width:76px; height:26px;"></div>
+        </div>
+        <div class="sk-card p-6">
+          <div class="flex justify-between items-start mb-4">
+            <div class="sk d5" style="width:40px;height:40px;border-radius:12px;"></div>
+            <div class="sk sk-line d1" style="width:40px;height:14px;"></div>
+          </div>
+          <div class="sk sk-line d1" style="width:68px; height:10px; margin-bottom:12px;"></div>
+          <div class="sk sk-line d2" style="width:80px; height:26px;"></div>
+        </div>
+      </div>
+
+      <!-- LOADED KPI -->
+      <div class="when-loaded grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
+        <div class="sk-card p-6 cursor-default">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--admin-surface-container);">
+              <span class="material-symbols-outlined" style="color: var(--admin-on-surface);">shopping_bag</span>
+            </div>
+            <span class="font-bold text-[12px]" style="color: var(--admin-on-surface);">+12.4%</span>
+          </div>
+          <p class="text-[12px] uppercase tracking-wider mb-1" style="color: var(--admin-on-surface-variant);">Всего заказов</p>
+          <h3 class="font-display font-bold text-[28px]" style="color: var(--admin-on-surface);">1 284</h3>
+        </div>
+        <div class="sk-card p-6 cursor-default">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--admin-surface-container);">
+              <span class="material-symbols-outlined" style="color: var(--admin-on-surface);">payments</span>
+            </div>
+            <span class="font-bold text-[12px]" style="color: var(--admin-on-surface);">+8.2%</span>
+          </div>
+          <p class="text-[12px] uppercase tracking-wider mb-1" style="color: var(--admin-on-surface-variant);">Выручка</p>
+          <h3 class="font-display font-bold text-[28px]" style="color: var(--admin-on-surface);">4.28 млн ₽</h3>
+        </div>
+        <div class="sk-card p-6 cursor-default">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--admin-surface-container);">
+              <span class="material-symbols-outlined" style="color: var(--admin-on-surface);">analytics</span>
+            </div>
+            <span class="font-bold text-[12px]" style="color: var(--admin-error);">−2.1%</span>
+          </div>
+          <p class="text-[12px] uppercase tracking-wider mb-1" style="color: var(--admin-on-surface-variant);">Средний чек</p>
+          <h3 class="font-display font-bold text-[28px]" style="color: var(--admin-on-surface);">18 400 ₽</h3>
+        </div>
+        <div class="sk-card p-6 cursor-default">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--admin-surface-container);">
+              <span class="material-symbols-outlined" style="color: var(--admin-on-surface);">person_add</span>
+            </div>
+            <span class="font-bold text-[12px]" style="color: var(--admin-on-surface);">+15.7%</span>
+          </div>
+          <p class="text-[12px] uppercase tracking-wider mb-1" style="color: var(--admin-on-surface-variant);">Клиенты</p>
+          <h3 class="font-display font-bold text-[28px]" style="color: var(--admin-on-surface);">892</h3>
+        </div>
+        <div class="sk-card p-6 cursor-default">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--admin-surface-container);">
+              <span class="material-symbols-outlined" style="color: var(--admin-on-surface);">redeem</span>
+            </div>
+            <span class="font-bold text-[12px]" style="color: var(--admin-on-surface);">+0.4%</span>
+          </div>
+          <p class="text-[12px] uppercase tracking-wider mb-1" style="color: var(--admin-on-surface-variant);">Активные купоны</p>
+          <h3 class="font-display font-bold text-[28px]" style="color: var(--admin-on-surface);">12</h3>
+        </div>
+        <div class="sk-card p-6 cursor-default">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--admin-surface-container);">
+              <span class="material-symbols-outlined" style="color: var(--admin-on-surface);">inventory</span>
+            </div>
+            <span class="font-bold text-[12px]" style="color: var(--admin-on-surface-variant);">Стабильно</span>
+          </div>
+          <p class="text-[12px] uppercase tracking-wider mb-1" style="color: var(--admin-on-surface-variant);">Продано пар</p>
+          <h3 class="font-display font-bold text-[28px]" style="color: var(--admin-on-surface);">2 105</h3>
+        </div>
+      </div>
+
+      <!-- ===== AREA CHART (8) + DONUT (4) ===== -->
+      <!-- SKELETON -->
+      <div class="when-skeleton grid grid-cols-12 gap-8 mb-8">
+        <div class="sk-card col-span-12 xl:col-span-8 p-8">
+          <div class="flex justify-between items-start mb-8">
+            <div>
+              <div class="sk sk-line" style="width:200px;height:22px;margin-bottom:10px;"></div>
+              <div class="sk sk-line d1" style="width:150px;height:11px;"></div>
+            </div>
+            <div class="sk sk-line d2" style="width:110px;height:18px;"></div>
+          </div>
+          <!-- полотно графика -->
+          <div class="sk d1" style="width:100%; height:320px; border-radius:16px;"></div>
+        </div>
+        <div class="sk-card col-span-12 xl:col-span-4 p-8 flex flex-col">
+          <div class="sk sk-line" style="width:160px;height:22px;margin-bottom:24px;"></div>
+          <div class="flex-1 flex flex-col justify-center">
+            <div class="sk sk-circle d1 mx-auto mb-8" style="width:192px;height:192px;"></div>
+            <div class="space-y-4">
+              <div class="flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                  <div class="sk sk-circle d1" style="width:12px;height:12px;"></div>
+                  <div class="sk sk-line d1" style="width:80px;"></div>
+                </div>
+                <div class="sk sk-line d2" style="width:36px;"></div>
+              </div>
+              <div class="flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                  <div class="sk sk-circle d2" style="width:12px;height:12px;"></div>
+                  <div class="sk sk-line d2" style="width:90px;"></div>
+                </div>
+                <div class="sk sk-line d3" style="width:36px;"></div>
+              </div>
+              <div class="flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                  <div class="sk sk-circle d3" style="width:12px;height:12px;"></div>
+                  <div class="sk sk-line d3" style="width:70px;"></div>
+                </div>
+                <div class="sk sk-line d4" style="width:36px;"></div>
+              </div>
+              <div class="flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                  <div class="sk sk-circle d4" style="width:12px;height:12px;"></div>
+                  <div class="sk sk-line d4" style="width:64px;"></div>
+                </div>
+                <div class="sk sk-line d5" style="width:36px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOADED chart + donut -->
+      <div class="when-loaded grid grid-cols-12 gap-8 mb-8">
+        <div class="sk-card col-span-12 xl:col-span-8 p-8">
+          <div class="flex justify-between items-start mb-8">
+            <div>
+              <h4 class="font-display font-bold text-[28px]" style="color: var(--admin-on-surface);">Выручка по дням</h4>
+              <p style="color: var(--admin-on-surface-variant);">Объём продаж за выбранный период</p>
+            </div>
+            <button class="flex items-center gap-2 font-bold transition-colors" style="color: var(--admin-on-surface);">
+              <span class="material-symbols-outlined text-[20px]">download</span><span>Экспорт CSV</span>
+            </button>
+          </div>
+          <div class="w-full h-80 relative overflow-hidden rounded-lg" style="background: var(--admin-surface); border: 1px solid var(--admin-outline-variant);">
+            <svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 800 320">
+              <defs>
+                <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#b2f700" stop-opacity="0.25"></stop>
+                  <stop offset="100%" stop-color="#b2f700" stop-opacity="0"></stop>
+                </linearGradient>
+              </defs>
+              <path d="M0,280 Q100,120 200,180 T400,80 T600,150 T800,40 L800,320 L0,320 Z" fill="url(#chartGradient)"></path>
+              <path d="M0,280 Q100,120 200,180 T400,80 T600,150 T800,40" fill="none" stroke="#b2f700" stroke-linecap="round" stroke-width="4"></path>
+              <line x1="0" x2="800" y1="80" y2="80" stroke="var(--admin-outline-variant)" stroke-dasharray="4,4"></line>
+              <line x1="0" x2="800" y1="160" y2="160" stroke="var(--admin-outline-variant)" stroke-dasharray="4,4"></line>
+              <line x1="0" x2="800" y1="240" y2="240" stroke="var(--admin-outline-variant)" stroke-dasharray="4,4"></line>
+            </svg>
+            <div class="absolute inset-x-0 bottom-2 px-4 flex justify-between text-[12px] font-bold" style="color: var(--admin-on-surface-variant);">
+              <span>ПН</span><span>ВТ</span><span>СР</span><span>ЧТ</span><span>ПТ</span><span>СБ</span><span>ВС</span>
+            </div>
+          </div>
+        </div>
+        <div class="sk-card col-span-12 xl:col-span-4 p-8 flex flex-col">
+          <h4 class="font-display font-bold text-[28px] mb-6" style="color: var(--admin-on-surface);">Статусы заказов</h4>
+          <div class="flex-1 flex flex-col justify-center">
+            <div class="relative w-48 h-48 mx-auto mb-8">
+              <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" fill="none" r="40" stroke="var(--admin-surface-high)" stroke-width="12"></circle>
+                <circle cx="50" cy="50" fill="none" r="40" stroke="#b2f700" stroke-dasharray="251" stroke-dashoffset="62" stroke-width="12"></circle>
+                <circle cx="50" cy="50" fill="none" r="40" stroke="var(--admin-on-surface)" stroke-dasharray="251" stroke-dashoffset="180" stroke-width="12"></circle>
+                <circle cx="50" cy="50" fill="none" r="40" stroke="var(--admin-secondary-container)" stroke-dasharray="251" stroke-dashoffset="220" stroke-width="12"></circle>
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span class="font-display font-bold text-[28px]" style="color: var(--admin-on-surface);">1.2k</span>
+                <span class="text-[12px]" style="color: var(--admin-on-surface-variant);">Всего</span>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full" style="background: var(--admin-primary);"></div>
+                  <span style="color: var(--admin-on-surface-variant);">Доставлен</span>
+                </div>
+                <span class="font-bold" style="color: var(--admin-on-surface);">642</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full" style="background: var(--admin-on-surface);"></div>
+                  <span style="color: var(--admin-on-surface-variant);">В обработке</span>
+                </div>
+                <span class="font-bold" style="color: var(--admin-on-surface);">218</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full" style="background: var(--admin-secondary-container);"></div>
+                  <span style="color: var(--admin-on-surface-variant);">Отправлен</span>
+                </div>
+                <span class="font-bold" style="color: var(--admin-on-surface);">156</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full" style="background: var(--admin-surface-high);"></div>
+                  <span style="color: var(--admin-on-surface-variant);">Прочее</span>
+                </div>
+                <span class="font-bold" style="color: var(--admin-on-surface);">268</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ТОП ПРОДАЖ (5) + НИЗКИЙ СТОК (7) ===== -->
+      <!-- SKELETON -->
+      <div class="when-skeleton grid grid-cols-12 gap-8">
+        <!-- Топ продаж -->
+        <div class="sk-card col-span-12 lg:col-span-5 p-8">
+          <div class="sk sk-line" style="width:220px;height:22px;margin-bottom:24px;"></div>
+          <div class="space-y-4">
+            <!-- 3 строки товара -->
+            <div class="flex items-center gap-4 p-4 rounded-xl" style="border:1px solid var(--admin-outline-variant);">
+              <div class="sk" style="width:64px;height:64px;border-radius:12px;"></div>
+              <div class="flex-1">
+                <div class="sk sk-line d1" style="width:120px;margin-bottom:8px;"></div>
+                <div class="sk sk-line d2" style="width:80px;height:9px;"></div>
+              </div>
+              <div class="text-right">
+                <div class="sk sk-line d2 ml-auto" style="width:64px;margin-bottom:8px;"></div>
+                <div class="sk sk-line d3 ml-auto" style="width:72px;height:9px;"></div>
+              </div>
+            </div>
+            <div class="flex items-center gap-4 p-4 rounded-xl" style="border:1px solid var(--admin-outline-variant);">
+              <div class="sk d1" style="width:64px;height:64px;border-radius:12px;"></div>
+              <div class="flex-1">
+                <div class="sk sk-line d2" style="width:110px;margin-bottom:8px;"></div>
+                <div class="sk sk-line d3" style="width:72px;height:9px;"></div>
+              </div>
+              <div class="text-right">
+                <div class="sk sk-line d3 ml-auto" style="width:64px;margin-bottom:8px;"></div>
+                <div class="sk sk-line d4 ml-auto" style="width:72px;height:9px;"></div>
+              </div>
+            </div>
+            <div class="flex items-center gap-4 p-4 rounded-xl" style="border:1px solid var(--admin-outline-variant);">
+              <div class="sk d2" style="width:64px;height:64px;border-radius:12px;"></div>
+              <div class="flex-1">
+                <div class="sk sk-line d3" style="width:104px;margin-bottom:8px;"></div>
+                <div class="sk sk-line d4" style="width:88px;height:9px;"></div>
+              </div>
+              <div class="text-right">
+                <div class="sk sk-line d4 ml-auto" style="width:64px;margin-bottom:8px;"></div>
+                <div class="sk sk-line d5 ml-auto" style="width:72px;height:9px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Низкий сток -->
+        <div class="sk-card col-span-12 lg:col-span-7 p-8">
+          <div class="flex justify-between items-center mb-6">
+            <div class="sk sk-line" style="width:180px;height:22px;"></div>
+            <div class="sk sk-pill d1" style="width:80px;height:26px;"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="p-4 rounded-xl flex justify-between items-center" style="border:1px solid var(--admin-outline-variant);">
+              <div>
+                <div class="sk sk-line d1" style="width:90px;margin-bottom:8px;"></div>
+                <div class="sk sk-line d2" style="width:130px;height:9px;"></div>
+              </div>
+              <div class="text-right">
+                <div class="sk sk-line d2 ml-auto" style="width:28px;height:24px;margin-bottom:6px;"></div>
+                <div class="sk sk-line d3 ml-auto" style="width:56px;height:8px;"></div>
+              </div>
+            </div>
+            <div class="p-4 rounded-xl flex justify-between items-center" style="border:1px solid var(--admin-outline-variant);">
+              <div>
+                <div class="sk sk-line d2" style="width:104px;margin-bottom:8px;"></div>
+                <div class="sk sk-line d3" style="width:130px;height:9px;"></div>
+              </div>
+              <div class="text-right">
+                <div class="sk sk-line d3 ml-auto" style="width:28px;height:24px;margin-bottom:6px;"></div>
+                <div class="sk sk-line d4 ml-auto" style="width:56px;height:8px;"></div>
+              </div>
+            </div>
+            <div class="p-4 rounded-xl flex justify-between items-center" style="border:1px solid var(--admin-outline-variant);">
+              <div>
+                <div class="sk sk-line d3" style="width:96px;margin-bottom:8px;"></div>
+                <div class="sk sk-line d4" style="width:130px;height:9px;"></div>
+              </div>
+              <div class="text-right">
+                <div class="sk sk-line d4 ml-auto" style="width:28px;height:24px;margin-bottom:6px;"></div>
+                <div class="sk sk-line d5 ml-auto" style="width:56px;height:8px;"></div>
+              </div>
+            </div>
+            <div class="p-4 rounded-xl flex justify-between items-center" style="border:1px solid var(--admin-outline-variant);">
+              <div>
+                <div class="sk sk-line d4" style="width:88px;margin-bottom:8px;"></div>
+                <div class="sk sk-line d5" style="width:130px;height:9px;"></div>
+              </div>
+              <div class="text-right">
+                <div class="sk sk-line d5 ml-auto" style="width:28px;height:24px;margin-bottom:6px;"></div>
+                <div class="sk sk-line d1 ml-auto" style="width:56px;height:8px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOADED top + low stock -->
+      <div class="when-loaded grid grid-cols-12 gap-8">
+        <!-- Топ продаж -->
+        <div class="sk-card col-span-12 lg:col-span-5 p-8">
+          <h4 class="font-display font-bold text-[28px] mb-6" style="color: var(--admin-on-surface);">Топ продаж</h4>
+          <div class="space-y-4">
+            <div class="flex items-center gap-4 p-4 rounded-xl" style="background: var(--admin-surface); border: 1px solid var(--admin-outline-variant);">
+              <div class="w-16 h-16 rounded-lg flex items-center justify-center" style="background: var(--admin-surface-container); color: var(--admin-on-surface-variant);">
+                <span class="material-symbols-outlined">footprint</span>
+              </div>
+              <div class="flex-1">
+                <p class="font-bold" style="color: var(--admin-on-surface);">Air Runner Pro</p>
+                <p class="text-[12px]" style="color: var(--admin-on-surface-variant);">Velocity Edition</p>
+              </div>
+              <div class="text-right">
+                <p class="font-bold" style="color: var(--admin-on-surface);">842 пары</p>
+                <p class="text-[12px]" style="color: var(--admin-on-surface-variant);">1 245 600 ₽</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-4 p-4 rounded-xl" style="background: var(--admin-surface); border: 1px solid var(--admin-outline-variant);">
+              <div class="w-16 h-16 rounded-lg flex items-center justify-center" style="background: var(--admin-surface-container); color: var(--admin-on-surface-variant);">
+                <span class="material-symbols-outlined">footprint</span>
+              </div>
+              <div class="flex-1">
+                <p class="font-bold" style="color: var(--admin-on-surface);">Velocity Trail</p>
+                <p class="text-[12px]" style="color: var(--admin-on-surface-variant);">Off-Road Series</p>
+              </div>
+              <div class="text-right">
+                <p class="font-bold" style="color: var(--admin-on-surface);">615 пар</p>
+                <p class="text-[12px]" style="color: var(--admin-on-surface-variant);">922 500 ₽</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-4 p-4 rounded-xl" style="background: var(--admin-surface); border: 1px solid var(--admin-outline-variant);">
+              <div class="w-16 h-16 rounded-lg flex items-center justify-center" style="background: var(--admin-surface-container); color: var(--admin-on-surface-variant);">
+                <span class="material-symbols-outlined">footprint</span>
+              </div>
+              <div class="flex-1">
+                <p class="font-bold" style="color: var(--admin-on-surface);">Court Classic</p>
+                <p class="text-[12px]" style="color: var(--admin-on-surface-variant);">Heritage White</p>
+              </div>
+              <div class="text-right">
+                <p class="font-bold" style="color: var(--admin-on-surface);">492 пары</p>
+                <p class="text-[12px]" style="color: var(--admin-on-surface-variant);">738 000 ₽</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Низкий сток -->
+        <div class="sk-card col-span-12 lg:col-span-7 p-8">
+          <div class="flex justify-between items-center mb-6">
+            <h4 class="font-display font-bold text-[28px]" style="color: var(--admin-on-surface);">Низкий сток</h4>
+            <span class="px-3 py-1 rounded-full font-bold text-[12px]" style="background: var(--admin-error); color: var(--admin-on-error);">4 позиции</span>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="p-4 rounded-xl flex justify-between items-center" style="border: 1px solid var(--admin-error); background: color-mix(in srgb, var(--admin-error) 12%, transparent);">
+              <div>
+                <p class="font-bold" style="color: var(--admin-on-surface);">Urban Flow</p>
+                <p class="text-[12px]" style="color: var(--admin-on-surface-variant);">Размер 42 • ST-UF-42</p>
+              </div>
+              <div class="text-right">
+                <p class="font-display font-bold text-[28px]" style="color: var(--admin-error);">3</p>
+                <p class="text-[12px] font-bold uppercase" style="color: var(--admin-error);">осталось</p>
+              </div>
+            </div>
+            <div class="p-4 rounded-xl flex justify-between items-center" style="border: 1px solid var(--admin-error); background: color-mix(in srgb, var(--admin-error) 12%, transparent);">
+              <div>
+                <p class="font-bold" style="color: var(--admin-on-surface);">Air Runner Pro</p>
+                <p class="text-[12px]" style="color: var(--admin-on-surface-variant);">Размер 44 • ST-AR-44</p>
+              </div>
+              <div class="text-right">
+                <p class="font-display font-bold text-[28px]" style="color: var(--admin-error);">2</p>
+                <p class="text-[12px] font-bold uppercase" style="color: var(--admin-error);">осталось</p>
+              </div>
+            </div>
+            <div class="p-4 rounded-xl flex justify-between items-center" style="border: 1px solid var(--admin-secondary-container); background: color-mix(in srgb, var(--admin-secondary-container) 30%, transparent);">
+              <div>
+                <p class="font-bold" style="color: var(--admin-on-surface);">Cloud Platform</p>
+                <p class="text-[12px]" style="color: var(--admin-on-surface-variant);">Размер 38 • ST-CP-38</p>
+              </div>
+              <div class="text-right">
+                <p class="font-display font-bold text-[28px]" style="color: var(--admin-on-secondary-container);">8</p>
+                <p class="text-[12px] font-bold uppercase" style="color: var(--admin-on-secondary-container);">пополнить</p>
+              </div>
+            </div>
+            <div class="p-4 rounded-xl flex justify-between items-center" style="border: 1px solid var(--admin-secondary-container); background: color-mix(in srgb, var(--admin-secondary-container) 30%, transparent);">
+              <div>
+                <p class="font-bold" style="color: var(--admin-on-surface);">Court Classic</p>
+                <p class="text-[12px]" style="color: var(--admin-on-surface-variant);">Размер 41 • ST-CC-41</p>
+              </div>
+              <div class="text-right">
+                <p class="font-display font-bold text-[28px]" style="color: var(--admin-on-secondary-container);">9</p>
+                <p class="text-[12px] font-bold uppercase" style="color: var(--admin-on-secondary-container);">пополнить</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  (function () {
+    const root        = document.getElementById('adminRoot');
+    const stateBtn    = document.getElementById('stateToggle');
+    const stateLabel  = document.getElementById('stateLabel');
+    const themeBtn    = document.getElementById('themeToggle');
+    const themeIcon   = document.getElementById('themeIcon');
+    const sidebarBtns = document.querySelectorAll('.sidebar-theme-btn');
+
+    // ---- Skeleton ⇄ Loaded ----
+    stateBtn.addEventListener('click', () => {
+      const isSkeleton = root.getAttribute('data-state') === 'skeleton';
+      root.setAttribute('data-state', isSkeleton ? 'loaded' : 'skeleton');
+      stateLabel.textContent = isSkeleton ? 'Показать скелетон' : 'Показать загруженное';
+    });
+
+    // ---- Применение темы (light <-> dark) ко всем нужным якорям ----
+    function applyTheme(theme) {
+      const dark = theme === 'dark';
+      document.documentElement.classList.toggle('dark', dark);
+      document.documentElement.classList.toggle('light', !dark);
+      root.classList.toggle('dark', dark);
+      root.classList.toggle('light', !dark);
+      themeIcon.textContent = dark ? 'light_mode' : 'dark_mode';
+
+      // Подсветка сегментов тоггла в сайдбаре
+      sidebarBtns.forEach(b => {
+        const active = b.dataset.theme === theme;
+        b.style.background = active ? 'var(--admin-surface)' : 'transparent';
+        b.style.color      = active ? 'var(--admin-on-surface)' : 'var(--admin-on-surface-variant)';
+        b.style.boxShadow  = active ? '0 1px 2px rgba(0,0,0,.12)' : 'none';
+        b.style.fontWeight = active ? '700' : '500';
+      });
+    }
+
+    themeBtn.addEventListener('click', () => {
+      applyTheme(root.classList.contains('dark') ? 'light' : 'dark');
+    });
+    sidebarBtns.forEach(b => b.addEventListener('click', () => applyTheme(b.dataset.theme)));
+
+    // init: light
+    applyTheme('light');
+  })();
+</script>
+</body></html>

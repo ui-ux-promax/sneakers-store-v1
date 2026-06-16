@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<!-- ВАРИАНТ: Sliding Pill — горизонтальный сегмент «Светлая | Тёмная»; лайм-таблетка-индикатор физически скользит между позициями (translateX + transition), иконки делают кроссфейд. -->
+<html lang="ru" class="light">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>STRIDE Admin · Тоггл темы — Sliding Pill</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@400;600;700;800&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&amp;display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = { theme: { extend: { fontFamily: {
+    head: ['Anybody', 'sans-serif'],
+    body: ['Manrope', 'sans-serif'],
+  } } } };
+</script>
+<style>
+  /* ============ ТОКЕНЫ STRIDE ADMIN ============ */
+  /* light по умолчанию — :root; dark свопает значения на .dark */
+  :root {
+    --admin-bg:#f7f8f4; --admin-surface:#ffffff; --admin-surface-low:#f8f9fb;
+    --admin-surface-container:#f3f4f6; --admin-surface-high:#e5e7eb;
+    --admin-on-surface:#111827; --admin-on-surface-variant:#6b7280;
+    --admin-primary:#b2f700; --admin-on-primary:#131f00;
+    --admin-secondary-container:#f3e8ff; --admin-on-secondary-container:#3b0764;
+    --admin-error:#ef4444; --admin-on-error:#ffffff;
+    --admin-outline:#d1d5db; --admin-outline-variant:#e5e7eb;
+    /* мягкая тень таблетки под светлую тему */
+    --pill-shadow: 0 2px 8px rgba(17,24,39,0.10), 0 1px 2px rgba(17,24,39,0.06);
+  }
+  .dark {
+    --admin-bg:#131313; --admin-surface:#131313; --admin-surface-low:#1c1b1b;
+    --admin-surface-container:#201f1f; --admin-surface-high:#2a2a2a;
+    --admin-on-surface:#e5e2e1; --admin-on-surface-variant:#c2caad;
+    --admin-primary:#b2f700; --admin-on-primary:#243600;
+    --admin-secondary-container:#563f71; --admin-on-secondary-container:#c9ade7;
+    --admin-error:#ffb4ab; --admin-on-error:#690005;
+    --admin-outline:#8c9479; --admin-outline-variant:#424a33;
+    --pill-shadow: 0 0 0 1px rgba(178,247,0,0.20), 0 4px 14px rgba(178,247,0,0.18);
+  }
+
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  .material-symbols-outlined.fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+
+  body { background: var(--admin-bg); color: var(--admin-on-surface); }
+
+  /* Плавный своп цветов всего демо при смене темы */
+  .theme-anim, .theme-anim * {
+    transition: background-color .55s cubic-bezier(.4,0,.2,1),
+                border-color .55s cubic-bezier(.4,0,.2,1),
+                color .45s cubic-bezier(.4,0,.2,1),
+                box-shadow .45s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ============ SLIDING PILL ============ */
+  .seg {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    padding: 4px;                       /* трек-инсет */
+    background: var(--admin-surface-container);
+    border: 1px solid var(--admin-outline-variant);
+    border-radius: 9999px;              /* rounded-full */
+    isolation: isolate;
+    user-select: none;
+  }
+  /* Скользящая лайм-таблетка-индикатор */
+  .seg__thumb {
+    position: absolute;
+    top: 4px; left: 4px;
+    width: var(--thumb-w, 50%);
+    height: calc(100% - 8px);
+    border-radius: 9999px;
+    background: var(--admin-primary);
+    box-shadow: var(--pill-shadow);
+    /* ФИШКА: физическое скольжение между позициями */
+    transform: translateX(var(--thumb-x, 0));
+    transition: transform .42s cubic-bezier(.34,1.56,.64,1); /* лёгкий «overshoot» */
+    z-index: 0;
+  }
+  .seg__opt {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: var(--opt-w, 116px);
+    padding: 8px 16px;
+    border-radius: 9999px;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1;
+    color: var(--admin-on-surface-variant);
+    transition: color .3s cubic-bezier(.4,0,.2,1);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .seg__opt:hover { color: var(--admin-on-surface); }
+  .seg__opt:focus-visible {
+    outline: 2px solid var(--admin-primary);
+    outline-offset: 2px;
+  }
+  /* Активная опция: текст становится «на лайме» */
+  .seg__opt[aria-pressed="true"] {
+    color: var(--admin-on-primary);
+    font-weight: 700;
+  }
+
+  /* Кроссфейд иконок: outline (неактив) ↔ filled (актив) в одной ячейке */
+  .seg__ico {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    width: 18px; height: 18px;
+  }
+  .seg__ico .material-symbols-outlined {
+    grid-area: 1 / 1;
+    font-size: 18px;
+    transition: opacity .34s ease, transform .42s cubic-bezier(.34,1.56,.64,1);
+  }
+  .seg__ico .ico-off { opacity: 1; transform: scale(1) rotate(0deg); }
+  .seg__ico .ico-on  { opacity: 0; transform: scale(.6) rotate(-25deg); }
+  .seg__opt[aria-pressed="true"] .ico-off { opacity: 0; transform: scale(.6) rotate(25deg); }
+  .seg__opt[aria-pressed="true"] .ico-on  { opacity: 1; transform: scale(1) rotate(0deg); }
+
+  /* Крупный дубль — те же правила, но больше размеры */
+  .seg--xl { padding: 6px; }
+  .seg--xl .seg__thumb { top: 6px; left: 6px; height: calc(100% - 12px); }
+  .seg--xl .seg__opt {
+    min-width: var(--opt-w, 168px);
+    padding: 16px 28px;
+    font-size: 18px;
+    gap: 12px;
+  }
+  .seg--xl .seg__ico { width: 24px; height: 24px; }
+  .seg--xl .seg__ico .material-symbols-outlined { font-size: 24px; }
+
+  /* prefers-reduced-motion: убираем скольжение/overshoot/кроссфейд-движение */
+  @media (prefers-reduced-motion: reduce) {
+    .theme-anim, .theme-anim *,
+    .seg__thumb, .seg__opt, .seg__ico .material-symbols-outlined {
+      transition: none !important;
+    }
+    .seg__ico .material-symbols-outlined { transition: opacity .01s !important; transform: none !important; }
+  }
+</style>
+</head>
+
+<body class="font-body">
+<!-- admin-root: тут вешается .dark, как в реальной админке -->
+<div id="admin-root" class="admin-root theme-anim min-h-screen flex flex-col lg:flex-row">
+
+  <!-- ============ ЛЕВО: мини-футер сайдбара ============ -->
+  <aside class="w-full lg:w-[280px] shrink-0 lg:h-screen lg:sticky lg:top-0 flex flex-col"
+         style="background:var(--admin-surface); border-right:1px solid var(--admin-outline-variant);">
+    <!-- Лого -->
+    <div class="flex items-center gap-3 px-6 pt-6 pb-2">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:var(--admin-primary);">
+        <span class="material-symbols-outlined fill" style="color:var(--admin-on-primary);">bolt</span>
+      </div>
+      <div>
+        <h1 class="font-head text-xl font-extrabold tracking-tight" style="color:var(--admin-on-surface);">STRIDE</h1>
+        <p class="text-[11px]" style="color:var(--admin-on-surface-variant);">Админ-панель</p>
+      </div>
+    </div>
+
+    <!-- Распорка, чтобы футер был внизу -->
+    <div class="flex-1 px-4 py-4 space-y-1 hidden lg:block">
+      <div class="flex items-center gap-3 px-4 py-3 rounded-lg"
+           style="background:var(--admin-surface-high); color:var(--admin-on-surface); font-weight:700;">
+        <span class="material-symbols-outlined fill">dashboard</span><span>Дашборд</span>
+      </div>
+      <div class="flex items-center gap-3 px-4 py-3 rounded-lg" style="color:var(--admin-on-surface-variant);">
+        <span class="material-symbols-outlined">inventory_2</span><span>Каталог</span>
+      </div>
+      <div class="flex items-center gap-3 px-4 py-3 rounded-lg" style="color:var(--admin-on-surface-variant);">
+        <span class="material-symbols-outlined">shopping_cart</span><span>Заказы</span>
+      </div>
+      <div class="flex items-center gap-3 px-4 py-3 rounded-lg" style="color:var(--admin-on-surface-variant);">
+        <span class="material-symbols-outlined">campaign</span><span>Маркетинг</span>
+      </div>
+    </div>
+
+    <!-- МИНИ-ФУТЕР САЙДБАРА: блок ОФОРМЛЕНИЕ + кнопка -->
+    <div class="mt-auto p-4" style="border-top:1px solid var(--admin-outline-variant);">
+      <p class="px-2 mb-2 text-[10px] font-semibold uppercase tracking-[0.18em]"
+         style="color:var(--admin-on-surface-variant);">Оформление</p>
+
+      <!-- === Sliding Pill (компактный, в сайдбаре) === -->
+      <div class="seg w-full" role="group" aria-label="Переключатель темы интерфейса"
+           data-theme-seg style="--opt-w:auto;">
+        <span class="seg__thumb" aria-hidden="true"></span>
+        <button class="seg__opt flex-1" type="button" data-theme="light" aria-pressed="true"
+                aria-label="Светлая тема">
+          <span class="seg__ico" aria-hidden="true">
+            <span class="material-symbols-outlined ico-off">light_mode</span>
+            <span class="material-symbols-outlined fill ico-on">light_mode</span>
+          </span>
+          <span>Светлая</span>
+        </button>
+        <button class="seg__opt flex-1" type="button" data-theme="dark" aria-pressed="false"
+                aria-label="Тёмная тема">
+          <span class="seg__ico" aria-hidden="true">
+            <span class="material-symbols-outlined ico-off">dark_mode</span>
+            <span class="material-symbols-outlined fill ico-on">dark_mode</span>
+          </span>
+          <span>Тёмная</span>
+        </button>
+      </div>
+
+      <!-- Профиль-карточка -->
+      <div class="mt-4 p-3 rounded-xl flex items-center gap-3"
+           style="background:var(--admin-surface-container);">
+        <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm"
+             style="background:var(--admin-secondary-container); color:var(--admin-on-secondary-container);">АР</div>
+        <div class="flex-1 overflow-hidden">
+          <p class="font-bold truncate" style="color:var(--admin-on-surface);">Алексей Рунов</p>
+          <p class="text-[11px] truncate" style="color:var(--admin-on-surface-variant);">Администратор</p>
+        </div>
+        <span class="material-symbols-outlined cursor-pointer" style="color:var(--admin-on-surface-variant);">logout</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ ПРАВО: демо-зона ============ -->
+  <main class="flex-1 px-6 md:px-10 py-8 lg:py-12" style="background:var(--admin-bg);">
+    <div class="max-w-[1100px] mx-auto">
+
+      <!-- Шапка -->
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-2">
+        <div>
+          <h2 class="font-head text-3xl font-bold mb-1" style="color:var(--admin-on-surface);">Тоггл темы — Sliding Pill</h2>
+          <p style="color:var(--admin-on-surface-variant);">
+            Лайм-таблетка скользит между «Светлой» и «Тёмной», иконки делают кроссфейд. Тема демо реально меняется.
+          </p>
+        </div>
+        <!-- Текущий статус темы -->
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold"
+             style="background:var(--admin-surface-high); color:var(--admin-on-surface);">
+          <span class="w-1.5 h-1.5 rounded-full" style="background:var(--admin-primary);"></span>
+          <span>Текущая: <span data-theme-label>Светлая</span></span>
+        </div>
+      </div>
+
+      <!-- КРУПНЫЙ ДУБЛЬ КНОПКИ ПО ЦЕНТРУ -->
+      <div class="my-8 rounded-xl flex flex-col items-center justify-center gap-5 py-12 px-6"
+           style="background:var(--admin-surface); border:1px solid var(--admin-outline-variant);">
+        <p class="text-[11px] font-semibold uppercase tracking-[0.18em]"
+           style="color:var(--admin-on-surface-variant);">Рассмотреть анимацию вблизи</p>
+
+        <div class="seg seg--xl" role="group" aria-label="Переключатель темы интерфейса (крупный)" data-theme-seg>
+          <span class="seg__thumb" aria-hidden="true"></span>
+          <button class="seg__opt" type="button" data-theme="light" aria-pressed="true" aria-label="Светлая тема">
+            <span class="seg__ico" aria-hidden="true">
+              <span class="material-symbols-outlined ico-off">light_mode</span>
+              <span class="material-symbols-outlined fill ico-on">light_mode</span>
+            </span>
+            <span>Светлая</span>
+          </button>
+          <button class="seg__opt" type="button" data-theme="dark" aria-pressed="false" aria-label="Тёмная тема">
+            <span class="seg__ico" aria-hidden="true">
+              <span class="material-symbols-outlined ico-off">dark_mode</span>
+              <span class="material-symbols-outlined fill ico-on">dark_mode</span>
+            </span>
+            <span>Тёмная</span>
+          </button>
+        </div>
+
+        <p class="text-sm" style="color:var(--admin-on-surface-variant);">Клик по сегменту переключает тему всей страницы.</p>
+      </div>
+
+      <!-- Демо-карточки на surface — меняют цвета при переключении -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Карточка 1 -->
+        <div class="p-6 rounded-xl" style="background:var(--admin-surface); border:1px solid var(--admin-outline-variant);">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center"
+                 style="background:var(--admin-surface-high);">
+              <span class="material-symbols-outlined" style="color:var(--admin-on-surface);">payments</span>
+            </div>
+            <span class="px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1"
+                  style="background:var(--admin-primary); color:var(--admin-on-primary);">
+              <span class="material-symbols-outlined fill" style="font-size:14px;">trending_up</span>+8.2%
+            </span>
+          </div>
+          <p class="text-xs uppercase tracking-wider mb-1" style="color:var(--admin-on-surface-variant);">Выручка за неделю</p>
+          <h3 class="font-head text-2xl font-bold" style="color:var(--admin-on-surface);">₽ 842 600</h3>
+          <p class="mt-3 text-sm" style="color:var(--admin-on-surface-variant);">
+            Поверхность <code>--admin-surface</code> на фоне страницы <code>--admin-bg</code> — следите, как меняется контраст.
+          </p>
+        </div>
+
+        <!-- Карточка 2 -->
+        <div class="p-6 rounded-xl" style="background:var(--admin-surface); border:1px solid var(--admin-outline-variant);">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center"
+                 style="background:var(--admin-surface-high);">
+              <span class="material-symbols-outlined" style="color:var(--admin-on-surface);">inventory_2</span>
+            </div>
+            <span class="px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1"
+                  style="background:var(--admin-secondary-container); color:var(--admin-on-secondary-container);">
+              <span class="material-symbols-outlined" style="font-size:14px;">sell</span>Скидка
+            </span>
+          </div>
+          <p class="text-xs uppercase tracking-wider mb-1" style="color:var(--admin-on-surface-variant);">Активные позиции</p>
+          <h3 class="font-head text-2xl font-bold" style="color:var(--admin-on-surface);">1 284 модели</h3>
+          <!-- Мини-список -->
+          <div class="mt-4 space-y-2">
+            <div class="flex items-center justify-between text-sm">
+              <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full" style="background:var(--admin-primary);"></span>
+                <span style="color:var(--admin-on-surface);">Air Runner Pro</span>
+              </div>
+              <span class="font-bold tabular-nums" style="color:var(--admin-on-surface);">₽ 12 990</span>
+            </div>
+            <div class="flex items-center justify-between text-sm">
+              <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full" style="background:var(--admin-error);"></span>
+                <span style="color:var(--admin-on-surface);">Urban Flow · 42</span>
+              </div>
+              <span class="font-bold tabular-nums" style="color:var(--admin-error);">3 шт.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Текстовый блок -->
+      <div class="mt-6 p-6 rounded-xl" style="background:var(--admin-surface-low); border:1px solid var(--admin-outline-variant);">
+        <h4 class="font-head text-lg font-bold mb-2" style="color:var(--admin-on-surface);">Как это работает</h4>
+        <p class="text-sm leading-relaxed" style="color:var(--admin-on-surface-variant);">
+          Сегмент — это группа из двух кнопок с <code>aria-pressed</code>. По клику мы переставляем
+          <code>aria-pressed</code>, сдвигаем CSS-переменную <code>--thumb-x</code> у таблетки и тоглим класс
+          <code>.dark</code> на корне админки. Выбор сохраняется в <code>localStorage</code>. Активная тема
+          <span class="font-bold" style="color:var(--admin-on-surface);">всегда явно подсвечена</span> —
+          состояние читается из DOM при каждом клике, а не из устаревшего снимка (это и был чинимый баг).
+        </p>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var STORAGE_KEY = 'stride-admin-theme';
+    var root = document.getElementById('admin-root');
+    var htmlEl = document.documentElement;
+    var segments = Array.prototype.slice.call(document.querySelectorAll('[data-theme-seg]'));
+    var labels = Array.prototype.slice.call(document.querySelectorAll('[data-theme-label]'));
+
+    // Позиционирование таблетки внутри КОНКРЕТНОГО сегмента под активную кнопку.
+    function positionThumb(seg, theme) {
+      var thumb = seg.querySelector('.seg__thumb');
+      var active = seg.querySelector('.seg__opt[data-theme="' + theme + '"]');
+      if (!thumb || !active) return;
+      var pad = parseFloat(getComputedStyle(seg).paddingLeft) || 0;
+      // ширина таблетки = ширина активной кнопки; сдвиг = её left относительно трека (минус инсет)
+      var w = active.offsetWidth;
+      var x = active.offsetLeft - pad;
+      thumb.style.width = w + 'px';
+      thumb.style.transform = 'translateX(' + x + 'px)';
+    }
+
+    // Единый источник правды: читаем тему из DOM-класса, переключаем явно.
+    function applyTheme(theme, persist) {
+      var isDark = theme === 'dark';
+      root.classList.toggle('dark', isDark);
+      // html.class держим в синхроне (как реальная админка хранит тему на корне)
+      htmlEl.classList.toggle('dark', isDark);
+      htmlEl.classList.toggle('light', !isDark);
+
+      // Обновляем КАЖДЫЙ сегмент: active-state и позицию таблетки.
+      segments.forEach(function (seg) {
+        seg.querySelectorAll('.seg__opt').forEach(function (btn) {
+          var on = btn.getAttribute('data-theme') === theme;
+          btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        positionThumb(seg, theme);
+      });
+
+      labels.forEach(function (el) { el.textContent = isDark ? 'Тёмная' : 'Светлая'; });
+
+      if (persist) {
+        try { localStorage.setItem(STORAGE_KEY, theme); } catch (e) {}
+      }
+    }
+
+    // Делегирование кликов по обоим сегментам.
+    segments.forEach(function (seg) {
+      seg.addEventListener('click', function (e) {
+        var btn = e.target.closest('.seg__opt');
+        if (!btn) return;
+        applyTheme(btn.getAttribute('data-theme'), true);
+      });
+      // Клавиатура: стрелки переключают сегмент.
+      seg.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+          e.preventDefault();
+          applyTheme(e.key === 'ArrowLeft' ? 'light' : 'dark', true);
+        }
+      });
+    });
+
+    // Инициализация: localStorage → системная тема → light.
+    var saved = null;
+    try { saved = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+    var initial = saved || (window.matchMedia &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+    // Без анимации скольжения на первом кадре — выставляем позицию, затем включаем переходы.
+    segments.forEach(function (seg) {
+      var thumb = seg.querySelector('.seg__thumb');
+      if (thumb) thumb.style.transition = 'none';
+    });
+    applyTheme(initial, false);
+    // форс-рефлоу и возврат transition
+    void root.offsetWidth;
+    segments.forEach(function (seg) {
+      var thumb = seg.querySelector('.seg__thumb');
+      if (thumb) thumb.style.transition = '';
+    });
+
+    // Пересчёт позиции таблетки при ресайзе (ширина кнопок плавающая).
+    var rafId;
+    window.addEventListener('resize', function () {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(function () {
+        var current = root.classList.contains('dark') ? 'dark' : 'light';
+        segments.forEach(function (seg) {
+          var thumb = seg.querySelector('.seg__thumb');
+          if (thumb) thumb.style.transition = 'none';
+          positionThumb(seg, current);
+          void seg.offsetWidth;
+          if (thumb) thumb.style.transition = '';
+        });
+      });
+    });
+
+    // Перепозиция после загрузки шрифтов (метрики кнопок могут сдвинуться).
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function () {
+        var current = root.classList.contains('dark') ? 'dark' : 'light';
+        segments.forEach(function (seg) {
+          var thumb = seg.querySelector('.seg__thumb');
+          if (thumb) thumb.style.transition = 'none';
+          positionThumb(seg, current);
+          void seg.offsetWidth;
+          if (thumb) thumb.style.transition = '';
+        });
+      });
+    }
+  })();
+</script>
+</body>
+</html>

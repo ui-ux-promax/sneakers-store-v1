@@ -30,12 +30,19 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   return (
     <div className={cn('admin-root', isDark && 'dark', 'font-admin-body h-screen overflow-hidden')}>
       <ScrollLock />
-      {/* Material Symbols icon font — нужен только в админке, поэтому здесь, а не в корне */}
+      {/* Material Symbols icon font — нужен только в админке, поэтому здесь, а не в корне.
+          display=block: пока шрифт не пришёл, глиф не рендерится текстом лигатуры
+          (никаких «dashboard», «inventory_2» в сайдбаре) — «невидимый период» ~3s,
+          который к тому же перекрыт скелетон-оверлеем сайдбара. preconnect ускоряет CDN. */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link
         rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
       />
-      <AdminShell user={session.user}>{children}</AdminShell>
+      <AdminShell user={session.user} initialTheme={isDark ? 'dark' : 'light'}>
+        {children}
+      </AdminShell>
     </div>
   );
 }
