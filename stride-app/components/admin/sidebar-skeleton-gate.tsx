@@ -32,7 +32,11 @@ export default function SidebarSkeletonGate(): JSX.Element | null {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const startedAt = typeof performance !== 'undefined' ? performance.now() : 0;
-    const MAX_WAIT = 4000; // страховка: не зависаем в скелетоне навсегда
+    // Аварийная страховка от ПОЛНОГО провала шрифта (CDN down/offline) — НЕ ограничитель
+    // нормальной загрузки. На медленной сети (Fast/Slow 4G) иконочный шрифт грузится >4s;
+    // короткий таймаут снимал бы FOUT-гард раньше реальной загрузки → мелькали текст-имена.
+    // Основной сигнал готовности — measure глифа (glyphReady), таймаут лишь не даёт зависнуть.
+    const MAX_WAIT = 20000;
 
     /**
      * Иконочный глиф реально доступен? Меряем ширину тест-лигатуры: загруженный глиф

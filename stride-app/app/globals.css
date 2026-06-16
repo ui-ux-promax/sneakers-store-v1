@@ -378,7 +378,7 @@ html body[data-scroll-locked] {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 8px 16px;
+    padding: 8px; /* 8px по бокам: при 16px контент впритык в узкой кнопке и съезжал вправо */
     border-radius: 9999px;
     background: transparent;
     border: 0;
