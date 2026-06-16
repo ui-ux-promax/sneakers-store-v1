@@ -1,11 +1,7 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-
-// На клиенте — useLayoutEffect (скрыть оверлей до paint при горячем кеше шрифта);
-// на сервере — useEffect-«заглушка», чтобы не было React-warning «useLayoutEffect does nothing on the server».
-const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+import { useAdminReady } from './admin-ready';
 
 /**
  * Оверлей-скелетон сайдбара.
@@ -13,7 +9,7 @@ const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffec
  * Material Symbols — иконочный шрифт: пока он не загружен, на месте глифов
  * виден сырой текст лигатур (`dashboard`, `inventory_2`, `shopping_cart`…).
  * Этот гейт перекрывает сайдбар shimmer-скелетоном на первой загрузке и
- * убирается, как только шрифт готов (или сработает страховочный таймаут).
+ * убирается, как только шрифт готов (сигнал из useAdminReady — общий с ContentReadyGate).
  *
  * Геометрия повторяет <aside> из admin-shell.tsx (280px, py-6 px-4):
  * бренд-блок, 5 nav-пунктов (1 активный лайм), низ (Оформление + 2 ссылки + профиль).
@@ -22,71 +18,8 @@ const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffec
  * дополнительный relative не нужен.
  */
 export default function SidebarSkeletonGate(): JSX.Element | null {
-  // Одинаковое начальное значение на SSR и клиенте → нет hydration-mismatch.
-  const [state, setState] = useState<'pending' | 'ready'>('pending');
-
-  useIsomorphicLayoutEffect(() => {
-    if (typeof document === 'undefined') return;
-
-    const root = document.querySelector<HTMLElement>('.admin-root');
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const startedAt = typeof performance !== 'undefined' ? performance.now() : 0;
-    // Аварийная страховка от ПОЛНОГО провала шрифта (CDN down/offline) — НЕ ограничитель
-    // нормальной загрузки. На медленной сети (Fast/Slow 4G) иконочный шрифт грузится >4s;
-    // короткий таймаут снимал бы FOUT-гард раньше реальной загрузки → мелькали текст-имена.
-    // Основной сигнал готовности — measure глифа (glyphReady), таймаут лишь не даёт зависнуть.
-    const MAX_WAIT = 20000;
-
-    /**
-     * Иконочный глиф реально доступен? Меряем ширину тест-лигатуры: загруженный глиф
-     * Material Symbols ≈ квадрат (≈ font-size), а fallback-текст «settings» заметно шире.
-     * Почему не document.fonts.check: пока @font-face ещё не объявлен (CSS шрифта грузится),
-     * check() возвращает true (нет совпадающих faces → «нечего грузить»), из-за чего гейт
-     * снимался слишком рано и мелькали текст-имена иконок.
-     */
-    const glyphReady = (): boolean => {
-      const probe = document.createElement('span');
-      probe.textContent = 'settings';
-      probe.setAttribute('aria-hidden', 'true');
-      probe.style.cssText =
-        'position:absolute;left:-9999px;top:-9999px;visibility:hidden;white-space:nowrap;' +
-        "font-family:'Material Symbols Outlined';font-weight:400;font-size:48px;line-height:1;";
-      document.body.appendChild(probe);
-      const w = probe.offsetWidth;
-      document.body.removeChild(probe);
-      return w > 0 && w < 80; // глиф ≈ 48px; текст «settings» ≈ 190px
-    };
-
-    const elapsed = () =>
-      (typeof performance !== 'undefined' ? performance.now() : 0) - startedAt;
-
-    const reveal = () => {
-      if (cancelled) return;
-      root?.classList.add('ms-ready'); // показать иконки во всей админке (снять FOUT-гард)
-      setState('ready'); // убрать оверлей-скелетон сайдбара
-    };
-
-    const poll = () => {
-      if (cancelled) return;
-      if (glyphReady() || elapsed() > MAX_WAIT) {
-        reveal();
-        return;
-      }
-      timer = setTimeout(poll, 90);
-    };
-
-    // Best-effort подтолкнуть загрузку шрифта и начать опрос (первый — синхронно до paint).
-    document.fonts?.load("48px 'Material Symbols Outlined'").catch(() => {});
-    poll();
-
-    return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
-    };
-  }, []);
-
-  if (state === 'ready') return null;
+  const ready = useAdminReady();
+  if (ready) return null;
 
   return (
     <div

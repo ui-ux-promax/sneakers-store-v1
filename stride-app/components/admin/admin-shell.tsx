@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { Icon } from '@/components/admin/icon';
 import { ThemeToggle } from '@/components/admin/theme-toggle';
 import SidebarSkeletonGate from '@/components/admin/sidebar-skeleton-gate';
+import { ContentReadyGate } from '@/components/admin/content-ready-gate';
 
 interface AdminShellProps {
   user: {
@@ -205,7 +206,9 @@ export function AdminShell({ user, children, initialTheme }: AdminShellProps) {
 
       {/* ── Основной контент (единственный скроллер; body зафиксирован через :has) ──── */}
       <main className="md:ml-[280px] pt-16 h-screen overflow-y-auto overscroll-contain bg-admin-bg [scrollbar-gutter:stable]">
-        <div className="max-w-[1440px] mx-auto p-8">{children}</div>
+        <div className="max-w-[1440px] mx-auto p-8">
+          <ContentReadyGate>{children}</ContentReadyGate>
+        </div>
       </main>
     </>
   );
