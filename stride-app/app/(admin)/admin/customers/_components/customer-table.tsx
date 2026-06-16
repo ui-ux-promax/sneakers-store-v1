@@ -41,7 +41,7 @@ export function CustomerTable({ rows, page, totalPages, total, limit }: Customer
 
   return (
     <div className="bg-admin-surface border border-admin-outline-variant rounded-xl overflow-hidden">
-      <div className="overflow-x-auto">
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-left">
           <thead className="bg-admin-surface-high">
             <tr>
@@ -87,6 +87,46 @@ export function CustomerTable({ rows, page, totalPages, total, limit }: Customer
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* Мобильная раскладка: карточки вместо таблицы (<md) */}
+      <div className="md:hidden divide-y divide-admin-outline-variant">
+        {rows.map((row) => {
+          const rv = roleView(row.role);
+          return (
+            <div
+              key={row.id}
+              onClick={() => router.push(`/admin/customers/${row.id}`)}
+              className="p-4 cursor-pointer hover:bg-admin-surface-high transition-colors"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <a
+                    href={`/admin/customers/${row.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="font-bold text-admin-on-surface hover:underline block truncate"
+                  >
+                    {row.name?.trim() || 'Без имени'}
+                  </a>
+                  <div className="text-xs text-admin-on-surface-variant truncate">{row.email}</div>
+                </div>
+                <span className={cn('shrink-0', rv.badge)}>{rv.label}</span>
+              </div>
+
+              <div className="mt-3 flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-sm">
+                  <span className="text-admin-on-surface-variant">Заказов: </span>
+                  <span className="font-bold text-admin-on-surface tabular-nums">{row.orderCount}</span>
+                </span>
+                <span className="text-sm">
+                  <span className="text-admin-on-surface-variant">Потрачено: </span>
+                  <span className="font-bold text-admin-on-surface tabular-nums">{formatPrice(row.totalSpent)}</span>
+                </span>
+                <span className="text-xs text-admin-on-surface-variant tabular-nums">{formatDateTime(row.createdAt)}</span>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Пагинация */}

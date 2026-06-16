@@ -62,7 +62,8 @@ export function CouponTable({ rows }: { rows: CouponRow[] }) {
   return (
     <div className="space-y-3">
       <div className="bg-admin-surface border border-admin-outline-variant rounded-xl overflow-hidden">
-        <Table>
+        <div className="hidden md:block">
+          <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Код</TableHead>
@@ -106,7 +107,48 @@ export function CouponTable({ rows }: { rows: CouponRow[] }) {
               </TableRow>
             ))}
           </TableBody>
-        </Table>
+          </Table>
+        </div>
+
+        <div className="md:hidden divide-y divide-admin-outline-variant">
+          {rows.map((row) => (
+            <div key={row.id} className="p-4 space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <span className="font-mono font-medium text-admin-on-surface">{row.code}</span>
+                  <div className="text-sm text-admin-on-surface-variant tabular-nums">{row.percent}% скидка</div>
+                </div>
+                <span className={`shrink-0 px-3 py-1 rounded-full text-xs font-bold w-fit ${STATUS_META[row.status].cls}`}>
+                  {STATUS_META[row.status].label}
+                </span>
+              </div>
+
+              <div className="text-xs text-admin-on-surface-variant tabular-nums space-y-0.5">
+                <div>Действует до: {row.expiresLabel}</div>
+                <div>Создан: {row.createdLabel}</div>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 pt-1">
+                <label className="flex items-center gap-2 text-sm text-admin-on-surface-variant">
+                  <Switch
+                    checked={row.active}
+                    disabled={pending === row.id}
+                    onCheckedChange={(v) => handleToggle(row, v)}
+                  />
+                  Активен
+                </label>
+                <div className="flex gap-2">
+                  <Button asChild variant="ghost" size="sm">
+                    <Link href={`/admin/marketing/${row.id}/edit`}>Изменить</Link>
+                  </Button>
+                  <Button variant="danger" size="sm" onClick={() => setToDelete(row)}>
+                    Удалить
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <AlertModal
