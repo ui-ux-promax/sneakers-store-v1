@@ -12,7 +12,8 @@ export function RecentOrders({ rows }: { rows: RecentOrderRow[] }) {
       {rows.length === 0 ? (
         <p className="px-6 pb-6 text-sm text-admin-on-surface-variant">Заказов нет.</p>
       ) : (
-        <div className="overflow-x-auto">
+        <>
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-admin-surface-high border-y border-admin-outline-variant">
               <tr>
@@ -46,6 +47,36 @@ export function RecentOrders({ rows }: { rows: RecentOrderRow[] }) {
             </tbody>
           </table>
         </div>
+
+        {/* Мобильная раскладка: карточки как на /admin/orders (<md) */}
+        <div className="md:hidden divide-y divide-admin-outline-variant border-t border-admin-outline-variant">
+          {rows.map((row) => {
+            const sv = orderStatusView(row.status, row.paymentStatus);
+            return (
+              <Link
+                key={row.id}
+                href={`/admin/orders/${row.id}`}
+                className="block p-4 hover:bg-admin-surface-high transition-colors"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <span className="font-bold text-admin-on-surface tabular-nums">#{row.orderNumber}</span>
+                    <div className="text-[11px] text-admin-on-surface-variant tabular-nums">{formatDateTime(row.createdAt)}</div>
+                  </div>
+                  <span className="font-bold text-admin-on-surface tabular-nums whitespace-nowrap">{formatPrice(row.totalAmount)}</span>
+                </div>
+                <div className="mt-2 flex items-end justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-admin-on-surface truncate">{row.contactName}</div>
+                    {row.email && <div className="text-[11px] text-admin-on-surface-variant truncate">{row.email}</div>}
+                  </div>
+                  <span className={`shrink-0 ${sv.badge}`}>{sv.label}</span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+        </>
       )}
     </div>
   );
