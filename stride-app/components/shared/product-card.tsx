@@ -6,6 +6,11 @@ import { PriceTag } from './price-tag';
 import { WishlistHeart } from '@/components/shared/wishlist/wishlist-heart';
 import type { ProductCardData } from '@/lib/product-summary';
 
+// Бежевый (surface-soft) плейсхолдер-блюр: пока фото грузится, карточка не «пыхает»
+// пустым квадратом, а плавно проявляет изображение поверх фона в цвет витрины.
+const BEIGE_BLUR =
+  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='8'%20height='8'%3E%3Crect%20width='8'%20height='8'%20fill='%23f1ece1'/%3E%3C/svg%3E";
+
 export function ProductCard({ data, wishlisted = false }: { data: ProductCardData; wishlisted?: boolean }) {
   const href = `/product/${data.slug}`;
   return (
@@ -24,6 +29,8 @@ export function ProductCard({ data, wishlisted = false }: { data: ProductCardDat
               alt={data.imageAlt}
               fill
               sizes="(max-width: 1024px) 50vw, 25vw"
+              placeholder="blur"
+              blurDataURL={BEIGE_BLUR}
               className={`object-cover transition-transform duration-300 group-hover:scale-105 ${data.soldOut ? 'opacity-50 grayscale' : ''}`}
             />
           ) : (
