@@ -125,6 +125,7 @@ export function ProductGallery({
           <Dialog.Content
             className="fixed inset-0 z-50 grid place-items-center p-4 sm:p-8 focus:outline-none"
             aria-label={`${productName}: просмотр фото`}
+            onClick={() => setOpen(false)}
           >
             <Dialog.Title className="sr-only">{productName}</Dialog.Title>
             <Dialog.Close
@@ -133,14 +134,15 @@ export function ProductGallery({
             >
               <X className="w-5 h-5" />
             </Dialog.Close>
-            <div className="relative w-full max-w-[1000px] aspect-[4/3]">
+            {/* Клик по самому фото не закрывает — закрывает только пустая область (Content). */}
+            <div className="relative w-full max-w-[1000px] aspect-[4/3]" onClick={(e) => e.stopPropagation()}>
               <Image src={main.url} alt={main.alt || productName} fill className="object-contain" sizes="100vw" />
             </div>
             {multi && (
               <>
                 <button
                   type="button"
-                  onClick={() => step(-1)}
+                  onClick={(e) => { e.stopPropagation(); step(-1); }}
                   className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-surface/90 backdrop-blur hover:bg-surface transition"
                   aria-label="Предыдущее фото"
                 >
@@ -148,7 +150,7 @@ export function ProductGallery({
                 </button>
                 <button
                   type="button"
-                  onClick={() => step(1)}
+                  onClick={(e) => { e.stopPropagation(); step(1); }}
                   className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-surface/90 backdrop-blur hover:bg-surface transition"
                   aria-label="Следующее фото"
                 >
