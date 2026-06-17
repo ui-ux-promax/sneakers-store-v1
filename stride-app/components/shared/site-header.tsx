@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { MainNav } from './main-nav';
+import { MainNav, MainNavFallback } from './main-nav';
 import { MobileNav } from './mobile-nav';
 import { HeaderSearch } from './header-search';
 import { CartBadge } from './cart-badge';
@@ -19,7 +19,9 @@ export function SiteHeader() {
             <span className="grid place-items-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-display font-bold text-sm">S</span>
             <span className="font-display font-bold text-lg tracking-tight">STRIDE</span>
           </Link>
-          <MainNav />
+          <Suspense fallback={<MainNavFallback />}>
+            <MainNav />
+          </Suspense>
           <div className="flex-1" />
           <HeaderSearch />
           <AuthNav />
