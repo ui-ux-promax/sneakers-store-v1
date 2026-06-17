@@ -1,6 +1,6 @@
 'use client';
 import Image from 'next/image';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Maximize2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -43,6 +43,20 @@ export function ProductGallery({
   const enterZoom = () => { if (typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches) setZooming(true); };
   const leaveZoom = () => setZooming(false);
   const openLightbox = () => { setZooming(false); setOpen(true); };
+
+  // Стрелки в лайтбоксе — оконный слушатель (надёжнее, чем onKeyDown на Dialog.Content:
+  // не зависит от того, какой именно элемент держит фокус внутри focus-trap Radix).
+  useEffect(() => {
+    if (!open || !multi) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') step(-1);
+      else if (e.key === 'ArrowRight') step(1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // step стабилен по поведению (functional setState); images.length константна в рамках mount (key=colorway).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, multi, images.length]);
 
   return (
     <div className="flex flex-col-reverse sm:flex-row gap-3 min-w-0">
@@ -111,7 +125,6 @@ export function ProductGallery({
           <Dialog.Content
             className="fixed inset-0 z-50 grid place-items-center p-4 sm:p-8 focus:outline-none"
             aria-label={`${productName}: просмотр фото`}
-            onKeyDown={(e) => { if (multi && e.key === 'ArrowLeft') step(-1); if (multi && e.key === 'ArrowRight') step(1); }}
           >
             <Dialog.Title className="sr-only">{productName}</Dialog.Title>
             <Dialog.Close
