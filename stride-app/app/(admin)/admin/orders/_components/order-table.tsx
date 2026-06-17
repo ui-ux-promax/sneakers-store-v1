@@ -46,7 +46,7 @@ export function OrderTable({ rows, page, totalPages, total, limit }: OrderTableP
 
   return (
     <div className="bg-admin-surface border border-admin-outline-variant rounded-xl overflow-hidden">
-      <div className="overflow-x-auto">
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-left">
           <thead className="bg-admin-surface-high">
             <tr>
@@ -115,6 +115,61 @@ export function OrderTable({ rows, page, totalPages, total, limit }: OrderTableP
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* Мобильная раскладка: карточки вместо таблицы (<md) */}
+      <div className="md:hidden divide-y divide-admin-outline-variant">
+        {rows.map((row) => {
+          const sv = orderStatusView(row.status, row.paymentStatus);
+          const pv = paymentStatusView(row.paymentStatus);
+          return (
+            <div
+              key={row.id}
+              onClick={() => router.push(`/admin/orders/${row.id}`)}
+              className="p-4 cursor-pointer hover:bg-admin-surface-high transition-colors"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-admin-surface-high border border-admin-outline-variant p-1 overflow-hidden flex items-center justify-center shrink-0">
+                  {row.coverImage ? (
+                    /* eslint-disable-next-line @next/next/no-img-element -- admin thumb */
+                    <img src={row.coverImage} alt="" className="object-contain w-full h-full" />
+                  ) : (
+                    <Icon name="image" className="text-admin-on-surface-variant" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <a
+                    href={`/admin/orders/${row.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="font-bold text-admin-on-surface hover:underline tabular-nums"
+                  >
+                    #{row.orderNumber}
+                  </a>
+                  <div className="text-xs text-admin-on-surface-variant tabular-nums">{row.createdLabel}</div>
+                </div>
+                <span className="font-bold text-admin-on-surface tabular-nums whitespace-nowrap">
+                  {formatPrice(row.totalAmount)}
+                </span>
+              </div>
+
+              <div className="mt-3">
+                <div className="font-medium text-admin-on-surface truncate">{row.contactName}</div>
+                <div className="text-xs text-admin-on-surface-variant truncate">{row.contactEmail}</div>
+              </div>
+
+              <div className="mt-3 flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={sv.badge}>{sv.label}</span>
+                  <span className={pv.badge}>{pv.label}</span>
+                  <span className="text-[11px] uppercase tracking-wider text-admin-on-surface-variant">
+                    {row.paymentMethod === 'online' ? 'Онлайн' : 'При получении'}
+                  </span>
+                </div>
+                <span className="text-xs text-admin-on-surface-variant tabular-nums">{row.itemCount} шт.</span>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Пагинация */}

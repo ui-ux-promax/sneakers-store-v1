@@ -66,7 +66,7 @@ export function ProductTable({ rows, page, totalPages, total, limit }: ProductTa
 
   return (
     <div className="bg-admin-surface border border-admin-outline-variant rounded-xl overflow-hidden">
-      <div className="overflow-x-auto">
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-left">
           <thead className="bg-admin-surface-high">
             <tr>
@@ -137,14 +137,14 @@ export function ProductTable({ rows, page, totalPages, total, limit }: ProductTa
                   )}
                 </td>
                 {/* Цена */}
-                <td className="px-6 py-4 font-bold text-admin-on-surface tabular-nums">{formatPrice(row.minPrice)}</td>
+                <td className="px-6 py-4 font-bold text-admin-on-surface tabular-nums whitespace-nowrap">{formatPrice(row.minPrice)}</td>
                 {/* Статус */}
                 <td className="px-6 py-4">
                   <StatusPill active={row.active} discountPct={row.discountPct} />
                 </td>
                 {/* Действия */}
                 <td className="px-6 py-4 text-right">
-                  <DropdownMenu>
+                  <DropdownMenu modal={false}>
                     <DropdownMenuTrigger asChild>
                       <button
                         type="button"
@@ -172,6 +172,81 @@ export function ProductTable({ rows, page, totalPages, total, limit }: ProductTa
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Мобильная раскладка: карточки вместо таблицы (<md) */}
+      <div className="md:hidden divide-y divide-admin-outline-variant">
+        {rows.map((row) => (
+          <div key={row.id} className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-12 h-12 rounded-lg bg-admin-surface-high border border-admin-outline-variant p-1 overflow-hidden flex items-center justify-center shrink-0">
+                {row.coverImage ? (
+                  /* eslint-disable-next-line @next/next/no-img-element -- admin thumb */
+                  <img src={row.coverImage} alt="" className="object-contain w-full h-full" />
+                ) : (
+                  <Icon name="image" className="text-admin-on-surface-variant" />
+                )}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <a
+                  href={`/admin/catalog/products/${row.id}/edit`}
+                  className="font-bold text-admin-on-surface hover:underline block truncate"
+                >
+                  {row.name}
+                </a>
+                <div className="text-xs text-admin-on-surface-variant truncate">
+                  {row.brand} · {row.categoryName}
+                </div>
+              </div>
+
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Действия"
+                    className="shrink-0 p-2 -mr-1 rounded-full text-admin-on-surface-variant hover:bg-admin-surface-container transition-colors"
+                  >
+                    <Icon name="more_vert" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => router.push(`/admin/catalog/products/${row.id}/edit`)}>
+                    <Icon name="edit" className="text-[18px] mr-2" /> Изменить
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setToDelete(row)} className="text-admin-error focus:text-admin-error">
+                    <Icon name="delete" className="text-[18px] mr-2" /> Удалить
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div className="mt-3 flex items-center justify-between gap-2">
+              {/* Остаток */}
+              {row.totalStock === 0 ? (
+                <span className="flex items-center gap-1.5 text-sm font-bold text-admin-error">
+                  <span className="w-1.5 h-1.5 rounded-full bg-admin-error" /> Нет в наличии
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5 text-sm">
+                  <span className={cn('w-1.5 h-1.5 rounded-full', row.totalStock <= LOW_STOCK ? 'bg-admin-on-secondary-container' : 'bg-admin-primary')} />
+                  <span className="font-bold text-admin-on-surface tabular-nums">{row.totalStock}</span>
+                  <span className="text-admin-on-surface-variant">в наличии</span>
+                </span>
+              )}
+
+              {/* Цена */}
+              <span className="font-bold text-admin-on-surface tabular-nums whitespace-nowrap">
+                {formatPrice(row.minPrice)}
+              </span>
+            </div>
+
+            <div className="mt-2">
+              <StatusPill active={row.active} discountPct={row.discountPct} />
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Пагинация (в подвале карточки, как в прототипе) */}

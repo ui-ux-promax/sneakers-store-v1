@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ru" class="light">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>STRIDE Admin — Таблица: компактные 2-строчные ряды</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@400;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: { extend: {
+      colors: {
+        "admin-bg": "var(--admin-bg)", "admin-surface": "var(--admin-surface)",
+        "admin-surface-low": "var(--admin-surface-low)", "admin-surface-container": "var(--admin-surface-container)",
+        "admin-surface-high": "var(--admin-surface-high)", "admin-on-bg": "var(--admin-on-bg)",
+        "admin-on-surface": "var(--admin-on-surface)", "admin-on-surface-variant": "var(--admin-on-surface-variant)",
+        "admin-primary": "var(--admin-primary)", "admin-on-primary": "var(--admin-on-primary)",
+        "admin-secondary-container": "var(--admin-secondary-container)", "admin-on-secondary-container": "var(--admin-on-secondary-container)",
+        "admin-error": "var(--admin-error)", "admin-on-error": "var(--admin-on-error)",
+        "admin-outline": "var(--admin-outline)", "admin-outline-variant": "var(--admin-outline-variant)"
+      },
+      fontFamily: { "admin-head": ["Anybody","sans-serif"], "admin-body": ["Manrope","sans-serif"] }
+    }}
+  }
+</script>
+<style>
+  :root{--admin-bg:#f7f8f4;--admin-surface:#ffffff;--admin-surface-low:#f8f9fb;--admin-surface-container:#f3f4f6;--admin-surface-high:#e5e7eb;--admin-on-bg:#111827;--admin-on-surface:#111827;--admin-on-surface-variant:#6b7280;--admin-primary:#b2f700;--admin-on-primary:#131f00;--admin-secondary-container:#f3e8ff;--admin-on-secondary-container:#3b0764;--admin-error:#ef4444;--admin-on-error:#ffffff;--admin-outline:#d1d5db;--admin-outline-variant:#e5e7eb;}
+  html.dark{--admin-bg:#131313;--admin-surface:#131313;--admin-surface-low:#1c1b1b;--admin-surface-container:#201f1f;--admin-surface-high:#2a2a2a;--admin-on-bg:#e5e2e1;--admin-on-surface:#e5e2e1;--admin-on-surface-variant:#c2caad;--admin-primary:#b2f700;--admin-on-primary:#243600;--admin-secondary-container:#563f71;--admin-on-secondary-container:#c9ade7;--admin-error:#ffb4ab;--admin-on-error:#690005;--admin-outline:#8c9479;--admin-outline-variant:#424a33;}
+  body{font-family:Manrope,sans-serif;background:var(--admin-bg);color:var(--admin-on-bg);}
+  .material-symbols-outlined{font-variation-settings:"FILL" 0,"wght" 400,"GRAD" 0,"opsz" 24;vertical-align:middle;}
+  .material-symbols-outlined.fill{font-variation-settings:"FILL" 1,"wght" 400,"GRAD" 0,"opsz" 24;}
+  .admin-scope *{border-color:var(--admin-outline-variant);}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;}}
+  .frame-scroll::-webkit-scrollbar{width:0;height:0;}
+  .frame-scroll{scrollbar-width:none;}
+  .sheet{transition:transform .26s cubic-bezier(.22,.61,.36,1);}
+  .scrim{transition:opacity .2s ease-out;}
+  .row-tap{transition:background-color .15s ease-out;}
+  .row-tap:active{background-color:var(--admin-surface-high);}
+</style>
+</head>
+<body class="admin-scope min-h-screen p-4 sm:p-8 flex flex-col items-center gap-5">
+
+  <!-- CONTROL BAR -->
+  <div class="bg-admin-surface rounded-2xl border border-admin-outline-variant p-4 max-w-[440px] w-full">
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <h1 class="font-admin-head font-bold text-lg leading-tight text-admin-on-surface">Таблица: компактные 2-строчные ряды</h1>
+        <span class="inline-block mt-1 text-[11px] font-semibold text-admin-on-surface-variant bg-admin-surface-container rounded-full px-2 py-0.5">≈390px</span>
+      </div>
+      <button id="themeToggle" class="shrink-0 flex items-center gap-1.5 rounded-full border border-admin-outline-variant bg-admin-surface-container px-3 py-2 text-sm font-semibold text-admin-on-surface active:scale-95 transition-transform" style="min-height:44px">
+        <span id="themeIcon" class="material-symbols-outlined text-[20px]">dark_mode</span>
+        <span id="themeLabel">Тёмная</span>
+      </button>
+    </div>
+    <p class="mt-3 text-sm leading-relaxed text-admin-on-surface-variant">
+      Плотный список: две строки на товар, цена всегда прибита к правому краю и не переносится. Между таблицей и карточками — золотая середина: больше SKU на экран без горизонтального скролла. Лучший выбор, когда админ быстро просматривает много позиций.
+    </p>
+  </div>
+
+  <!-- PHONE FRAME -->
+  <div class="max-w-[390px] w-full bg-admin-bg rounded-[2.2rem] border-[6px] border-admin-on-surface/10 shadow-2xl overflow-hidden" style="min-height:720px;position:relative;">
+    <div class="frame-scroll overflow-y-auto" style="max-height:720px;">
+
+      <!-- status bar -->
+      <div class="flex items-center justify-between px-6 pt-2.5 pb-1 text-[11px] font-semibold text-admin-on-surface">
+        <span>9:41</span>
+        <div class="flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-[15px]">signal_cellular_alt</span>
+          <span class="material-symbols-outlined text-[15px]">wifi</span>
+          <span class="material-symbols-outlined text-[15px]">battery_full</span>
+        </div>
+      </div>
+
+      <!-- topbar -->
+      <header class="sticky top-0 z-20 bg-admin-bg/95 backdrop-blur px-4">
+        <div class="h-16 flex items-center gap-3">
+          <button class="shrink-0 grid place-items-center w-10 h-10 rounded-xl text-admin-on-surface-variant hover:bg-admin-surface-high transition-colors">
+            <span class="material-symbols-outlined">menu</span>
+          </button>
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="shrink-0 grid place-items-center w-9 h-9 rounded-xl bg-admin-primary">
+              <span class="material-symbols-outlined fill text-admin-on-primary text-[22px]">bolt</span>
+            </div>
+            <div class="leading-none min-w-0">
+              <div class="font-admin-head font-bold text-admin-on-surface">STRIDE</div>
+              <div class="text-[10px] text-admin-on-surface-variant truncate">Премиум-кроссовки</div>
+            </div>
+          </div>
+        </div>
+        <div class="pb-3">
+          <div class="flex items-center gap-2 rounded-full bg-admin-surface-container px-4 h-11 text-admin-on-surface-variant">
+            <span class="material-symbols-outlined text-[20px]">search</span>
+            <span class="text-sm truncate">Поиск заказов, клиентов, товаров…</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- page content -->
+      <main class="px-4 pb-8">
+
+        <!-- title row -->
+        <div class="flex items-center justify-between gap-3 pt-1 pb-3">
+          <div>
+            <h2 class="font-admin-head font-bold text-2xl text-admin-on-surface leading-tight">Товары</h2>
+            <p class="text-xs text-admin-on-surface-variant mt-0.5">42 позиции в каталоге</p>
+          </div>
+          <button class="shrink-0 flex items-center gap-1.5 rounded-full bg-admin-primary text-admin-on-primary font-bold text-sm px-4 h-11 active:scale-95 transition-transform">
+            <span class="material-symbols-outlined text-[20px]">add</span>
+            Товар
+          </button>
+        </div>
+
+        <!-- filter pills -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-3 -mx-4 px-4 frame-scroll" id="filterRow">
+          <button data-filter="all" class="filter-pill shrink-0 rounded-full px-4 h-9 text-sm font-semibold border border-admin-outline-variant bg-admin-primary text-admin-on-primary">Все</button>
+          <button data-filter="active" class="filter-pill shrink-0 rounded-full px-4 h-9 text-sm font-semibold border border-admin-outline-variant bg-admin-surface text-admin-on-surface-variant">Активные</button>
+          <button data-filter="sale" class="filter-pill shrink-0 rounded-full px-4 h-9 text-sm font-semibold border border-admin-outline-variant bg-admin-surface text-admin-on-surface-variant">Скидка</button>
+          <button data-filter="out" class="filter-pill shrink-0 rounded-full px-4 h-9 text-sm font-semibold border border-admin-outline-variant bg-admin-surface text-admin-on-surface-variant">Нет в наличии</button>
+        </div>
+
+        <!-- dense list card -->
+        <div class="bg-admin-surface rounded-xl border border-admin-outline-variant overflow-hidden">
+          <ul class="divide-y divide-admin-outline-variant" id="productList"></ul>
+        </div>
+
+        <!-- pagination footer -->
+        <div class="flex items-center justify-between mt-4">
+          <span class="text-xs text-admin-on-surface-variant" id="pageInfo">1–6 из 42</span>
+          <div class="flex items-center gap-1.5">
+            <button id="prevBtn" class="grid place-items-center w-11 h-11 rounded-lg border border-admin-outline-variant bg-admin-surface text-admin-on-surface-variant disabled:opacity-40 active:scale-95 transition-transform">
+              <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+            </button>
+            <button class="grid place-items-center w-11 h-11 rounded-lg bg-admin-primary text-admin-on-primary font-bold text-sm">1</button>
+            <button class="grid place-items-center w-11 h-11 rounded-lg border border-admin-outline-variant bg-admin-surface text-admin-on-surface-variant font-semibold text-sm active:scale-95 transition-transform">2</button>
+            <button id="nextBtn" class="grid place-items-center w-11 h-11 rounded-lg border border-admin-outline-variant bg-admin-surface text-admin-on-surface-variant active:scale-95 transition-transform">
+              <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+            </button>
+          </div>
+        </div>
+
+      </main>
+    </div>
+
+    <!-- ACTION SHEET -->
+    <div id="scrim" class="scrim absolute inset-0 bg-black/40 opacity-0 pointer-events-none z-30"></div>
+    <div id="sheet" class="sheet absolute left-0 right-0 bottom-0 z-40 bg-admin-surface rounded-t-2xl border-t border-admin-outline-variant p-4 pb-6" style="transform:translateY(110%)">
+      <div class="mx-auto w-10 h-1 rounded-full bg-admin-surface-high mb-3"></div>
+      <div class="flex items-center gap-3 pb-3 mb-2 border-b border-admin-outline-variant">
+        <div class="w-11 h-11 rounded-lg bg-admin-surface-high border border-admin-outline-variant p-1 grid place-items-center">
+          <span class="material-symbols-outlined text-admin-on-surface-variant">image</span>
+        </div>
+        <div class="min-w-0">
+          <div id="sheetName" class="font-bold text-sm text-admin-on-surface truncate">—</div>
+          <div id="sheetMeta" class="text-xs text-admin-on-surface-variant truncate">—</div>
+        </div>
+      </div>
+      <button class="w-full flex items-center gap-3 rounded-xl px-3 h-12 text-admin-on-surface hover:bg-admin-surface-high transition-colors text-left">
+        <span class="material-symbols-outlined text-admin-on-surface-variant">edit</span>
+        <span class="font-semibold text-sm">Изменить</span>
+      </button>
+      <button class="w-full flex items-center gap-3 rounded-xl px-3 h-12 text-admin-error hover:bg-admin-surface-high transition-colors text-left">
+        <span class="material-symbols-outlined">delete</span>
+        <span class="font-semibold text-sm">Удалить</span>
+      </button>
+    </div>
+
+  </div>
+
+<script>
+  // ---- theme toggle ----
+  const root = document.documentElement;
+  const tBtn = document.getElementById('themeToggle');
+  const tIcon = document.getElementById('themeIcon');
+  const tLabel = document.getElementById('themeLabel');
+  tBtn.addEventListener('click', () => {
+    const dark = root.classList.toggle('dark');
+    tIcon.textContent = dark ? 'light_mode' : 'dark_mode';
+    tLabel.textContent = dark ? 'Светлая' : 'Тёмная';
+  });
+
+  // ---- data ----
+  const products = [
+    {name:'STRIDE Velocity Trail', brand:'Nike',   cat:'Беговые',    stock:28, price:'12 990 ₽', status:'active'},
+    {name:'STRIDE Lux Platform',   brand:'Nike',   cat:'Лайфстайл',  stock:16, price:'11 240 ₽', status:'sale'},
+    {name:'STRIDE Peak Trail',     brand:'Adidas', cat:'Беговые',    stock:4,  price:'15 490 ₽', status:'active'},
+    {name:'STRIDE Daily Mesh',     brand:'Puma',   cat:'Городские',  stock:32, price:'13 490 ₽', status:'sale'},
+    {name:'STRIDE Aero Runner',    brand:'Nike',   cat:'Беговые',    stock:0,  price:'16 990 ₽', status:'out'},
+    {name:'STRIDE Cloud Platform', brand:'Adidas', cat:'Лайфстайл',  stock:28, price:'9 990 ₽',  status:'active'},
+  ];
+
+  function stockDot(p){
+    if(p.stock===0) return 'bg-admin-error';
+    if(p.stock<=20) return 'bg-admin-on-secondary-container';
+    return 'bg-admin-primary';
+  }
+  function statusPill(s){
+    if(s==='active') return `<span class="inline-flex items-center gap-1 rounded-full bg-admin-primary text-admin-on-primary text-[11px] font-bold px-2 h-6"><span class="material-symbols-outlined fill text-[14px]">check_circle</span>Активен</span>`;
+    if(s==='sale')   return `<span class="inline-flex items-center gap-1 rounded-full bg-admin-secondary-container text-admin-on-secondary-container text-[11px] font-bold px-2 h-6"><span class="material-symbols-outlined text-[14px]">sell</span>Скидка</span>`;
+    if(s==='out')    return `<span class="inline-flex items-center gap-1 rounded-full text-admin-error text-[11px] font-bold px-2 h-6 border border-admin-error/40">Нет в наличии</span>`;
+    return `<span class="inline-flex items-center gap-1 rounded-full bg-admin-surface-high text-admin-on-surface-variant text-[11px] font-bold px-2 h-6"><span class="material-symbols-outlined text-[14px]">archive</span>Черновик</span>`;
+  }
+
+  const list = document.getElementById('productList');
+  let activeFilter = 'all';
+
+  function render(){
+    const rows = products.filter(p => activeFilter==='all' ? true : p.status===activeFilter);
+    list.innerHTML = rows.map((p,i) => `
+      <li class="row-tap flex items-center gap-3 px-3 py-2.5 cursor-pointer" data-idx="${i}" style="min-height:60px">
+        <div class="shrink-0 w-11 h-11 rounded-lg bg-admin-surface-high border border-admin-outline-variant p-1 grid place-items-center">
+          <span class="material-symbols-outlined text-admin-on-surface-variant text-[20px]">image</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="font-bold text-sm text-admin-on-surface truncate">${p.name}</div>
+          <div class="flex items-center gap-1.5 text-xs text-admin-on-surface-variant mt-0.5 min-w-0">
+            <span class="truncate">${p.brand} · ${p.cat}</span>
+            <span class="shrink-0 inline-flex items-center gap-1 ml-0.5">
+              <span class="w-1.5 h-1.5 rounded-full ${stockDot(p)}"></span>
+              <span class="tabular-nums ${p.stock===0?'text-admin-error font-semibold':''}">${p.stock}</span>
+            </span>
+          </div>
+        </div>
+        <div class="shrink-0 flex items-center gap-1">
+          <div class="text-right">
+            <div class="font-bold text-sm text-admin-on-surface tabular-nums whitespace-nowrap">${p.price}</div>
+            <div class="mt-1 flex justify-end">${statusPill(p.status)}</div>
+          </div>
+          <button class="kebab shrink-0 grid place-items-center w-9 h-11 rounded-lg text-admin-on-surface-variant hover:bg-admin-surface-high transition-colors" data-idx="${i}" aria-label="Действия">
+            <span class="material-symbols-outlined text-[20px]">more_vert</span>
+          </button>
+        </div>
+      </li>`).join('');
+
+    document.getElementById('pageInfo').textContent = `1–${rows.length} из 42`;
+    bindRows(rows);
+  }
+
+  // ---- action sheet ----
+  const scrim = document.getElementById('scrim');
+  const sheet = document.getElementById('sheet');
+  function openSheet(p){
+    document.getElementById('sheetName').textContent = p.name;
+    document.getElementById('sheetMeta').textContent = `${p.brand} · ${p.cat} · ${p.price}`;
+    scrim.style.opacity = '1';
+    scrim.style.pointerEvents = 'auto';
+    sheet.style.transform = 'translateY(0)';
+  }
+  function closeSheet(){
+    scrim.style.opacity = '0';
+    scrim.style.pointerEvents = 'none';
+    sheet.style.transform = 'translateY(110%)';
+  }
+  scrim.addEventListener('click', closeSheet);
+
+  function bindRows(rows){
+    list.querySelectorAll('[data-idx]').forEach(el => {
+      el.addEventListener('click', (e) => {
+        const idx = +el.getAttribute('data-idx');
+        e.stopPropagation();
+        openSheet(rows[idx]);
+      });
+    });
+  }
+
+  // ---- filters ----
+  document.getElementById('filterRow').addEventListener('click', (e) => {
+    const btn = e.target.closest('.filter-pill');
+    if(!btn) return;
+    activeFilter = btn.getAttribute('data-filter');
+    document.querySelectorAll('.filter-pill').forEach(b => {
+      const on = b===btn;
+      b.classList.toggle('bg-admin-primary', on);
+      b.classList.toggle('text-admin-on-primary', on);
+      b.classList.toggle('bg-admin-surface', !on);
+      b.classList.toggle('text-admin-on-surface-variant', !on);
+    });
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>

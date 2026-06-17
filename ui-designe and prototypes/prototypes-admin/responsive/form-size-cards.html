@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ru" class="light">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>STRIDE Admin — Форма: карточка на каждый размер</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@400;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: { extend: {
+      colors: {
+        "admin-bg": "var(--admin-bg)", "admin-surface": "var(--admin-surface)",
+        "admin-surface-low": "var(--admin-surface-low)", "admin-surface-container": "var(--admin-surface-container)",
+        "admin-surface-high": "var(--admin-surface-high)", "admin-on-bg": "var(--admin-on-bg)",
+        "admin-on-surface": "var(--admin-on-surface)", "admin-on-surface-variant": "var(--admin-on-surface-variant)",
+        "admin-primary": "var(--admin-primary)", "admin-on-primary": "var(--admin-on-primary)",
+        "admin-secondary-container": "var(--admin-secondary-container)", "admin-on-secondary-container": "var(--admin-on-secondary-container)",
+        "admin-error": "var(--admin-error)", "admin-on-error": "var(--admin-on-error)",
+        "admin-outline": "var(--admin-outline)", "admin-outline-variant": "var(--admin-outline-variant)"
+      },
+      fontFamily: { "admin-head": ["Anybody","sans-serif"], "admin-body": ["Manrope","sans-serif"] }
+    }}
+  }
+</script>
+<style>
+  :root{--admin-bg:#f7f8f4;--admin-surface:#ffffff;--admin-surface-low:#f8f9fb;--admin-surface-container:#f3f4f6;--admin-surface-high:#e5e7eb;--admin-on-bg:#111827;--admin-on-surface:#111827;--admin-on-surface-variant:#6b7280;--admin-primary:#b2f700;--admin-on-primary:#131f00;--admin-secondary-container:#f3e8ff;--admin-on-secondary-container:#3b0764;--admin-error:#ef4444;--admin-on-error:#ffffff;--admin-outline:#d1d5db;--admin-outline-variant:#e5e7eb;}
+  html.dark{--admin-bg:#131313;--admin-surface:#131313;--admin-surface-low:#1c1b1b;--admin-surface-container:#201f1f;--admin-surface-high:#2a2a2a;--admin-on-bg:#e5e2e1;--admin-on-surface:#e5e2e1;--admin-on-surface-variant:#c2caad;--admin-primary:#b2f700;--admin-on-primary:#243600;--admin-secondary-container:#563f71;--admin-on-secondary-container:#c9ade7;--admin-error:#ffb4ab;--admin-on-error:#690005;--admin-outline:#8c9479;--admin-outline-variant:#424a33;}
+  body{font-family:Manrope,sans-serif;background:var(--admin-bg);color:var(--admin-on-bg);}
+  .material-symbols-outlined{font-variation-settings:"FILL" 0,"wght" 400,"GRAD" 0,"opsz" 24;vertical-align:middle;}
+  .material-symbols-outlined.fill{font-variation-settings:"FILL" 1,"wght" 400,"GRAD" 0,"opsz" 24;}
+  .admin-scope *{border-color:var(--admin-outline-variant);}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;}}
+  .frame-scroll::-webkit-scrollbar{width:0;height:0;}
+  .frame-scroll{scrollbar-width:none;}
+</style>
+</head>
+<body class="admin-scope min-h-screen p-4 sm:p-8 flex flex-col items-center gap-5">
+
+  <!-- CONTROL BAR -->
+  <div class="bg-admin-surface rounded-2xl border border-admin-outline-variant p-4 max-w-[440px] w-full">
+    <div class="flex items-start justify-between gap-3">
+      <div class="flex-1 min-w-0">
+        <h1 class="font-admin-head font-bold text-lg leading-tight">Форма: карточка на каждый размер</h1>
+        <p class="text-sm text-admin-on-surface-variant mt-1.5 leading-snug">
+          Вместо широкой строки-таблицы каждый выбранный размер — отдельная мини-карточка с полями в 2 колонки. Самый понятный ввод данных на телефоне; чуть выше по высоте, зато ноль горизонтального скролла.
+        </p>
+      </div>
+      <button id="themeToggle" class="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-admin-outline-variant bg-admin-surface-container px-3 h-9 text-sm font-medium hover:bg-admin-surface-high transition-colors">
+        <span class="material-symbols-outlined text-[18px]" id="themeIcon">dark_mode</span>
+        <span id="themeLabel">Тёмная</span>
+      </button>
+    </div>
+    <div class="mt-2 text-[11px] text-admin-on-surface-variant font-medium">≈390px</div>
+  </div>
+
+  <!-- PHONE FRAME -->
+  <div class="max-w-[390px] w-full bg-admin-bg rounded-[2.2rem] border-[6px] border-admin-on-surface/10 shadow-2xl overflow-hidden" style="min-height:720px;">
+    <div class="frame-scroll overflow-y-auto" style="max-height:720px;">
+
+      <!-- status bar -->
+      <div class="h-7 bg-admin-surface flex items-center justify-between px-5 text-[11px] font-semibold text-admin-on-surface">
+        <span>9:41</span>
+        <div class="flex items-center gap-1">
+          <span class="material-symbols-outlined text-[15px]">signal_cellular_alt</span>
+          <span class="material-symbols-outlined text-[15px]">wifi</span>
+          <span class="material-symbols-outlined text-[15px]">battery_full</span>
+        </div>
+      </div>
+
+      <!-- topbar -->
+      <div class="h-16 bg-admin-surface border-b border-admin-outline-variant flex items-center gap-2 px-3">
+        <button class="h-10 w-10 shrink-0 grid place-items-center rounded-lg text-admin-on-surface-variant hover:bg-admin-surface-high transition-colors">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="flex-1 flex items-center gap-2 rounded-full bg-admin-surface-container px-3 h-10 min-w-0">
+          <span class="material-symbols-outlined text-[20px] text-admin-on-surface-variant shrink-0">search</span>
+          <span class="text-sm text-admin-on-surface-variant truncate">Поиск заказов, клиентов…</span>
+        </div>
+        <div class="h-9 w-9 shrink-0 rounded-full bg-admin-primary text-admin-on-primary grid place-items-center font-bold text-xs">АР</div>
+      </div>
+
+      <!-- page content -->
+      <div class="p-3.5 space-y-4">
+
+        <!-- breadcrumb / title -->
+        <div>
+          <div class="flex items-center gap-1 text-[11px] text-admin-on-surface-variant font-medium">
+            <span>Каталог</span><span class="material-symbols-outlined text-[14px]">chevron_right</span>
+            <span>Товары</span><span class="material-symbols-outlined text-[14px]">chevron_right</span>
+            <span class="text-admin-on-surface">Velocity Runner</span>
+          </div>
+          <h2 class="font-admin-head font-bold text-xl mt-1">Редактировать товар</h2>
+        </div>
+
+        <!-- SCALAR FIELDS (1 col on mobile) -->
+        <section class="bg-admin-surface rounded-xl border border-admin-outline-variant p-3.5 space-y-3">
+          <h3 class="font-admin-head font-bold text-sm flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px] text-admin-on-surface-variant">edit_note</span>Основное
+          </h3>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-medium text-admin-on-surface-variant mb-1">Название</label>
+              <input value="Velocity Runner" class="w-full h-10 rounded-xl bg-admin-surface border border-admin-outline-variant px-3 text-sm focus:ring-2 focus:ring-admin-primary focus:border-admin-primary outline-none"/>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-admin-on-surface-variant mb-1">Slug</label>
+              <input value="velocity-runner" class="w-full h-10 rounded-xl bg-admin-surface border border-admin-outline-variant px-3 text-sm focus:ring-2 focus:ring-admin-primary focus:border-admin-primary outline-none"/>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-admin-on-surface-variant mb-1">Бренд</label>
+              <input value="Stride" class="w-full h-10 rounded-xl bg-admin-surface border border-admin-outline-variant px-3 text-sm focus:ring-2 focus:ring-admin-primary focus:border-admin-primary outline-none"/>
+            </div>
+          </div>
+        </section>
+
+        <!-- COLORWAY: Lime Flash -->
+        <section class="bg-admin-surface rounded-xl border border-admin-outline-variant p-3.5 space-y-4">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="h-6 w-6 rounded-full bg-admin-primary border border-admin-outline-variant shrink-0"></span>
+              <div class="min-w-0">
+                <div class="font-admin-head font-bold text-sm leading-tight truncate">Lime Flash</div>
+                <div class="text-[11px] text-admin-on-surface-variant">Размеры и варианты</div>
+              </div>
+            </div>
+            <span class="text-[11px] font-semibold px-2 py-1 rounded-full bg-admin-surface-high text-admin-on-surface-variant tabular-nums shrink-0" id="selCount">7 разм.</span>
+          </div>
+
+          <!-- SIZE CHIP GRID -->
+          <div>
+            <label class="block text-xs font-medium text-admin-on-surface-variant mb-2">Размеры (EU)</label>
+            <div id="chipGrid" class="flex flex-wrap gap-1.5"></div>
+          </div>
+
+          <!-- BULK CONTROLS (stack) -->
+          <div class="space-y-2.5 pt-1 border-t border-admin-outline-variant">
+            <div class="flex items-end gap-2 pt-3">
+              <div class="flex-1 min-w-0">
+                <label class="block text-[11px] font-medium text-admin-on-surface-variant mb-1">Цена всем</label>
+                <input id="bulkPrice" type="number" placeholder="12990" class="w-full h-10 rounded-xl bg-admin-surface border border-admin-outline-variant px-3 text-sm tabular-nums focus:ring-2 focus:ring-admin-primary focus:border-admin-primary outline-none"/>
+              </div>
+              <button data-bulk="price" class="bulk-ok h-10 shrink-0 px-5 rounded-full bg-admin-primary text-admin-on-primary text-sm font-bold hover:opacity-90 transition-opacity">OK</button>
+            </div>
+            <div class="flex items-end gap-2">
+              <div class="flex-1 min-w-0">
+                <label class="block text-[11px] font-medium text-admin-on-surface-variant mb-1">Остаток всем</label>
+                <input id="bulkStock" type="number" placeholder="0" class="w-full h-10 rounded-xl bg-admin-surface border border-admin-outline-variant px-3 text-sm tabular-nums focus:ring-2 focus:ring-admin-primary focus:border-admin-primary outline-none"/>
+              </div>
+              <button data-bulk="stock" class="bulk-ok h-10 shrink-0 px-5 rounded-full bg-admin-primary text-admin-on-primary text-sm font-bold hover:opacity-90 transition-opacity">OK</button>
+            </div>
+          </div>
+
+          <!-- SIZE CARDS -->
+          <div class="border-t border-admin-outline-variant pt-3">
+            <div class="text-xs font-medium text-admin-on-surface-variant mb-2.5">Варианты по размерам</div>
+            <div id="cards" class="space-y-2.5"></div>
+          </div>
+        </section>
+
+        <!-- save row -->
+        <div class="flex items-center gap-2 pt-1 pb-3">
+          <button class="flex-1 h-12 rounded-full bg-admin-primary text-admin-on-primary font-bold text-sm flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity">
+            <span class="material-symbols-outlined text-[20px]">save</span>Сохранить товар
+          </button>
+          <button class="h-12 w-12 shrink-0 grid place-items-center rounded-full border border-admin-outline-variant text-admin-on-surface-variant hover:bg-admin-surface-high transition-colors">
+            <span class="material-symbols-outlined">more_horiz</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ===== THEME TOGGLE =====
+  const root = document.documentElement;
+  const themeBtn = document.getElementById('themeToggle');
+  const themeIcon = document.getElementById('themeIcon');
+  const themeLabel = document.getElementById('themeLabel');
+  themeBtn.addEventListener('click', () => {
+    const dark = root.classList.toggle('dark');
+    themeIcon.textContent = dark ? 'light_mode' : 'dark_mode';
+    themeLabel.textContent = dark ? 'Светлая' : 'Тёмная';
+  });
+
+  // ===== DATA =====
+  const allSizes = [];
+  for (let s = 35; s <= 47; s += 0.5) allSizes.push(s);
+
+  const initialSelected = [40, 41, 42, 42.5, 43, 44, 45];
+  const selected = new Set(initialSelected);
+
+  // variant model keyed by size
+  const variants = {
+    40:   { sku: 'NK-VEL-LF-40',  price: '12990', old: '',      stock: '4', active: true  },
+    41:   { sku: 'NK-VEL-LF-41',  price: '12990', old: '',      stock: '3', active: true  },
+    42:   { sku: 'NK-VEL-LF-42',  price: '12990', old: '14990', stock: '8', active: true  },
+    42.5: { sku: 'NK-VEL-LF-425', price: '12990', old: '',      stock: '2', active: true  },
+    43:   { sku: 'NK-VEL-LF-43',  price: '12990', old: '',      stock: '0', active: false },
+    44:   { sku: 'NK-VEL-LF-44',  price: '12990', old: '',      stock: '6', active: true  },
+    45:   { sku: 'NK-VEL-LF-45',  price: '12990', old: '',      stock: '1', active: true  }
+  };
+
+  function fmtSize(s){ return Number.isInteger(s) ? String(s) : String(s); }
+  function skuFor(s){ return 'NK-VEL-LF-' + String(s).replace('.', ''); }
+
+  const chipGrid = document.getElementById('chipGrid');
+  const cardsWrap = document.getElementById('cards');
+  const selCount = document.getElementById('selCount');
+
+  function updateCount(){
+    selCount.textContent = selected.size + ' разм.';
+  }
+
+  // ===== CHIP GRID =====
+  function renderChips(){
+    chipGrid.innerHTML = '';
+    allSizes.forEach(s => {
+      const on = selected.has(s);
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.dataset.size = s;
+      chip.className = 'min-w-[44px] h-9 px-2.5 rounded-full text-sm font-semibold tabular-nums transition-colors ' +
+        (on ? 'bg-admin-primary text-admin-on-primary' : 'border border-admin-outline-variant text-admin-on-surface-variant hover:bg-admin-surface-high');
+      chip.textContent = fmtSize(s);
+      chip.addEventListener('click', () => toggleSize(s));
+      chipGrid.appendChild(chip);
+    });
+  }
+
+  function toggleSize(s){
+    if (selected.has(s)) {
+      selected.delete(s);
+    } else {
+      selected.add(s);
+      if (!variants[s]) {
+        variants[s] = { sku: skuFor(s), price: '12990', old: '', stock: '0', active: true };
+      }
+    }
+    renderChips();
+    renderCards();
+    updateCount();
+  }
+
+  // ===== SIZE CARDS =====
+  function renderCards(){
+    cardsWrap.innerHTML = '';
+    const sizes = [...selected].sort((a,b) => a - b);
+
+    if (sizes.length === 0){
+      cardsWrap.innerHTML = '<div class="text-sm text-admin-on-surface-variant text-center py-4">Выберите размеры выше</div>';
+      return;
+    }
+
+    sizes.forEach(s => {
+      const v = variants[s];
+      const zeroStock = String(v.stock).trim() === '0' || v.stock === '';
+
+      const card = document.createElement('div');
+      card.className = 'bg-admin-surface-low rounded-xl border border-admin-outline-variant p-3';
+      card.dataset.size = s;
+
+      card.innerHTML =
+        '<div class="flex items-center justify-between gap-2 mb-3">' +
+          '<div class="flex items-center gap-2 min-w-0">' +
+            '<span class="h-9 min-w-[44px] px-2 rounded-lg bg-admin-surface-high grid place-items-center text-admin-on-surface font-admin-head font-bold text-sm tabular-nums">' + fmtSize(s) + '</span>' +
+            (zeroStock
+              ? '<span class="text-[11px] font-semibold text-admin-error inline-flex items-center gap-0.5"><span class="material-symbols-outlined text-[15px]">error</span>Нет в наличии</span>'
+              : (v.active ? '' : '<span class="text-[11px] font-semibold text-admin-on-surface-variant">Скрыт</span>')) +
+          '</div>' +
+          '<div class="flex items-center gap-1 shrink-0">' +
+            '<button class="sw h-11 w-11 grid place-items-center" data-size="' + s + '" aria-label="Активен" aria-pressed="' + v.active + '">' +
+              '<span class="sw-track relative block w-11 h-6 rounded-full transition-colors ' + (v.active ? 'bg-admin-primary' : 'bg-admin-surface-high') + '">' +
+                '<span class="sw-knob absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ' + (v.active ? 'translate-x-[22px]' : 'translate-x-0.5') + '"></span>' +
+              '</span>' +
+            '</button>' +
+            '<button class="del h-11 w-11 grid place-items-center rounded-lg text-admin-on-surface-variant hover:text-admin-error hover:bg-admin-surface-high transition-colors" data-size="' + s + '" aria-label="Удалить">' +
+              '<span class="material-symbols-outlined text-[20px]">delete</span>' +
+            '</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="grid grid-cols-2 gap-2.5">' +
+          '<div>' +
+            '<label class="block text-[11px] font-medium text-admin-on-surface-variant mb-1">Цена</label>' +
+            '<input type="number" value="' + v.price + '" class="vf-price w-full h-10 rounded-xl bg-admin-surface border border-admin-outline-variant px-2.5 text-sm tabular-nums focus:ring-2 focus:ring-admin-primary focus:border-admin-primary outline-none"/>' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-[11px] font-medium text-admin-on-surface-variant mb-1">Старая цена</label>' +
+            '<input type="number" value="' + v.old + '" placeholder="—" class="vf-old w-full h-10 rounded-xl bg-admin-surface border border-admin-outline-variant px-2.5 text-sm tabular-nums focus:ring-2 focus:ring-admin-primary focus:border-admin-primary outline-none"/>' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-[11px] font-medium text-admin-on-surface-variant mb-1">Сток</label>' +
+            '<input type="number" value="' + v.stock + '" class="vf-stock w-full h-10 rounded-xl bg-admin-surface border ' + (zeroStock ? 'border-admin-error text-admin-error' : 'border-admin-outline-variant') + ' px-2.5 text-sm tabular-nums focus:ring-2 focus:ring-admin-primary focus:border-admin-primary outline-none"/>' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-[11px] font-medium text-admin-on-surface-variant mb-1">SKU</label>' +
+            '<input type="text" value="' + v.sku + '" class="vf-sku w-full h-10 rounded-xl bg-admin-surface border border-admin-outline-variant px-2.5 text-sm focus:ring-2 focus:ring-admin-primary focus:border-admin-primary outline-none"/>' +
+          '</div>' +
+        '</div>';
+
+      cardsWrap.appendChild(card);
+    });
+
+    bindCardEvents();
+  }
+
+  function bindCardEvents(){
+    cardsWrap.querySelectorAll('.sw').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const s = parseFloat(btn.dataset.size);
+        variants[s].active = !variants[s].active;
+        renderCards();
+      });
+    });
+    cardsWrap.querySelectorAll('.del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const s = parseFloat(btn.dataset.size);
+        selected.delete(s);
+        renderChips();
+        renderCards();
+        updateCount();
+      });
+    });
+    cardsWrap.querySelectorAll('[data-size]').forEach(card => {
+      const s = parseFloat(card.dataset.size);
+      const p = card.querySelector('.vf-price');
+      const o = card.querySelector('.vf-old');
+      const st = card.querySelector('.vf-stock');
+      const sk = card.querySelector('.vf-sku');
+      if (p) p.addEventListener('input', e => { variants[s].price = e.target.value; });
+      if (o) o.addEventListener('input', e => { variants[s].old = e.target.value; });
+      if (st) st.addEventListener('change', e => { variants[s].stock = e.target.value; renderCards(); });
+      if (sk) sk.addEventListener('input', e => { variants[s].sku = e.target.value; });
+    });
+  }
+
+  // ===== BULK =====
+  document.querySelectorAll('.bulk-ok').forEach(b => {
+    b.addEventListener('click', () => {
+      const kind = b.dataset.bulk;
+      if (kind === 'price'){
+        const val = document.getElementById('bulkPrice').value;
+        if (val !== '') selected.forEach(s => { variants[s].price = val; });
+      } else {
+        const val = document.getElementById('bulkStock').value;
+        if (val !== '') selected.forEach(s => { variants[s].stock = val; });
+      }
+      renderCards();
+    });
+  });
+
+  // init
+  renderChips();
+  renderCards();
+  updateCount();
+</script>
+</body>
+</html>

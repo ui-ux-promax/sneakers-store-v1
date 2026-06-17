@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Icon } from '@/components/admin/icon';
 import { cn } from '@/lib/utils';
 
@@ -23,6 +23,17 @@ interface ThemeToggleProps {
  */
 export function ThemeToggle({ initialTheme, className }: ThemeToggleProps) {
   const [theme, setTheme] = useState<'light' | 'dark'>(initialTheme);
+
+  // Дропдаун-меню аватара размонтирует/ремонтирует этот компонент при каждом
+  // открытии (Radix unmount-on-close), а проп initialTheme — снимок SSR-cookie на
+  // момент загрузки страницы, он НЕ обновляется при клиентском переключении темы.
+  // Поэтому на маунте синхронизируемся с живым DOM (.admin-root.dark), иначе
+  // таблетка залипает на устаревшем значении. Чтение в useEffect (не в init)
+  // сохраняет SSR === первый клиентский кадр — детерминизм гидратации цел.
+  useEffect(() => {
+    const root = document.querySelector('.admin-root');
+    if (root) setTheme(root.classList.contains('dark') ? 'dark' : 'light');
+  }, []);
 
   const applyTheme = (next: 'light' | 'dark') => {
     setTheme(next);

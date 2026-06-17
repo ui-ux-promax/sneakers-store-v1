@@ -71,7 +71,8 @@ export function CategoryTable({ rows }: { rows: CategoryRow[] }) {
   return (
     <div className="space-y-3">
       <div className="bg-admin-surface border border-admin-outline-variant rounded-xl overflow-hidden">
-        <Table>
+        <div className="hidden md:block">
+          <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Обложка</TableHead>
@@ -131,7 +132,59 @@ export function CategoryTable({ rows }: { rows: CategoryRow[] }) {
               </TableRow>
             ))}
           </TableBody>
-        </Table>
+          </Table>
+        </div>
+
+        <div className="md:hidden divide-y divide-admin-outline-variant">
+          {rows.map((row, i) => (
+            <div key={row.id} className="p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                {row.coverImage ? (
+                  /* eslint-disable-next-line @next/next/no-img-element -- admin thumb */
+                  <img src={row.coverImage} alt="" className="h-10 w-10 rounded object-cover bg-admin-surface-high shrink-0" />
+                ) : (
+                  <div className="h-10 w-10 rounded bg-admin-surface-high shrink-0" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium text-admin-on-surface truncate">{row.name}</div>
+                  <div className="text-admin-on-surface-variant text-xs truncate">{row.slug}</div>
+                </div>
+                <span className="text-xs text-admin-on-surface-variant tabular-nums shrink-0">{row.productCount} тов.</span>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 pt-1">
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    aria-label="Вверх"
+                    disabled={i === 0 || pending === row.id}
+                    onClick={() => handleMove(row.id, 'up')}
+                    className="text-admin-on-surface-variant hover:text-admin-on-surface disabled:opacity-30"
+                  >
+                    <Icon name="arrow_upward" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Вниз"
+                    disabled={i === rows.length - 1 || pending === row.id}
+                    onClick={() => handleMove(row.id, 'down')}
+                    className="text-admin-on-surface-variant hover:text-admin-on-surface disabled:opacity-30"
+                  >
+                    <Icon name="arrow_downward" />
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <Button asChild variant="ghost" size="sm">
+                    <Link href={`/admin/catalog/categories/${row.id}/edit`}>Изменить</Link>
+                  </Button>
+                  <Button variant="danger" size="sm" onClick={() => requestDelete(row)}>
+                    Удалить
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <AlertModal

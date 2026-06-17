@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru" class="light">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>STRIDE Admin — Адаптив: галерея прототипов</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@400;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: { extend: {
+      colors: {
+        "admin-bg": "var(--admin-bg)", "admin-surface": "var(--admin-surface)",
+        "admin-surface-low": "var(--admin-surface-low)", "admin-surface-container": "var(--admin-surface-container)",
+        "admin-surface-high": "var(--admin-surface-high)", "admin-on-bg": "var(--admin-on-bg)",
+        "admin-on-surface": "var(--admin-on-surface)", "admin-on-surface-variant": "var(--admin-on-surface-variant)",
+        "admin-primary": "var(--admin-primary)", "admin-on-primary": "var(--admin-on-primary)",
+        "admin-secondary-container": "var(--admin-secondary-container)", "admin-on-secondary-container": "var(--admin-on-secondary-container)",
+        "admin-error": "var(--admin-error)", "admin-on-error": "var(--admin-on-error)",
+        "admin-outline": "var(--admin-outline)", "admin-outline-variant": "var(--admin-outline-variant)"
+      },
+      fontFamily: { "admin-head": ["Anybody","sans-serif"], "admin-body": ["Manrope","sans-serif"] }
+    }}
+  }
+</script>
+<style>
+  :root{--admin-bg:#f7f8f4;--admin-surface:#ffffff;--admin-surface-low:#f8f9fb;--admin-surface-container:#f3f4f6;--admin-surface-high:#e5e7eb;--admin-on-bg:#111827;--admin-on-surface:#111827;--admin-on-surface-variant:#6b7280;--admin-primary:#b2f700;--admin-on-primary:#131f00;--admin-secondary-container:#f3e8ff;--admin-on-secondary-container:#3b0764;--admin-error:#ef4444;--admin-on-error:#ffffff;--admin-outline:#d1d5db;--admin-outline-variant:#e5e7eb;}
+  html.dark{--admin-bg:#131313;--admin-surface:#131313;--admin-surface-low:#1c1b1b;--admin-surface-container:#201f1f;--admin-surface-high:#2a2a2a;--admin-on-bg:#e5e2e1;--admin-on-surface:#e5e2e1;--admin-on-surface-variant:#c2caad;--admin-primary:#b2f700;--admin-on-primary:#243600;--admin-secondary-container:#563f71;--admin-on-secondary-container:#c9ade7;--admin-error:#ffb4ab;--admin-on-error:#690005;--admin-outline:#8c9479;--admin-outline-variant:#424a33;}
+  body{font-family:Manrope,sans-serif;background:var(--admin-bg);color:var(--admin-on-bg);}
+  .admin-scope *{border-color:var(--admin-outline-variant);}
+  .material-symbols-outlined{font-variation-settings:"FILL" 0,"wght" 400,"GRAD" 0,"opsz" 24;vertical-align:middle;}
+  .material-symbols-outlined.fill{font-variation-settings:"FILL" 1,"wght" 400,"GRAD" 0,"opsz" 24;}
+  iframe{background:var(--admin-bg);color-scheme:light dark;}
+</style>
+</head>
+<body class="admin-scope min-h-screen">
+
+  <!-- HEADER -->
+  <header class="sticky top-0 z-20 bg-admin-surface/85 backdrop-blur border-b border-admin-outline-variant">
+    <div class="max-w-[1400px] mx-auto px-5 sm:px-8 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-9 h-9 rounded-xl bg-admin-primary grid place-items-center shrink-0">
+          <span class="material-symbols-outlined fill text-admin-on-primary text-[22px]">bolt</span>
+        </div>
+        <div class="leading-none min-w-0">
+          <div class="font-admin-head font-bold text-admin-on-surface text-[15px] truncate">STRIDE Admin · Адаптив</div>
+          <div class="text-[11px] text-admin-on-surface-variant mt-0.5">7 прототипов мобильной вёрстки</div>
+        </div>
+      </div>
+      <button id="themeToggle" class="shrink-0 flex items-center gap-1.5 bg-admin-surface-container text-admin-on-surface rounded-full px-3.5 py-2 text-sm font-medium border border-admin-outline-variant active:scale-95 transition-transform">
+        <span id="themeIcon" class="material-symbols-outlined text-[20px]">dark_mode</span>
+        <span id="themeLabel">Тёмная</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-[1400px] mx-auto px-5 sm:px-8 py-8 space-y-12">
+
+    <!-- INTRO -->
+    <section class="bg-admin-surface border border-admin-outline-variant rounded-2xl p-6 sm:p-8">
+      <h1 class="font-admin-head text-2xl sm:text-3xl font-bold text-admin-on-surface mb-2">Адаптив админки — варианты под выбор</h1>
+      <p class="text-admin-on-surface-variant max-w-3xl leading-relaxed">
+        Три проблемы на экранах &lt;768px и прототипы под каждую. Все построены на реальных токенах админки
+        (<code class="text-admin-on-surface font-mono text-[13px]">admin-*</code>), шрифтах Anybody/Manrope и Material Symbols —
+        переносятся в React почти 1:1. У каждого прототипа свой переключатель light/dark внутри телефона. Нажми
+        <span class="font-semibold text-admin-on-surface">«Открыть ↗»</span>, чтобы потрогать интеракции в полноэкранном виде.
+      </p>
+      <div class="grid sm:grid-cols-3 gap-3 mt-5">
+        <a href="#sidebar" class="flex items-center gap-3 p-3 rounded-xl bg-admin-surface-low border border-admin-outline-variant hover:border-admin-primary transition-colors">
+          <span class="w-9 h-9 rounded-lg bg-admin-surface-high grid place-items-center"><span class="material-symbols-outlined text-[20px] text-admin-on-surface">menu</span></span>
+          <span><span class="block text-sm font-semibold text-admin-on-surface">1 · Сайдбар</span><span class="block text-xs text-admin-on-surface-variant">исчезает на 767px → 3 варианта</span></span>
+        </a>
+        <a href="#table" class="flex items-center gap-3 p-3 rounded-xl bg-admin-surface-low border border-admin-outline-variant hover:border-admin-primary transition-colors">
+          <span class="w-9 h-9 rounded-lg bg-admin-surface-high grid place-items-center"><span class="material-symbols-outlined text-[20px] text-admin-on-surface">table_rows</span></span>
+          <span><span class="block text-sm font-semibold text-admin-on-surface">2 · Таблицы</span><span class="block text-xs text-admin-on-surface-variant">скролл + перенос цены → 2 варианта</span></span>
+        </a>
+        <a href="#form" class="flex items-center gap-3 p-3 rounded-xl bg-admin-surface-low border border-admin-outline-variant hover:border-admin-primary transition-colors">
+          <span class="w-9 h-9 rounded-lg bg-admin-surface-high grid place-items-center"><span class="material-symbols-outlined text-[20px] text-admin-on-surface">edit_note</span></span>
+          <span><span class="block text-sm font-semibold text-admin-on-surface">3 · Форма товара</span><span class="block text-xs text-admin-on-surface-variant">ряды вариантов уезжают → 2 варианта</span></span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ===== PROBLEM 1: SIDEBAR ===== -->
+    <section id="sidebar" class="scroll-mt-20 space-y-5">
+      <div class="flex items-baseline gap-3">
+        <h2 class="font-admin-head text-xl sm:text-2xl font-bold text-admin-on-surface">1 · Мобильный сайдбар</h2>
+        <span class="text-sm text-admin-on-surface-variant">3 варианта</span>
+      </div>
+      <div class="grid gap-6 lg:grid-cols-2 xl:grid-cols-3" id="grid-sidebar"></div>
+    </section>
+
+    <!-- ===== PROBLEM 2: TABLE ===== -->
+    <section id="table" class="scroll-mt-20 space-y-5">
+      <div class="flex items-baseline gap-3">
+        <h2 class="font-admin-head text-xl sm:text-2xl font-bold text-admin-on-surface">2 · Таблицы на мобиле</h2>
+        <span class="text-sm text-admin-on-surface-variant">2 варианта</span>
+      </div>
+      <div class="grid gap-6 lg:grid-cols-2" id="grid-table"></div>
+    </section>
+
+    <!-- ===== PROBLEM 3: FORM ===== -->
+    <section id="form" class="scroll-mt-20 space-y-5">
+      <div class="flex items-baseline gap-3">
+        <h2 class="font-admin-head text-xl sm:text-2xl font-bold text-admin-on-surface">3 · Форма товара — ряды вариантов</h2>
+        <span class="text-sm text-admin-on-surface-variant">2 варианта</span>
+      </div>
+      <div class="grid gap-6 lg:grid-cols-2" id="grid-form"></div>
+    </section>
+
+    <footer class="text-center text-xs text-admin-on-surface-variant py-6">
+      STRIDE Admin · прототипы адаптива · только просмотр, в код пока не внесено
+    </footer>
+  </main>
+
+<script>
+  // ---- data ----
+  const DATA = {
+    sidebar: [
+      { file:"sidebar-drawer.html", title:"Выдвижной drawer", badge:"безопасный",
+        idea:"Гамбургер в топбаре выдвигает полный сайдбар поверх затемнённого скрима.",
+        pros:["Точный перенос десктопного сайдбара без потери пунктов","Контент не теряет ширину","3 способа закрытия + Esc, блокировка скролла"],
+        cons:["Навигация на 1 тап дальше, чем bottom-bar","Перекрывает контент, а не сжимает"],
+        rec:"Дефолт, если нужен максимально верный перенос без редизайна навигации." },
+      { file:"sidebar-bottom-tabs.html", title:"Нижний таб-бар", badge:"нативный",
+        idea:"5 разделов — в фиксированном нижнем баре с lime-пилюлей; вторичное — в дропдауне из аватара.",
+        pros:["Навигация большим пальцем, всё под рукой","Скользящая lime-пилюля активного таба","Топбар разгружен"],
+        cons:["Только 5 слотов (дальше нужен «Ещё»)","Вторичные действия на 2 тапа","Бар ест высоту контента"],
+        rec:"Когда админка ощущается как мобильное приложение и разделов ровно ≤5." },
+      { file:"sidebar-floating-dock.html", title:"Плавающий лайм-док", badge:"смелый",
+        idea:"Лаймовый FAB внизу справа пружинно раскрывается в плавающий док из 5 разделов.",
+        pros:["Максимум места под контент","Яркий бренд-эффект (glow, стаггер)","Крупные таргеты ≥44px"],
+        cons:["Скрытая навигация — хуже discoverability","FAB перекрывает правый нижний угол","Нестандартно для админки"],
+        rec:"Когда нужен смелый брендовый UI, а навигация — эпизодическая." },
+    ],
+    table: [
+      { file:"table-cards.html", title:"Карточки на мобиле", badge:"рекомендую",
+        idea:"Таблица разворачивается в стек карточек: миниатюра+название+кебаб, бренд/категория, мини-грид Остаток/Цена и статус.",
+        pros:["Полностью убирает горизонтальный скролл — баг с переносом «12 990 ₽» решён","Крупные тач-таргеты, воздух","Переиспользуемо 1:1 для заказов/клиентов/купонов"],
+        cons:["Меньше позиций на экран → больше скролла","Теряется сравнение «глаз по колонке»"],
+        rec:"Дефолт для любых табличных списков; на desktop (md+) рядом обычная таблица." },
+      { file:"table-compact-rows.html", title:"Компактные 2-строчные ряды", badge:"плотный",
+        idea:"Плотный двухстрочный список: название/бренд·категория·сток слева, цена и статус прибиты к правому краю.",
+        pros:["Больше SKU на экран, чем у карточек","Цена жёстко вправо, не переносится","Тап по ряду → bottom-sheet действий"],
+        cons:["Плотно: на 360px правый блок жмёт длинные названия","Меньше воздуха, мелкий шрифт во 2-й строке"],
+        rec:"Когда важна плотность и быстрый скан многих позиций." },
+    ],
+    form: [
+      { file:"form-size-cards.html", title:"Карточка на каждый размер", badge:"чёткий ввод",
+        idea:"Каждый размер — отдельная мини-карточка: размер+тоггл+удаление в шапке, поля Цена/Старая/Сток/SKU в 2 колонки.",
+        pros:["Ноль горизонтального скролла на 360px","Тоггл и удаление явно внутри карточки, ≥44px","Понятная иерархия, видно zero-stock"],
+        cons:["Выше построчной таблицы — много скролла при 7+ размерах","Дубль лейблов = визуальный шум"],
+        rec:"Когда приоритет — безошибочный ввод с телефона при умеренном числе размеров." },
+      { file:"form-responsive-grid.html", title:"Адаптивная сетка с подписями", badge:"мин. правок",
+        idea:"Строка варианта переносится в блок с лайм-акцентом слева; на md+ схлопывается обратно в одну grid-строку.",
+        pros:["Минимум вмешательства — по сути md:-брейкпоинты + wrap","Ноль скролла на 360px","Компактнее карточек"],
+        cons:["Подписи дублируются у каждой строки","Border-left не кодирует состояние","SKU тесновато на 320px"],
+        rec:"Безопасный рефактор текущей формы без переписывания в карточки." },
+    ],
+  };
+
+  function card(v){
+    const pros = v.pros.map(p=>`<li class="flex gap-2"><span class="material-symbols-outlined text-[16px] text-admin-on-surface mt-0.5" style="color:var(--admin-primary)">check</span><span>${p}</span></li>`).join("");
+    const cons = v.cons.map(c=>`<li class="flex gap-2"><span class="material-symbols-outlined text-[16px] text-admin-on-surface-variant mt-0.5">remove</span><span>${c}</span></li>`).join("");
+    return `
+    <article class="bg-admin-surface border border-admin-outline-variant rounded-2xl overflow-hidden flex flex-col">
+      <div class="p-4 border-b border-admin-outline-variant flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 mb-1">
+            <h3 class="font-admin-head font-bold text-admin-on-surface text-[17px] truncate">${v.title}</h3>
+            <span class="shrink-0 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-admin-primary text-admin-on-primary">${v.badge}</span>
+          </div>
+          <p class="text-[13px] text-admin-on-surface-variant leading-snug">${v.idea}</p>
+        </div>
+        <a href="${v.file}" target="_blank" rel="noopener" class="shrink-0 flex items-center gap-1 bg-admin-surface-container text-admin-on-surface rounded-full px-3 py-2 text-[13px] font-semibold border border-admin-outline-variant hover:border-admin-primary transition-colors">
+          Открыть <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+        </a>
+      </div>
+      <div class="bg-admin-bg border-b border-admin-outline-variant">
+        <iframe src="${v.file}" loading="lazy" title="${v.title}" class="w-full block" style="height:840px;border:0;"></iframe>
+      </div>
+      <details class="p-4 text-[13px] text-admin-on-surface-variant">
+        <summary class="cursor-pointer font-semibold text-admin-on-surface select-none">Плюсы / минусы / когда брать</summary>
+        <div class="grid sm:grid-cols-2 gap-4 mt-3">
+          <ul class="space-y-1.5">${pros}</ul>
+          <ul class="space-y-1.5">${cons}</ul>
+        </div>
+        <p class="mt-3 pt-3 border-t border-admin-outline-variant"><span class="font-semibold text-admin-on-surface">Когда брать:</span> ${v.rec}</p>
+      </details>
+    </article>`;
+  }
+
+  document.getElementById("grid-sidebar").innerHTML = DATA.sidebar.map(card).join("");
+  document.getElementById("grid-table").innerHTML   = DATA.table.map(card).join("");
+  document.getElementById("grid-form").innerHTML    = DATA.form.map(card).join("");
+
+  // ---- gallery theme toggle (chrome only; each iframe has its own) ----
+  const root = document.documentElement;
+  const tIcon = document.getElementById("themeIcon");
+  const tLabel = document.getElementById("themeLabel");
+  document.getElementById("themeToggle").addEventListener("click", () => {
+    const dark = root.classList.toggle("dark");
+    tIcon.textContent = dark ? "light_mode" : "dark_mode";
+    tLabel.textContent = dark ? "Светлая" : "Тёмная";
+  });
+</script>
+</body>
+</html>

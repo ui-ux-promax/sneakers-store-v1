@@ -8,6 +8,9 @@ import { Icon } from '@/components/admin/icon';
 import { ThemeToggle } from '@/components/admin/theme-toggle';
 import SidebarSkeletonGate from '@/components/admin/sidebar-skeleton-gate';
 import { ContentReadyGate } from '@/components/admin/content-ready-gate';
+import { ADMIN_NAV, isNavActive } from '@/lib/admin/nav';
+import { AdminTabBar } from '@/components/admin/admin-tab-bar';
+import { AdminMobileMenu } from '@/components/admin/admin-mobile-menu';
 
 interface AdminShellProps {
   user: {
@@ -20,14 +23,6 @@ interface AdminShellProps {
   /** Тема из cookie admin-theme (читается в (admin)/layout) — стартовое значение тоггла. */
   initialTheme: 'light' | 'dark';
 }
-
-const NAV_ITEMS = [
-  { label: 'Дашборд',   href: '/admin',            icon: 'dashboard',      exact: true },
-  { label: 'Каталог',   href: '/admin/catalog',     icon: 'inventory_2',    exact: false },
-  { label: 'Заказы',    href: '/admin/orders',      icon: 'shopping_cart',  exact: false },
-  { label: 'Клиенты',   href: '/admin/customers',   icon: 'group',          exact: false },
-  { label: 'Маркетинг', href: '/admin/marketing',   icon: 'campaign',       exact: false },
-];
 
 /** Человекочитаемые названия ролей */
 const ROLE_LABELS: Record<string, string> = {
@@ -50,10 +45,6 @@ function getInitials(name?: string | null, email?: string | null): string {
 
 export function AdminShell({ user, children, initialTheme }: AdminShellProps) {
   const pathname = usePathname();
-
-  /** Активен ли пункт меню с учётом точного совпадения для Dashboard */
-  const isActive = (href: string, exact: boolean) =>
-    exact ? pathname === href : pathname === href || pathname.startsWith(href + '/');
 
   return (
     <>
@@ -86,12 +77,12 @@ export function AdminShell({ user, children, initialTheme }: AdminShellProps) {
 
         {/* ── Навигация ─────────────────────────────────────────────── */}
         <nav className="flex-1 flex flex-col gap-1">
-          {NAV_ITEMS.map(({ label, href, icon, exact }) => {
-            const active = isActive(href, exact);
+          {ADMIN_NAV.map((item) => {
+            const active = isNavActive(item, pathname);
             return (
               <Link
-                key={href}
-                href={href}
+                key={item.href}
+                href={item.href}
                 className={cn(
                   'flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-150',
                   active
@@ -99,8 +90,8 @@ export function AdminShell({ user, children, initialTheme }: AdminShellProps) {
                     : 'text-admin-on-surface-variant hover:bg-admin-surface-high hover:text-admin-on-surface',
                 )}
               >
-                <Icon name={icon} filled={active} />
-                <span>{label}</span>
+                <Icon name={item.icon} filled={active} />
+                <span>{item.label}</span>
               </Link>
             );
           })}
@@ -176,14 +167,21 @@ export function AdminShell({ user, children, initialTheme }: AdminShellProps) {
       <header
         className={cn(
           'fixed top-0 right-0 h-16 z-30',
-          'flex items-center justify-between px-8',
+          'flex items-center gap-4 px-4 md:px-8',
           'bg-admin-surface/80 backdrop-blur border-b border-admin-outline-variant',
           // Смещаем вправо от sidebar на десктопе
           'left-0 md:left-[280px]',
         )}
       >
+        {/* Бренд — только мобильный (на десктопе бренд в сайдбаре) */}
+        <div className="md:hidden flex items-center gap-2 shrink-0">
+          <div className="w-9 h-9 bg-admin-primary rounded-xl flex items-center justify-center">
+            <Icon name="bolt" filled className="text-admin-on-primary" />
+          </div>
+        </div>
+
         {/* Поиск-заглушка */}
-        <div className="relative max-w-xl w-full">
+        <div className="relative flex-1 max-w-xl">
           <Icon
             name="search"
             className="absolute left-3 top-1/2 -translate-y-1/2 text-admin-on-surface-variant text-[20px]"
@@ -201,15 +199,20 @@ export function AdminShell({ user, children, initialTheme }: AdminShellProps) {
             )}
           />
         </div>
-        {/* Правая сторона topbar зарезервирована для page-level actions (Phase 3.x) */}
+
+        {/* Аватар-меню — только мобильный */}
+        <AdminMobileMenu user={user} initialTheme={initialTheme} />
       </header>
 
       {/* ── Основной контент (единственный скроллер; body зафиксирован через :has) ──── */}
       <main className="md:ml-[280px] pt-16 h-screen overflow-y-auto overscroll-contain bg-admin-bg [scrollbar-gutter:stable]">
-        <div className="max-w-[1440px] mx-auto p-8">
+        <div className="max-w-[1440px] mx-auto p-4 sm:p-8 pb-28 md:pb-8">
           <ContentReadyGate>{children}</ContentReadyGate>
         </div>
       </main>
+
+      {/* ── Мобильный нижний таб-бар (только <md) ───────────────────────── */}
+      <AdminTabBar />
     </>
   );
 }
