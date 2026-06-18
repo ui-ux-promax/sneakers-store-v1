@@ -28,6 +28,16 @@ describe('getSiteUrl', () => {
       process.env.NEXT_PUBLIC_SITE_URL = prev;
     }
   });
+
+  it('falls back to localhost when NEXT_PUBLIC_SITE_URL is empty', () => {
+    const prev = process.env.NEXT_PUBLIC_SITE_URL;
+    process.env.NEXT_PUBLIC_SITE_URL = '';
+    try {
+      expect(getSiteUrl().toString()).toBe('http://localhost:3000/');
+    } finally {
+      process.env.NEXT_PUBLIC_SITE_URL = prev;
+    }
+  });
 });
 
 describe('absoluteUrl', () => {

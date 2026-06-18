@@ -5,7 +5,7 @@ export const catalogSeoDescription = 'Каталог кроссовок STRIDE: 
 export const defaultOgImage = '/products/Professional_product_photography_of_white_202605311739.png';
 
 export function getSiteUrl(): URL {
-  return new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000');
+  return new URL(process.env.NEXT_PUBLIC_SITE_URL?.trim() || 'http://localhost:3000');
 }
 
 export function absoluteUrl(pathOrUrl: string, base = getSiteUrl()): string {
