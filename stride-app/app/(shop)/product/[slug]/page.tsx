@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma-client';
 import { getProductBySlug } from '@/lib/get-product';
+import { absoluteUrl, defaultOgImage, siteName } from '@/lib/seo';
 import { productCardInclude, buildProductCardData } from '@/lib/product-summary';
 import { normalizeSize } from '@/lib/format';
 import { NEW_PRODUCT_WINDOW_DAYS, LOW_STOCK_THRESHOLD } from '@/constants/config';
@@ -27,9 +28,47 @@ type Params = { params: Promise<{ slug: string }>; searchParams: Promise<{ color
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const product = await prisma.product.findFirst({ where: { slug, active: true }, select: { name: true, description: true } });
+  const product = await prisma.product.findFirst({
+    where: { slug, active: true },
+    select: {
+      name: true,
+      description: true,
+      colorways: {
+        orderBy: [{ isDefault: 'desc' }, { sortOrder: 'asc' }],
+        take: 1,
+        select: {
+          images: {
+            orderBy: { sortOrder: 'asc' },
+            take: 1,
+            select: { url: true, alt: true },
+          },
+        },
+      },
+    },
+  });
   if (!product) return { title: 'Товар не найден', robots: { index: false, follow: false } };
-  return { title: product.name, description: product.description ?? undefined, alternates: { canonical: `/product/${slug}` } };
+  const description = product.description ?? undefined;
+  const primaryImage = product.colorways[0]?.images[0];
+  const image = absoluteUrl(primaryImage?.url ?? defaultOgImage);
+  return {
+    title: product.name,
+    description,
+    alternates: { canonical: `/product/${slug}` },
+    openGraph: {
+      title: product.name,
+      description,
+      url: `/product/${slug}`,
+      siteName,
+      type: 'website',
+      images: [{ url: image, alt: primaryImage?.alt ?? product.name }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: product.name,
+      description,
+      images: [image],
+    },
+  };
 }
 
 export default async function ProductPage({ params, searchParams }: Params) {
@@ -71,6 +110,7 @@ export default async function ProductPage({ params, searchParams }: Params) {
   const wishlistedIds = await getWishlistProductIds(session, wlStore.get(wishlistCookieName)?.value);
 
   const galleryImages = active.images.map((im) => ({ url: im.url, alt: im.alt ?? product.name }));
+  const jsonLdImages = galleryImages.map((g) => absoluteUrl(g.url));
   // «Новинка» поверх главного кадра — по createdAt товара (как в buildProductCardData).
   // Скидку на PDP показывает только панель покупки (по выбранной вариации), чтобы не дублировать пилл.
   // Распроданную расцветку не маркируем — паритет с computeBadges (soldOut гасит new/discount).
@@ -146,7 +186,7 @@ export default async function ProductPage({ params, searchParams }: Params) {
       {/* JSON-LD */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         '@context': 'https://schema.org', '@type': 'Product', name: product.name,
-        image: galleryImages.map((g) => g.url), description: product.description ?? undefined, brand: product.brand,
+        image: jsonLdImages, description: product.description ?? undefined, brand: product.brand,
         ...(count > 0 ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: avg.toFixed(1), reviewCount: count } } : {}),
         offers: { '@type': 'AggregateOffer', priceCurrency: 'RUB', availability: active.variants.some((v) => v.stock > 0) ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock', lowPrice: Math.min(...active.variants.map((v) => v.price)) },
       }) }} />

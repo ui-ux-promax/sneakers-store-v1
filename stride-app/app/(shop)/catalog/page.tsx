@@ -1,7 +1,9 @@
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { auth } from '@/auth';
 import { findProducts } from '@/lib/find-products';
+import { catalogSeoDescription, defaultOgImage } from '@/lib/seo';
 import { getWishlistProductIds } from '@/lib/wishlist';
 import { wishlistCookieName } from '@/lib/wishlist-cookie';
 import { ProductCard } from '@/components/shared/product-card';
@@ -14,7 +16,23 @@ import { EmptyCatalog, ProductGridSkeleton } from '@/components/shared/catalog/c
 
 export const dynamic = 'force-dynamic';
 
-export const metadata = { title: 'Каталог' };
+export const metadata: Metadata = {
+  title: 'Каталог',
+  description: catalogSeoDescription,
+  alternates: { canonical: '/catalog' },
+  openGraph: {
+    title: 'Каталог STRIDE',
+    description: catalogSeoDescription,
+    url: '/catalog',
+    images: [{ url: defaultOgImage, alt: 'Каталог STRIDE' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Каталог STRIDE',
+    description: catalogSeoDescription,
+    images: [defaultOgImage],
+  },
+};
 
 export default async function CatalogPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;
