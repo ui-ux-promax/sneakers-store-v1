@@ -1,18 +1,23 @@
 import type { MetadataRoute } from 'next';
 import { prisma } from '@/lib/prisma-client';
+import { absoluteUrl, getSiteUrl } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
-  const products = await prisma.product.findMany({ where: { active: true }, select: { slug: true } });
+  const siteUrl = getSiteUrl();
+  const products = await prisma.product.findMany({ where: { active: true }, select: { slug: true, createdAt: true } });
+  const fallbackLastModified = new Date();
+  const contentLastModified = products.reduce<Date | null>(
+    (latest, product) => (!latest || product.createdAt > latest ? product.createdAt : latest),
+    null,
+  ) ?? fallbackLastModified;
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: base, changeFrequency: 'daily', priority: 1 },
-    { url: `${base}/catalog`, changeFrequency: 'daily', priority: 0.9 },
-    { url: `${base}/cart`, changeFrequency: 'monthly', priority: 0.1 },
+    { url: siteUrl.toString(), lastModified: contentLastModified, changeFrequency: 'daily', priority: 1 },
+    { url: absoluteUrl('/catalog', siteUrl), lastModified: contentLastModified, changeFrequency: 'daily', priority: 0.9 },
   ];
   const productRoutes: MetadataRoute.Sitemap = products.map((p) => ({
-    url: `${base}/product/${p.slug}`, changeFrequency: 'weekly', priority: 0.8,
+    url: absoluteUrl(`/product/${p.slug}`, siteUrl), lastModified: p.createdAt, changeFrequency: 'weekly', priority: 0.8,
   }));
   return [...staticRoutes, ...productRoutes];
 }
