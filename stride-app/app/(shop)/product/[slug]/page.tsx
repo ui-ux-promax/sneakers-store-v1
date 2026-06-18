@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma-client';
 import { getProductBySlug } from '@/lib/get-product';
-import { absoluteUrl, defaultOgImage, siteName } from '@/lib/seo';
+import { absoluteUrl, buildBreadcrumbListJsonLd, buildProductJsonLd, defaultOgImage, siteName } from '@/lib/seo';
 import { productCardInclude, buildProductCardData } from '@/lib/product-summary';
 import { normalizeSize } from '@/lib/format';
 import { NEW_PRODUCT_WINDOW_DAYS, LOW_STOCK_THRESHOLD } from '@/constants/config';
@@ -110,7 +110,6 @@ export default async function ProductPage({ params, searchParams }: Params) {
   const wishlistedIds = await getWishlistProductIds(session, wlStore.get(wishlistCookieName)?.value);
 
   const galleryImages = active.images.map((im) => ({ url: im.url, alt: im.alt ?? product.name }));
-  const jsonLdImages = galleryImages.map((g) => absoluteUrl(g.url));
   // «Новинка» поверх главного кадра — по createdAt товара (как в buildProductCardData).
   // Скидку на PDP показывает только панель покупки (по выбранной вариации), чтобы не дублировать пилл.
   // Распроданную расцветку не маркируем — паритет с computeBadges (soldOut гасит new/discount).
@@ -122,6 +121,22 @@ export default async function ProductPage({ params, searchParams }: Params) {
     price: v.price, compareAtPrice: v.compareAtPrice,
   }));
   const specs = (product.specs ?? null) as Record<string, string> | null;
+  const productUrl = `/product/${product.slug}${active.slug ? `?color=${active.slug}` : ''}`;
+  const productJsonLd = buildProductJsonLd({
+    name: product.name,
+    description: product.description,
+    images: galleryImages.map((g) => g.url),
+    variants: product.colorways.flatMap((colorway) => colorway.variants),
+    url: productUrl,
+    rating: count > 0 ? { value: avg, count } : null,
+  });
+  const breadcrumbItems = [
+    { name: 'Главная', url: '/' },
+    { name: 'Каталог', url: '/catalog' },
+    { name: product.category.name, url: `/catalog?category=${product.category.slug}` },
+    { name: product.name, url: `/product/${product.slug}` },
+  ];
+  const breadcrumbJsonLd = buildBreadcrumbListJsonLd(breadcrumbItems);
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 sm:px-6 pb-16">
@@ -136,7 +151,7 @@ export default async function ProductPage({ params, searchParams }: Params) {
         {/* key по расцветке: при смене ?color= галерея/панель пересоздаются (сброс выбранного размера) */}
         <ProductGallery key={active.slug} images={galleryImages} productName={product.name} isNew={galleryIsNew} />
         <div>
-          <p className="text-[11px] text-ink-muted uppercase tracking-wide">{product.category.name} · {product.brand}</p>
+          <p className="text-[11px] text-ink-muted uppercase tracking-wide">{product.category.name} · STRIDE</p>
           <h1 className="font-display font-bold text-[28px] sm:text-[34px] leading-tight mt-1">{product.name}</h1>
           {count > 0 && (
             <a href="#reviews" className="mt-2 inline-flex"><RatingStars value={avg} count={count} /></a>
@@ -184,12 +199,8 @@ export default async function ProductPage({ params, searchParams }: Params) {
       />
 
       {/* JSON-LD */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-        '@context': 'https://schema.org', '@type': 'Product', name: product.name,
-        image: jsonLdImages, description: product.description ?? undefined, brand: product.brand,
-        ...(count > 0 ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: avg.toFixed(1), reviewCount: count } } : {}),
-        offers: { '@type': 'AggregateOffer', priceCurrency: 'RUB', availability: active.variants.some((v) => v.stock > 0) ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock', lowPrice: Math.min(...active.variants.map((v) => v.price)) },
-      }) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
     </div>
   );
 }
