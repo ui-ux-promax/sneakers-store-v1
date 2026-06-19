@@ -26,6 +26,7 @@ const EMPTY: ProductValues = {
   name: '', slug: '', brand: '', gender: 'UNISEX', categoryId: '',
   description: '', fitNote: '', specs: [], isBestseller: false, active: false, sortOrder: 0, colorways: [],
 };
+const VALIDATION_ERROR = 'Проверьте поля товара, расцветок, изображений и размеров';
 
 export function ProductForm({
   initial,
@@ -79,8 +80,12 @@ export function ProductForm({
     router.push('/admin/catalog/products');
   }
 
+  function onInvalid() {
+    setServerError(VALIDATION_ERROR);
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 max-w-4xl">
+    <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-8 max-w-4xl">
       {/* Скаляры */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Название" error={errors.name?.message}>

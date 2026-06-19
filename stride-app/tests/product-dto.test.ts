@@ -78,6 +78,15 @@ describe('productSchema', () => {
     expect(productSchema.safeParse({ ...base, colorways: [{ ...colorway, images: [image] }] }).success).toBe(true);
   });
 
+  it('accepts product images uploaded through the admin product uploader folder', () => {
+    vi.stubEnv('NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME', 'stride-cloud');
+    const image = {
+      url: 'https://res.cloudinary.com/stride-cloud/image/upload/v1700000000/stride/products/pair.jpg',
+      publicId: 'stride/products/pair',
+    };
+    expect(productSchema.safeParse({ ...base, colorways: [{ ...colorway, images: [image] }] }).success).toBe(true);
+  });
+
   it('rejects third-party product image URLs', () => {
     vi.stubEnv('NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME', 'stride-cloud');
     const image = { url: 'https://tracker.example/pixel.jpg', publicId: 'stride/uploads/pair' };

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 const CLOUDINARY_HOST = 'res.cloudinary.com';
-const ALLOWED_PUBLIC_ID_PREFIXES = ['stride/uploads/', 'stride/categories/'] as const;
+const ALLOWED_PUBLIC_ID_PREFIXES = ['stride/uploads/', 'stride/categories/', 'stride/products/'] as const;
 
 function configuredCloudName(): string | undefined {
   return process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME?.trim() || undefined;
