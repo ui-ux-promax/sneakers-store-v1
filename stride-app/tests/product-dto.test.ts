@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { productSchema } from '@/services/dto/product.dto';
 
 const variant = { sizeEu: 42, sku: 'NK-AM90-BLK-42', price: 12990, compareAtPrice: null, stock: 5, active: true };
@@ -67,5 +67,20 @@ describe('productSchema', () => {
 
   it('rejects duplicate spec keys', () => {
     expect(productSchema.safeParse({ ...base, specs: [{ key: 'Материал', value: 'Сетка' }, { key: 'Материал', value: 'Кожа' }] }).success).toBe(false);
+  });
+
+  it('accepts Cloudinary product image URLs for the configured cloud', () => {
+    vi.stubEnv('NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME', 'stride-cloud');
+    const image = {
+      url: 'https://res.cloudinary.com/stride-cloud/image/upload/v1700000000/stride/uploads/pair.jpg',
+      publicId: 'stride/uploads/pair',
+    };
+    expect(productSchema.safeParse({ ...base, colorways: [{ ...colorway, images: [image] }] }).success).toBe(true);
+  });
+
+  it('rejects third-party product image URLs', () => {
+    vi.stubEnv('NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME', 'stride-cloud');
+    const image = { url: 'https://tracker.example/pixel.jpg', publicId: 'stride/uploads/pair' };
+    expect(productSchema.safeParse({ ...base, colorways: [{ ...colorway, images: [image] }] }).success).toBe(false);
   });
 });

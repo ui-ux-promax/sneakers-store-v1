@@ -21,6 +21,7 @@ import { confirmCode, issueCode } from '@/lib/verification/service';
 import { readPending, clearPending } from '@/lib/verification/pending-cookie';
 import { prisma } from '@/lib/prisma-client';
 import { signIn } from '@/auth';
+import { checkResendRateLimit } from '@/lib/rate-limit';
 
 const confirm = confirmCode as unknown as ReturnType<typeof vi.fn>;
 const issue = issueCode as unknown as ReturnType<typeof vi.fn>;
@@ -29,6 +30,7 @@ const clear = clearPending as unknown as ReturnType<typeof vi.fn>;
 const userUpdate = prisma.user.update as unknown as ReturnType<typeof vi.fn>;
 const userFind = prisma.user.findUnique as unknown as ReturnType<typeof vi.fn>;
 const signInMock = signIn as unknown as ReturnType<typeof vi.fn>;
+const resendLimit = checkResendRateLimit as unknown as ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -88,7 +90,15 @@ describe('ensureVerificationGate', () => {
     userFind.mockResolvedValue({ emailVerified: null });
     const r = await ensureVerificationGate('u@x.com');
     expect(r.gated).toBe(true);
+    expect(resendLimit).toHaveBeenCalledWith('u@x.com');
     expect(issue).toHaveBeenCalled();
+  });
+  it('resend limit in gate → gated:true without sending another code', async () => {
+    userFind.mockResolvedValue({ emailVerified: null });
+    resendLimit.mockResolvedValue({ success: false, remaining: 0, reset: Date.now() + 60_000 });
+    const r = await ensureVerificationGate('u@x.com');
+    expect(r.gated).toBe(true);
+    expect(issue).not.toHaveBeenCalled();
   });
   it('верифицированный → gated:false', async () => {
     userFind.mockResolvedValue({ emailVerified: new Date() });

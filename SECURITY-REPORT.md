@@ -5,11 +5,11 @@
 ## Сводка
 
 - Всего findings: 8
-- Critical: 2, оба исправлены автоматически
-- High: 2, требуют отдельного PR
-- Medium: 3, требуют hardening
-- Recommendations: 1
-- Остаточный риск после исправлений: High
+- Critical: 2, исправлены
+- High: 2, исправлены / снижены
+- Medium: 3, исправлены
+- Recommendations: 1, реализована
+- Остаточный риск после исправлений: Medium, из-за forced/breaking dependency advisory в `next`/`postcss`
 - Уверенность: высокая для всех перечисленных findings
 
 Проверены: Next.js App Router routes/actions, auth/admin gate, платежный workflow YooKassa, email verification, upload/media boundary, raw SQL, redirects, API routes, security headers, dependency audit.
@@ -60,46 +60,44 @@ if (notification.event === 'payment.succeeded') {
 
 ### [HIGH-001] Остались production dependency advisories
 
-Статус: не исправлено
+Статус: частично исправлено, остаточный риск снижен
 
 - Файлы:
-  - `stride-app/package-lock.json:2082` (`@opentelemetry/core`)
-  - `stride-app/package-lock.json:7949` (`ws` через `engine.io`)
-  - `stride-app/package-lock.json:8348` (`form-data`)
-  - `stride-app/package-lock.json:9408` (`postcss` в nested dependency)
-- Риск: High
+  - `stride-app/package-lock.json` (`form-data`, `ws`, `@opentelemetry/core` обновлены безопасным `npm audit fix`)
+  - `stride-app/package-lock.json` (`next/node_modules/postcss` остается в forced/breaking audit path)
+- Риск: Medium после safe fix
 - Уверенность: High
-- Описание: после обновления Next.js audit все еще сообщает 12 vulnerabilities: 1 low, 7 moderate, 4 high. Critical больше нет, но high/moderate остаются в production dependency graph.
-- Сценарий атаки: в зависимости от достижимости конкретного пакета возможны DoS через websocket/memory exhaustion, CRLF/header injection при multipart construction и memory exhaustion в telemetry baggage parsing.
-- Исправление: отдельным PR выполнить scoped dependency update/audit pass, затем прогнать `typecheck`, unit tests и production build. Не применять `npm audit fix --force` без ревью diff, потому что он может подтянуть breaking upgrades.
+- Описание: безопасный `npm audit fix` снял production high findings по `form-data`, `ws` и `@opentelemetry/core`. Остался production moderate advisory по `postcss` внутри `next`; `npm audit` предлагает только `--force`, который ведет к breaking downgrade `next@9.3.3`.
+- Сценарий атаки: остаточный `postcss` advisory связан с CSS stringify output; текущий app не принимает пользовательский CSS для серверной stringify-обработки, поэтому риск ниже исходного dependency finding.
+- Исправление: не применять `npm audit fix --force`; ждать безопасный патч в Next.js или vendor override после отдельной проверки совместимости.
 
 ### [HIGH-002] Публичный DaData proxy можно использовать для сжигания provider quota
 
-Статус: не исправлено
+Статус: исправлено
 
-- Файл: `stride-app/app/api/dadata/suggest/route.ts:6`
+- Файл: `stride-app/app/api/dadata/suggest/route.ts:8`
 - Риск: High
 - Уверенность: High
 - Описание: endpoint публичный, не требует auth/session и не применяет rate limit перед запросом к DaData с серверным `DADATA_TOKEN`. Пользовательский `query` напрямую уходит во внешний paid/provider API.
 - Сценарий атаки: атакующий запускает массовые POST-запросы на `/api/dadata/suggest`, заставляет backend расходовать лимиты/квоту DaData и генерирует upstream traffic от имени приложения.
-- Исправление: добавить IP-based rate limit, ограничение длины `query`, минимальную длину запроса и, если UX позволяет, привязку к checkout/session flow.
+- Исправление: добавлен `checkDadataRateLimit(ip)`, trimming и hard cap `query <= 120` до upstream fetch. Тест: `stride-app/tests/dadata-suggest-route.test.ts`.
 
 ## Medium
 
 ### [MED-001] Email verification gate может обходить resend limiter
 
-Статус: не исправлено
+Статус: исправлено
 
 - Файл: `stride-app/app/actions/verification.ts:72`
 - Риск: Medium
 - Уверенность: High
 - Описание: `resendVerificationCode()` проверяет `checkResendRateLimit()`, но `ensureVerificationGate()` для существующего неверифицированного пользователя вызывает `issueCode(norm)` без direct resend limit.
 - Сценарий атаки: повторные login attempts на известный неверифицированный email могут многократно отправлять письма и перезаписывать verification code, создавая email flood/DoS для пользователя.
-- Исправление: перед `issueCode(norm)` в `ensureVerificationGate()` применить тот же resend limiter или отдельный limiter по `ip:email`, сохранив наружный non-enumerating ответ.
+- Исправление: `ensureVerificationGate()` теперь вызывает `checkResendRateLimit(norm)` перед `issueCode(norm)` и сохраняет non-enumerating `{ gated: true }`. Тест: `stride-app/tests/verification-actions.test.ts`.
 
 ### [MED-002] Admin DTO принимают произвольные image URLs
 
-Статус: не исправлено
+Статус: исправлено
 
 - Файлы:
   - `stride-app/services/dto/product.dto.ts:33`
@@ -108,31 +106,31 @@ if (notification.event === 'payment.succeeded') {
 - Уверенность: High
 - Описание: product/category DTO валидируют только синтаксически корректный URL. Это обходит ожидаемую границу signed Cloudinary upload и позволяет сохранить сторонний image URL.
 - Сценарий атаки: при компрометации admin-сессии или через future admin bug атакующий сохраняет URL на внешний tracking/content host. Storefront будет загружать сторонний ресурс в пользовательских браузерах.
-- Исправление: allowlist `https://res.cloudinary.com/${NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/...`, требовать допустимые `publicId` prefixes и отклонять image URL без соответствующего Cloudinary public id.
+- Исправление: добавлен общий DTO helper `stride-app/services/dto/cloudinary-image.ts`; product/category схемы принимают только `https://res.cloudinary.com/${NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/...` с `publicId` prefix `stride/uploads/` или `stride/categories/`. Тесты: `product-dto.test.ts`, `category-dto.test.ts`.
 
 ### [MED-003] Нет CSP и HSTS headers
 
-Статус: не исправлено
+Статус: исправлено
 
 - Файл: `stride-app/next.config.mjs:30`
 - Риск: Medium
 - Уверенность: High
 - Описание: конфиг выставляет `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, но не задает `Content-Security-Policy` и `Strict-Transport-Security`.
 - Сценарий атаки: при появлении XSS CSP не ограничит загрузку script/connect/img источников; без HSTS браузер не закрепляет HTTPS policy для домена.
-- Исправление: добавить production CSP, совместимую с Next.js, Cloudinary, YooKassa redirect, Sentry/analytics, и HSTS `max-age=31536000; includeSubDomains; preload` после проверки домена.
+- Исправление: security headers вынесены в `stride-app/lib/security/headers.mjs`; `next.config.mjs` добавляет CSP и production HSTS. Тест: `stride-app/tests/security-headers.test.ts`.
 
 ## Recommendations
 
 ### [REC-001] Добавить central CSRF origin/fetch-metadata guard
 
-Статус: рекомендация
+Статус: реализовано
 
 - Файлы: `stride-app/app/api/cart/route.ts`, `stride-app/app/api/cart/[id]/route.ts`, `stride-app/app/actions/*`
 - Риск: Defense-in-depth
 - Уверенность: High
 - Описание: cookie baseline через `SameSite=Lax` снижает CSRF риск, но нет единого server-side Origin / `Sec-Fetch-Site` guard для state-changing route handlers и server actions.
 - Сценарий атаки: если browser/client path или будущая cookie policy ослабит SameSite assumptions, state-changing endpoints останутся без централизованной проверки происхождения запроса.
-- Исправление: добавить helper/middleware для POST/PATCH/DELETE и server actions: разрешать same-origin/same-site trusted origins, блокировать cross-site, исключить только provider webhooks.
+- Исправление: добавлен `stride-app/lib/security/csrf.ts`; middleware применяет Fetch Metadata / Origin / Referer guard к state-changing requests на broad app matcher, с исключением для provider webhook. Тест: `stride-app/tests/csrf.test.ts`.
 
 ## Что проверено и не вынесено как finding
 
@@ -148,11 +146,20 @@ if (notification.event === 'payment.succeeded') {
 1. `stride-app/app/api/yookassa/webhook/route.ts` - добавлена сверка terminal status у YooKassa перед применением локальных payment effects.
 2. `stride-app/tests/yookassa-webhook.test.ts` - добавлены regression tests для remote status verification и failure path.
 3. `stride-app/package.json` / `stride-app/package-lock.json` - `next` обновлен с `15.1.11` до `15.5.19`.
+4. `stride-app/package-lock.json` - safe `npm audit fix` снял production high findings по `form-data`, `ws`, `@opentelemetry/core`.
+5. `stride-app/app/api/dadata/suggest/route.ts` - добавлены rate limit и cap длины query перед upstream DaData.
+6. `stride-app/app/actions/verification.ts` - email verification gate больше не обходит resend limiter.
+7. `stride-app/services/dto/*` - добавлена Cloudinary allowlist validation для product/category image URL.
+8. `stride-app/next.config.mjs`, `stride-app/middleware.ts` - добавлены CSP/HSTS и central CSRF guard.
 
 ## Verification
 
 - `npm.cmd run typecheck` - passed.
-- `npm.cmd run test -- tests/yookassa-webhook.test.ts` - passed, 6/6.
-- `npm.cmd run test` - passed, 69 files / 489 tests.
-- `npm.cmd audit --omit=dev --audit-level=moderate` - critical findings removed; remaining: 12 vulnerabilities (1 low, 7 moderate, 4 high).
-- `npm.cmd run build` - не завершился из-за sandbox/network `EACCES` при загрузке Google Fonts (`Anybody`, `Manrope`, `Unbounded`) в `app/layout.tsx`; это ограничение сетевого доступа, не TypeScript/app compile error.
+- `npm.cmd run test -- tests/dadata-suggest-route.test.ts` - passed, 3/3.
+- `npm.cmd run test -- tests/verification-actions.test.ts` - passed, 10/10.
+- `npm.cmd run test -- tests/product-dto.test.ts tests/category-dto.test.ts` - passed, 24/24.
+- `npm.cmd run test -- tests/csrf.test.ts tests/security-headers.test.ts` - passed, 5/5.
+- `npm.cmd run test` - passed, 72 files / 502 tests.
+- `npm.cmd audit --omit=dev --audit-level=moderate` - remaining: 4 moderate vulnerabilities in forced/breaking `next` → nested `postcss` path.
+- `npm.cmd audit --audit-level=moderate` - remaining: 9 vulnerabilities in full tree, including dev `vitest/vite/esbuild`; fixes require `--force` / breaking upgrades.
+- `npm.cmd run build` - passed with network permission for Google Fonts fetch.

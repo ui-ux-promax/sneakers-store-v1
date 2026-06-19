@@ -76,6 +76,9 @@ export async function ensureVerificationGate(email: string, callbackUrl?: string
   if (user && !user.emailVerified) {
     const safeCb = safeCallbackUrl(callbackUrl);
     await (safeCb === '/' ? setPending(norm) : setPending(norm, safeCb));
+    if (!(await checkResendRateLimit(norm)).success) {
+      return { gated: true };
+    }
     await issueCode(norm);
     return { gated: true };
   }

@@ -1,10 +1,16 @@
 import NextAuth from 'next-auth';
 import authConfig from './auth.config';
+import { blockCrossSiteStateChange } from './lib/security/csrf';
 
-export const { auth: middleware } = NextAuth(authConfig);
+const { auth } = NextAuth(authConfig);
+
+export default auth((req) => {
+  const blocked = blockCrossSiteStateChange(req);
+  if (blocked) return blocked;
+});
 
 export const config = {
-  // /login и /register — чтобы authorized-колбэк увёл залогиненного в /profile.
-  // /admin и /admin/:path* — гейт роли ADMIN живёт в authorized() (auth.config.ts).
-  matcher: ['/profile/:path*', '/checkout/:path*', '/orders/:path*', '/login', '/register', '/admin', '/admin/:path*'],
+  // Broad app matcher: auth.config decides protected pages; csrf.ts blocks cross-site
+  // state-changing requests, including Server Actions posted to their page route.
+  matcher: ['/((?!api/auth|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\..*).*)'],
 };

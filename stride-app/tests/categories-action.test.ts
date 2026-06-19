@@ -34,9 +34,11 @@ const findUnique = prisma.category.findUnique as unknown as ReturnType<typeof vi
 const findFirst = prisma.category.findFirst as unknown as ReturnType<typeof vi.fn>;
 const tx = prisma.$transaction as unknown as ReturnType<typeof vi.fn>;
 const deleteAssetMock = deleteAsset as unknown as ReturnType<typeof vi.fn>;
+const coverImage = 'https://res.cloudinary.com/stride-cloud/image/upload/v1700000000/stride/categories/new.jpg';
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.stubEnv('NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME', 'stride-cloud');
   authMock.mockResolvedValue({ user: { role: 'ADMIN' } });
 });
 
@@ -99,14 +101,14 @@ describe('updateCategory', () => {
     findUnique.mockResolvedValue({ id: 'c1', coverImagePublicId: 'old/pid' });
     update.mockResolvedValue({ id: 'c1' });
     deleteAssetMock.mockResolvedValue({ ok: true });
-    await updateCategory('c1', { name: 'N', slug: 'n', coverImage: 'https://x/y.jpg', coverImagePublicId: 'new/pid' });
+    await updateCategory('c1', { name: 'N', slug: 'n', coverImage, coverImagePublicId: 'stride/categories/new' });
     expect(deleteAssetMock).toHaveBeenCalledWith('old/pid');
   });
 
   it('cover unchanged → no deleteAsset', async () => {
-    findUnique.mockResolvedValue({ id: 'c1', coverImagePublicId: 'same/pid' });
+    findUnique.mockResolvedValue({ id: 'c1', coverImagePublicId: 'stride/categories/same' });
     update.mockResolvedValue({ id: 'c1' });
-    await updateCategory('c1', { name: 'N', slug: 'n', coverImage: 'https://x/y.jpg', coverImagePublicId: 'same/pid' });
+    await updateCategory('c1', { name: 'N', slug: 'n', coverImage, coverImagePublicId: 'stride/categories/same' });
     expect(deleteAssetMock).not.toHaveBeenCalled();
   });
 });
