@@ -18,9 +18,11 @@ test('регистрация → автологин → профиль с дан
   await expect(page.getByRole('heading', { name: 'Профиль' })).toBeVisible();
   await expect(page.getByLabel('Email')).toHaveValue(email); // email — value disabled-инпута
 
-  await page.getByRole('button', { name: 'Выйти' }).click();
-  // Дождаться завершения логаута (AuthNav → гость), а не loose waitForURL('**/'):
-  // логаут с '/' не меняет URL, и goto ниже мог гонкой опередить выход. (#leak-redirect)
+  await Promise.all([
+    page.waitForURL('/', { waitUntil: 'networkidle' }),
+    page.getByRole('button', { name: 'Выйти' }).click(),
+  ]);
+  // Дождаться завершения логаута по redirect на '/', иначе goto ниже может гонкой опередить Set-Cookie удаления сессии.
   await expect(page.getByRole('button', { name: 'Выйти' })).toHaveCount(0);
   await page.goto('/profile');
   await expect(page).toHaveURL(/\/login/); // middleware защищает /profile
