@@ -76,6 +76,7 @@ async function makeLimiter(slot: { v: Limiter }, points: number, window: `${numb
 const verifySlot = { v: null as Limiter };
 const resendSlot = { v: null as Limiter };
 const newsletterSlot = { v: null as Limiter };
+const dadataSlot = { v: null as Limiter };
 
 export async function checkVerifyRateLimit(key: string): Promise<RateLimitResult> {
   const l = await makeLimiter(verifySlot, 10, '10 m', 'stride-app:verify');
@@ -95,6 +96,13 @@ export async function checkNewsletterRateLimit(key: string): Promise<RateLimitRe
   const l = await makeLimiter(newsletterSlot, 5, '10 m', 'stride-app:newsletter');
   if (!l) return { success: true, remaining: -1, reset: 0 };
   const r = await l.limit(key);
+  return { success: r.success, remaining: r.remaining, reset: r.reset };
+}
+
+export async function checkDadataRateLimit(ip: string): Promise<RateLimitResult> {
+  const l = await makeLimiter(dadataSlot, 30, '1 m', 'stride-app:dadata');
+  if (!l) return { success: true, remaining: -1, reset: 0 };
+  const r = await l.limit(ip);
   return { success: r.success, remaining: r.remaining, reset: r.reset };
 }
 

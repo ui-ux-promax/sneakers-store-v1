@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { cloudinaryImageIssue, isAllowedCloudinaryImageUrl } from './cloudinary-image';
 
 // slug: латиница/цифры, дефис только между сегментами (как в category.dto).
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -34,6 +35,10 @@ const imageSchema = z.object({
   url: z.string().url('Некорректный URL картинки'),
   publicId: z.string().optional(),
   alt: z.string().trim().max(200).optional(),
+}).superRefine((image, ctx) => {
+  if (!isAllowedCloudinaryImageUrl(image.url, image.publicId)) {
+    ctx.addIssue(cloudinaryImageIssue(['url']));
+  }
 });
 
 const colorwaySchema = z.object({

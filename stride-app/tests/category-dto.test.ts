@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { categorySchema } from '@/services/dto/category.dto';
 
 const valid = { name: 'Беговые', slug: 'running', tagline: 'Скорость' };
@@ -33,5 +33,25 @@ describe('categorySchema', () => {
 
   it('rejects name longer than 100 chars', () => {
     expect(categorySchema.safeParse({ ...valid, name: 'a'.repeat(101) }).success).toBe(false);
+  });
+
+  it('accepts Cloudinary cover image URLs for the configured cloud', () => {
+    vi.stubEnv('NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME', 'stride-cloud');
+    const r = categorySchema.safeParse({
+      ...valid,
+      coverImage: 'https://res.cloudinary.com/stride-cloud/image/upload/v1700000000/stride/categories/running.jpg',
+      coverImagePublicId: 'stride/categories/running',
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it('rejects third-party cover image URLs', () => {
+    vi.stubEnv('NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME', 'stride-cloud');
+    const r = categorySchema.safeParse({
+      ...valid,
+      coverImage: 'https://tracker.example/running.jpg',
+      coverImagePublicId: 'stride/categories/running',
+    });
+    expect(r.success).toBe(false);
   });
 });
